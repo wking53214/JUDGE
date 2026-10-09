@@ -12,11 +12,14 @@ THE RULES, in order. The first that fires decides.
     Ghost reports a finding at the end that it did not report at the start
     SWIZZLE's proofs failed
     SWIZZLE's attacks on the governor found an invariant violated (high or medium)
+    ASSAY's answer key was unproven, or Ghost caught fewer known failure modes
+    than the floor the person set
     code changed under a documentation grant
     the evidence contradicts itself (impossible counts, a code edit with no suite)
   INSUFFICIENT  nothing shows harm, but too little was measured to approve:
-    the final suite run, Ghost, SWIZZLE's proofs or SWIZZLE's attacks on the
-    governor is missing. All four are required, for prose changes too.
+    the final suite run, Ghost, SWIZZLE's proofs, SWIZZLE's attacks on the
+    governor or ASSAY's grading of Ghost is missing. All five are required,
+    for prose changes too.
   ACCEPT        everything required ran, and none of it shows harm.
 
 Unknown is not approved: a missing measurement can never produce ACCEPT.
@@ -43,7 +46,9 @@ class Judge:
         changed = len(evidence.changed)
         return Verdict("ACCEPT", (
             f"{changed} change(s) applied; suite green with no fewer passes; Ghost reports nothing new; "
-            "SWIZZLE's proofs hold and none of its attacks on the governor found a violation",), NAME)
+            "SWIZZLE's proofs hold and none of its attacks on the governor found a violation; "
+            f"Ghost caught {evidence.assay.get('caught')} of {evidence.assay.get('failure_modes')} "
+            "failure modes in ASSAY's answer key",), NAME)
 
 
 def _harm(e: Evidence) -> list[str]:
@@ -65,6 +70,14 @@ def _harm(e: Evidence) -> list[str]:
     for a in e.attacks or ():
         if a.get("status") == "violated" and a.get("severity") in {"high", "medium"}:
             out.append(f"SWIZZLE's attack '{a.get('scenario')}' found a violated invariant ({a.get('severity')})")
+    if e.assay is not None:
+        if e.assay.get("key_proven") is not True:
+            out.append("ASSAY's answer key was not proven, so Ghost's grade means nothing")
+        else:
+            caught, floor = int(e.assay.get("caught", 0)), int(e.assay.get("floor", 0))
+            if caught < floor:
+                out.append(f"Ghost caught {caught} of {e.assay.get('failure_modes')} known failure modes, "
+                           f"below the floor of {floor}")
     code = [p for p, _ in e.changed if not p.lower().endswith(_PROSE)]
     if code and e.scope.strip().lower() not in {"code", "all"}:
         out.append(f"code changed under a {e.scope!r} grant ({', '.join(code[:3])})")
@@ -83,4 +96,6 @@ def _missing(e: Evidence) -> list[str]:
         out.append("SWIZZLE's proofs")
     if e.attacks is None:
         out.append("SWIZZLE's attacks on the governor")
+    if e.assay is None:
+        out.append("ASSAY's grading of Ghost")
     return out

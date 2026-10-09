@@ -29,8 +29,8 @@ The rules are few and are written at the top of `judge/seat.py`, so a person can
 
 | verdict | when |
 |---|---|
-| REJECT | the suite is red or fewer tests pass than before; Ghost reports a finding at the end it did not report at the start; SWIZZLE's proofs failed; SWIZZLE's attacks on the governor found a high or medium invariant violated; code changed under a documentation grant |
-| INSUFFICIENT | nothing shows harm, but the final suite run, Ghost, SWIZZLE's proofs or SWIZZLE's attacks is missing |
+| REJECT | the suite is red or fewer tests pass than before; Ghost reports a finding at the end it did not report at the start; SWIZZLE's proofs failed; SWIZZLE's attacks on the governor found a high or medium invariant violated; ASSAY's answer key was unproven or Ghost caught fewer known failure modes than the floor you set; code changed under a documentation grant |
+| INSUFFICIENT | nothing shows harm, but the final suite run, Ghost, SWIZZLE's proofs, SWIZZLE's attacks or ASSAY's grading of Ghost is missing |
 | ACCEPT | all four ran and none shows harm |
 
 | module | owns |
