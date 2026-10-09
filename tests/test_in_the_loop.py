@@ -48,12 +48,14 @@ def stack(monkeypatch):
     monkeypatch.setattr(tagteam, "ghost_scan", lambda target, **kw: state["ghost"])
     monkeypatch.setattr(TagTeam, "_calibrate", lambda self, python, notes: True)
     monkeypatch.setattr(tagteam, "governor_attacks", lambda **kw: state["attacks"])
+    monkeypatch.setattr(tagteam, "assay_score", lambda **kw: (True, {"key_proven": True, "failure_modes": 5, "caught": 3}, "ok"))
     return state
 
 
 def _run(root):
     auth = grant("william", "transform", str(root.resolve()), "documentation", "judge integration")
-    team = TagTeam(drafter=Rewrites(), judge=Judge(), ghost_tools_root=Path("."), swizzle_root=Path("."))
+    team = TagTeam(drafter=Rewrites(), judge=Judge(), ghost_tools_root=Path("."), swizzle_root=Path("."),
+                   assay_root=Path("."), assay_floor=3)
     return team.run(root, findings=[], authorization=auth)
 
 

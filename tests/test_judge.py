@@ -12,13 +12,15 @@ from judge import Judge
 GREEN = SuiteRun(ran=True, passed=10)
 HELD = ({"scenario": "a", "severity": "high", "status": "held"},)
 
+ASSAY = {"key_proven": True, "failure_modes": 5, "caught": 3, "floor": 0}
+
 
 def _evidence(**kw) -> Evidence:
     base = dict(
         target="/t", scope="documentation", cycles=((1, "APPLIED"),), changed=(("README.md", "write"),),
         judging_files_touched=(), suite_before=GREEN, suite_after=GREEN,
         ghost_before=("ghost-a",), ghost_after=("ghost-a",), declined=(), swizzle_proofs=True,
-        attacks=HELD, unmeasured=())
+        attacks=HELD, unmeasured=(), assay=ASSAY)
     base.update(kw)
     return Evidence(**base)
 
@@ -95,3 +97,17 @@ def test_the_judge_does_not_mutate_the_evidence():
     snapshot = replace(e)
     Judge().decide(e)
     assert e == snapshot
+
+
+def test_a_missing_assay_grade_is_insufficient_never_accept():
+    assert _decide(assay=None).decision == "INSUFFICIENT"
+
+
+def test_an_unproven_answer_key_is_rejected():
+    v = _decide(assay={**ASSAY, "key_proven": False})
+    assert v.decision == "REJECT" and "answer key" in v.reasons[0]
+
+
+def test_ghost_below_the_floor_is_rejected_and_at_the_floor_is_accepted():
+    assert _decide(assay={**ASSAY, "floor": 4}).decision == "REJECT"
+    assert _decide(assay={**ASSAY, "floor": 3}).decision == "ACCEPT"
