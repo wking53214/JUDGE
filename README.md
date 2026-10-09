@@ -56,6 +56,17 @@ pip install git+https://github.com/wking53214/Warden.git
 pip install git+https://github.com/wking53214/Judge.git
 ```
 
+### Bumping the Warden pin
+
+This package depends on one exact Warden commit (see `dependencies` in `pyproject.toml`), so a change on
+Warden's `main` cannot break it without anyone noticing. To move to a newer Warden:
+
+1. Pick the Warden commit (or `vX.Y.Z` tag) you want.
+2. Put it after the `@` in the `warden @ git+...` line of `pyproject.toml`.
+3. Run `pip install -e ".[dev]"` and `pytest`. The tests check that the pin is a tag or a full commit and that
+   this package's `requires_contract` matches the installed Warden's `CONTRACT`.
+4. Open a pull request. CI runs the same checks.
+
 ## Usage
 
 No command line of its own. Warden loads it:
