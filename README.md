@@ -6,7 +6,7 @@ The third party that decides. It reads the evidence of a whole run and says ACCE
 
 One of seven repositories in a stack that improves code under human control. Judge has one job: given the evidence a run produced, decide whether the run is acceptable, and say why. [Warden](https://github.com/wking53214/Warden) runs the loop and is the only one that writes files. When the loop is done, Warden hands Judge the evidence and does what the verdict says. Warden cannot say ACCEPT on its own.
 
-Version `0.1.0`. Python 3.11 or newer. It depends on Warden for the shapes of the evidence and the verdict, and on nothing else.
+Version `0.2.0`. Python 3.11 or newer. It depends on Warden for the shapes of the evidence and the verdict, and on nothing else.
 
 ## WHAT IT DOES NOT OWN
 
@@ -25,13 +25,14 @@ Warden loop ends  ->  Evidence (suite, Ghost, SWIZZLE, what changed)  ->  Judge.
                                           INSUFFICIENT: changes stand, flagged as unjudged.
 ```
 
-The rules are few and are written at the top of `judge/seat.py`, so a person can read why a run was turned away. The first rule that fires decides:
+The rules are written at the top of `judge/seat.py`, so a person can read why a run was turned away. The governing rule is **unknown is not approved**: only values the Judge recognizes count as good. Text is trimmed and lowercased before it is compared. Harm is found first and outranks missing evidence. The checks for unreadable evidence come before everything else.
 
 | verdict | when |
 |---|---|
-| REJECT | the suite is red or fewer tests pass than before; Ghost reports a finding at the end it did not report at the start; SWIZZLE's proofs failed; SWIZZLE's attacks on the governor found a high or medium invariant violated; ASSAY's answer key was unproven or Ghost caught fewer known failure modes than the floor you set; code changed under a documentation grant |
-| INSUFFICIENT | nothing shows harm, but the final suite run, Ghost, SWIZZLE's proofs, SWIZZLE's attacks or ASSAY's grading of Ghost is missing |
-| ACCEPT | all four ran and none shows harm |
+| INSUFFICIENT (evidence unreadable) | a count is not a whole number of zero or more (a true/false value, a float, NaN, a negative all fail), a field has the wrong type or is missing, or any other error occurs while reading. The Judge never raises an error. |
+| REJECT | the suite is red or fewer tests pass than before; more tests are skipped or expected-to-fail than before; tests or test settings were changed (Warden's list, or any path shaped like a test, a test setting, `conftest.py`, `pyproject.toml`, `Makefile` or a `.github` file, whether or not Warden listed it); an edit reached outside the project (`..`, an absolute path) or into `.git` or `.venv`; Ghost reports a finding at the end that it did not report at the start (counted one by one, so a repeat counts as new); SWIZZLE's proofs are exactly `False`; a SWIZZLE attack is `violated` at any severity except `low` (an unknown or missing severity counts as high); ASSAY's key is exactly `False`, Ghost caught fewer failure modes than the floor, or caught is more than the total; code changed under a documentation grant |
+| INSUFFICIENT | nothing shows harm, but something is unknown: the final suite run, Ghost, SWIZZLE's proofs, SWIZZLE's attacks or ASSAY's grade is missing; the proofs or the key are anything other than exactly `True`; no attacks were attempted; an attack is not a proper entry or did not give a clean answer (status `error`, `timeout`, `crashed`, `unknown`, `not_run`, empty or missing); ASSAY's floor, caught or failure_modes is missing or not a whole number (a missing floor is 0); some tests did not run before the run and a `.py` file was written or deleted; Warden lists a check that never ran other than `judge` |
+| ACCEPT | everything above is clear. The reason lists what was checked with the real numbers: passed, skipped and xfailed counts, attacks held out of attacks run, Ghost findings at start and end, and ASSAY caught out of total with the floor. |
 
 | module | owns |
 |---|---|
@@ -39,7 +40,7 @@ The rules are few and are written at the top of `judge/seat.py`, so a person can
 
 ## KEY INTERNAL CONCEPTS
 
-- **Unknown is not approved.** A measurement that did not run can never produce ACCEPT.
+- **Unknown is not approved.** A measurement that did not run, or came back in a shape the Judge does not recognize, can never produce ACCEPT.
 - **Harm outranks missing evidence.** If the suite is red, the verdict is REJECT even when other checks are missing.
 - **Read-only.** Judge imports `warden.roles` and nothing else from the stack. It does not use `ast`, `subprocess` or `os`, and it calls nothing that writes a file. A test reads its source to prove it.
 - **Reasons are always given.** Every verdict carries at least one sentence.
@@ -77,7 +78,7 @@ Warden calls `Judge.decide` once, after the last cycle and after the finisher. O
 - Seated in the real Warden loop: a clean run is accepted, a run with a violated SWIZZLE attack is turned away and the tree is put back, a run whose attacks never ran stays unjudged. **VERIFIED** by `tests/test_in_the_loop.py`.
 - It imports only `warden.roles`, never measures, never writes. **VERIFIED** by `tests/test_independence.py`.
 
-25 tests exist in this tree, and all 25 passed on CPython 3.13 on 2026-10-08.
+183 tests exist in this tree (28 older ones and 155 in `tests/test_strict_evidence.py`, which reproduces the red-team cases), and all 183 passed on CPython 3.13 on 2026-10-09.
 
 ## WHAT IS BEAUTIFUL
 
@@ -98,12 +99,13 @@ The tests named above, against hand-built evidence and against the real Warden w
 
 ## WHAT DOES NOT WORK
 
-- It cannot weigh severity beyond "high or medium attack violated". A single low-severity Ghost finding that is new is as bad as a critical one.
+- It cannot weigh severity beyond "low attack violation is tolerated, anything else is harm". A single low-severity Ghost finding that is new is as bad as a critical one.
+- Test files are recognized by name and folder. A real source file in a folder called `test` or `tests` would be treated as a test file and turned away.
 - It trusts the evidence Warden assembles. It cannot tell whether Warden left something out.
 
 ## WHAT IS STILL UGLY
 
-- The test-count rule compares passes before and after, so a run that removes a deliberately obsolete test is rejected.
+- The test-count rule compares passes before and after, so a run that removes a deliberately obsolete test is rejected. Any change to a test file is rejected, even a harmless one, because there is no format-only exception yet.
 
 ## KNOWN DEFECTS
 
@@ -119,7 +121,7 @@ The README says Judge never writes and never measures. The tests read its source
 
 ## Status
 
-Experimental, version 0.1.0, maintained by one person.
+Experimental, version 0.2.0, maintained by one person.
 
 ## Support
 
