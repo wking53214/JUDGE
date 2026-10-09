@@ -72,6 +72,9 @@ def _unreadable(what: str) -> Verdict:
 
 
 class Judge:
+    #: The seat contract this Judge was written against. Warden warns when it is missing and refuses a mismatch.
+    requires_contract = "1"
+
     def decide(self, evidence: Evidence) -> Verdict:
         try:
             return _decide(evidence)
