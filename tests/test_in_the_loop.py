@@ -53,14 +53,19 @@ def stack(monkeypatch):
 
 
 class WithBaseline(Judge):
-    """Today's Warden does not carry Ghost's baseline report; this hands it to the Judge the way Warden will."""
+    """Hands the Judge a Ghost baseline report of its own choosing.
+
+    Warden 0.8.0 did not carry Ghost's baseline report, so this adds it. Warden 0.9.0 already carries the two
+    fields (None here, because the Ghost scan is stubbed), so they are overridden rather than added twice.
+    """
 
     baseline = {"path": None, "suppressed": 0}
 
     def decide(self, evidence):
         from types import SimpleNamespace
-        view = SimpleNamespace(**vars(evidence), ghost_baseline_before=self.baseline, ghost_baseline_after=self.baseline)
-        return super().decide(view)
+        fields = dict(vars(evidence))
+        fields.update(ghost_baseline_before=self.baseline, ghost_baseline_after=self.baseline)
+        return super().decide(SimpleNamespace(**fields))
 
 
 def _run(root, judge=None):
