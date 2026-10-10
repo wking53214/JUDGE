@@ -10,6 +10,8 @@ from warden.suite import SuiteRun
 from judge import Judge
 
 GREEN = SuiteRun(ran=True, passed=10)
+CLEAN_BASELINE = {"path": None, "suppressed": 0}
+MISSING = object()
 HELD = ({"scenario": "a", "severity": "high", "status": "held"},)
 
 ASSAY = {"key_proven": True, "failure_modes": 5, "caught": 3, "floor": 0}
@@ -22,7 +24,13 @@ def _evidence(**kw) -> Evidence:
         ghost_before=("ghost-a",), ghost_after=("ghost-a",), declined=(), swizzle_proofs=True,
         attacks=HELD, unmeasured=(), assay=ASSAY)
     base.update(kw)
-    return Evidence(**base)
+    extra = {k: base.pop(k) for k in ("ghost_baseline_before", "ghost_baseline_after") if k in base}
+    ev = Evidence(**base)
+    # Ghost's baseline report is not an Evidence field in the pinned Warden yet; the Judge reads it if present.
+    for k, v in {"ghost_baseline_before": CLEAN_BASELINE, "ghost_baseline_after": CLEAN_BASELINE, **extra}.items():
+        if v is not MISSING:
+            object.__setattr__(ev, k, v)
+    return ev
 
 
 def _decide(**kw):
