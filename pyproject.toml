@@ -23,7 +23,7 @@ classifiers = [
 ]
 # Pinned to a Warden commit (v0.7.0), not a branch, so a change on Warden main cannot silently break this seat.
 # To bump: see "Bumping the Warden pin" in README.md.
-dependencies = ["warden @ git+https://github.com/wking53214/Warden.git@cf4d60eefc6097a241e5c529441cf66c24d9120d"]
+dependencies = ["warden @ git+https://github.com/wking53214/Warden.git@v0.8.0"]
 
 [project.urls]
 Homepage = "https://github.com/wking53214/Judge"
