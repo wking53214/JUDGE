@@ -52,9 +52,20 @@ def stack(monkeypatch):
     return state
 
 
-def _run(root):
+class WithBaseline(Judge):
+    """Today's Warden does not carry Ghost's baseline report; this hands it to the Judge the way Warden will."""
+
+    baseline = {"path": None, "suppressed": 0}
+
+    def decide(self, evidence):
+        from types import SimpleNamespace
+        view = SimpleNamespace(**vars(evidence), ghost_baseline_before=self.baseline, ghost_baseline_after=self.baseline)
+        return super().decide(view)
+
+
+def _run(root, judge=None):
     auth = grant("william", "transform", str(root.resolve()), "documentation", "judge integration")
-    team = TagTeam(drafter=Rewrites(), judge=Judge(), ghost_tools_root=Path("."), swizzle_root=Path("."),
+    team = TagTeam(drafter=Rewrites(), judge=judge or WithBaseline(), ghost_tools_root=Path("."), swizzle_root=Path("."),
                    assay_root=Path("."), assay_floor=3)
     return team.run(root, findings=[], authorization=auth)
 
@@ -77,3 +88,9 @@ def test_attacks_that_never_ran_leave_the_run_unjudged(tmp_path, stack):
     result = _run(_repo(tmp_path))
     assert result.decision == "ACCEPT_UNVERIFIED" and result.verdict.decision == "INSUFFICIENT"
     assert (tmp_path / "NOTE.md").read_text(encoding="utf-8") == "new\n"
+
+
+def test_without_a_baseline_report_the_real_warden_run_is_unjudged(tmp_path, stack):
+    result = _run(_repo(tmp_path), judge=Judge())
+    assert result.decision == "ACCEPT_UNVERIFIED" and result.verdict.decision == "INSUFFICIENT"
+    assert any("baseline" in r for r in result.verdict.reasons)

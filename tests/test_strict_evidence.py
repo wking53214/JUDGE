@@ -8,6 +8,8 @@ from warden.suite import SuiteRun
 from judge import Judge
 
 GREEN = SuiteRun(ran=True, passed=10)
+CLEAN_BASELINE = {"path": None, "suppressed": 0}
+MISSING = object()
 HELD = ({"scenario": "a", "severity": "high", "status": "held"},)
 ASSAY = {"key_proven": True, "failure_modes": 5, "caught": 3, "floor": 0}
 
@@ -19,7 +21,13 @@ def _ev(**kw) -> Evidence:
         ghost_before=("g",), ghost_after=("g",), declined=(), swizzle_proofs=True,
         attacks=HELD, unmeasured=(), assay=ASSAY)
     base.update(kw)
-    return Evidence(**base)
+    extra = {k: base.pop(k) for k in ("ghost_baseline_before", "ghost_baseline_after") if k in base}
+    ev = Evidence(**base)
+    # Ghost's baseline report is not an Evidence field in the pinned Warden yet; the Judge reads it if present.
+    for k, v in {"ghost_baseline_before": CLEAN_BASELINE, "ghost_baseline_after": CLEAN_BASELINE, **extra}.items():
+        if v is not MISSING:
+            object.__setattr__(ev, k, v)
+    return ev
 
 
 def _d(**kw):
@@ -163,9 +171,10 @@ def test_a_bad_floor_is_insufficient(floor, caught):
     assert v.decision == "INSUFFICIENT" and any("floor" in r for r in v.reasons)
 
 
-def test_a_missing_floor_is_zero():
+def test_a_missing_floor_is_not_zero():
     a = {"key_proven": True, "failure_modes": 5, "caught": 0}
-    assert _d(assay=a).decision == "ACCEPT"
+    v = _d(assay=a)
+    assert v.decision == "INSUFFICIENT" and any("floor was not given" in r for r in v.reasons)
 
 
 @pytest.mark.parametrize("floor", [0, -1, "3", None])
