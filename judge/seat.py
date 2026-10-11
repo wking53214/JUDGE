@@ -447,6 +447,11 @@ def _decide(e: Evidence) -> Verdict:
     if (before is not None and before.not_run > 0
             and any(p.strip().lower().endswith(".py") and k.strip().lower() in {"write", "delete"} for p, k in changed)):
         reasons.append("some tests did not run, so a code change cannot be shown safe")
+    # Counts that come from printed text alone can be faked by the code under test, so they never
+    # support a plain ACCEPT. The run is held as unverified instead.
+    if any(s is not None and s.text_derived for s in (before, after)):
+        reasons.append("the suite results come from printed text only (no exit code to check them), "
+                       "so they cannot prove the change safe")
     if reasons:
         return Verdict("INSUFFICIENT", tuple(reasons) + ((text_note,) if text_note else ()), NAME)
 

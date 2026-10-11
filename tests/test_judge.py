@@ -9,7 +9,7 @@ from warden.suite import SuiteRun
 
 from judge import Judge
 
-GREEN = SuiteRun(ran=True, passed=10)
+GREEN = SuiteRun(ran=True, passed=10, exit_code=0)
 CLEAN_BASELINE = {"path": None, "suppressed": 0}
 MISSING = object()
 HELD = ({"scenario": "a", "severity": "high", "status": "held"},)

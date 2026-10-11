@@ -7,7 +7,7 @@ from warden.suite import SuiteRun
 
 from judge import Judge
 
-GREEN = SuiteRun(ran=True, passed=10)
+GREEN = SuiteRun(ran=True, passed=10, exit_code=0)
 CLEAN_BASELINE = {"path": None, "suppressed": 0}
 MISSING = object()
 HELD = ({"scenario": "a", "severity": "high", "status": "held"},)
@@ -39,7 +39,7 @@ def _atk(status="held", severity="high", scenario="X"):
 
 
 def _suite(**kw):
-    return SuiteRun(ran=True, **{"passed": 10, **kw})
+    return SuiteRun(ran=True, **{"passed": 10, "exit_code": 0, **kw})
 
 
 # 1. attacks
@@ -257,7 +257,7 @@ def test_skips_swapped_for_xfails_counts_as_growth_only_in_total():
 
 def test_xfailed_missing_from_an_older_suite_run_counts_as_zero():
     class Old:
-        ran, passed, failed, errors, skipped = True, 10, 0, 0, 0
+        ran, passed, failed, errors, skipped, exit_code = True, 10, 0, 0, 0, 0
     assert _d(suite_before=Old(), suite_after=Old(), changed=()).decision == "ACCEPT"
 
 
