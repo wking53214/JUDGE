@@ -9,7 +9,7 @@ from warden.suite import SuiteRun
 
 from judge import Judge
 
-GREEN = SuiteRun(ran=True, passed=10)
+GREEN = SuiteRun(ran=True, passed=10, exit_code=0)
 HELD = ({"scenario": "a", "severity": "high", "status": "held"},)
 ASSAY = {"key_proven": True, "failure_modes": 5, "caught": 3, "floor": 1}
 BASE = {"path": None, "suppressed": 0}
@@ -192,10 +192,19 @@ def test_a_non_numeric_exit_code_is_insufficient():
 
 
 def test_text_only_counts_are_called_text_derived_in_the_reason():
-    v = _d()
-    assert v.decision == "ACCEPT" and any("derived from printed text" in r for r in v.reasons)
+    v = _d(suite_after=SuiteRun(ran=True, passed=10))
+    assert v.decision == "INSUFFICIENT" and any("derived from printed text" in r for r in v.reasons)
     v = _d(suite_after=_run(text_only=True))
-    assert any("text-only" in r for r in v.reasons)
+    assert v.decision == "INSUFFICIENT" and any("text-only" in r for r in v.reasons)
+
+
+def test_text_only_starting_counts_also_block_a_plain_accept():
+    assert _d(suite_before=SuiteRun(ran=True, passed=10)).decision == "INSUFFICIENT"
+
+
+def test_text_only_counts_never_give_a_plain_accept():
+    for kw in ({"suite_after": SuiteRun(ran=True, passed=10)}, {"suite_before": SuiteRun(ran=True, passed=10)}):
+        assert _d(**kw).decision != "ACCEPT"
 
 
 def test_an_exit_code_of_zero_removes_the_text_derived_note():
