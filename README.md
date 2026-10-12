@@ -6,7 +6,7 @@ The third party that decides. It reads the evidence of a whole run and says ACCE
 
 One of seven repositories in a stack that improves code under human control. Judge has one job: given the evidence a run produced, decide whether the run is acceptable, and say why. [Warden](https://github.com/wking53214/Warden) runs the loop and is the only one that writes files. When the loop is done, Warden hands Judge the evidence and does what the verdict says. Warden cannot say ACCEPT on its own.
 
-Version `0.3.0`. Python 3.11 or newer. It depends on Warden for the shapes of the evidence and the verdict, and on nothing else. It is pinned to Warden tag `v0.9.0` (`882b2be`); see "Testing against the pin" below.
+Version `0.3.0`. Python 3.11 or newer. It depends on Warden for the shapes of the evidence and the verdict, and on nothing else. It is pinned to Warden tag `v0.10.0` (`f9bd3de`); see "Testing against the pin" below.
 
 ## WHAT IT DOES NOT OWN
 
@@ -52,7 +52,7 @@ Judge is a different seat from SWIZZLE on purpose. SWIZZLE reports whether an in
 ## Install
 
 ```bash
-pip install "git+https://github.com/wking53214/Warden.git@v0.9.0"
+pip install "git+https://github.com/wking53214/Warden.git@v0.10.0"
 pip install git+https://github.com/wking53214/Judge.git
 ```
 
@@ -95,8 +95,8 @@ Warden calls `Judge.decide` once, after the last cycle and after the finisher. O
 
 Judge's tests import Warden from whatever is on the import path. Checked on 2026-10-12:
 
-- Against Warden `main`: all 288 pass on CPython 3.13.
-- Against Warden `v0.9.0` (the pin, which CI installs): 287 pass and one fails, `tests/test_in_the_loop.py::test_attacks_that_never_ran_leave_the_run_unjudged`. The test expects a held result (`held_digest`), which Warden added after `v0.9.0`. Moving the pin to a newer Warden tag, or changing this test, is a maintainer decision. It has not been made here.
+- Against Warden `v0.10.0` (the pin, which CI installs): all 288 pass on CPython 3.13. Checked 2026-10-12.
+- Against Warden `v0.9.0` (the old pin): 287 pass and one fails, `tests/test_in_the_loop.py::test_attacks_that_never_ran_leave_the_run_unjudged`. That test expects a held result (`held_digest`), which `v0.9.0` does not have.
 
 ## WHAT IS BEAUTIFUL
 
