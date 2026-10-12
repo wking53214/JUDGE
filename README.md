@@ -22,7 +22,7 @@ Version `0.3.0`. Python 3.11 or newer. It depends on Warden for the shapes of th
 Warden loop ends  ->  Evidence (suite, Ghost, SWIZZLE, what changed)  ->  Judge.decide  ->  Verdict
                                                                                               |
                                           ACCEPT: stands.  REJECT: Warden puts the whole tree back.
-                                          INSUFFICIENT: changes stand, flagged as unjudged.
+                                          INSUFFICIENT: Warden puts the tree back and holds the result (ACCEPT_UNVERIFIED) until a person approves that exact result.
 ```
 
 The rules are written at the top of `judge/seat.py`, so a person can read why a run was turned away. The governing rule is **unknown is not approved**: only values the Judge recognizes count as good. Text is trimmed and lowercased before it is compared. Harm is found first and outranks missing evidence. The checks for unreadable evidence come before everything else.
@@ -86,7 +86,7 @@ Warden calls `Judge.decide` once, after the last cycle and after the finisher. O
 ## WHAT WORKS
 
 - Each rule above, one at a time, on hand-made evidence. **VERIFIED** by `tests/test_judge.py`.
-- Seated in the real Warden loop: a clean run is accepted, a run with a violated SWIZZLE attack is turned away and the tree is put back, a run whose attacks never ran stays unjudged. **VERIFIED** by `tests/test_in_the_loop.py`.
+- Seated in the real Warden loop: a clean run is accepted, a run with a violated SWIZZLE attack is turned away and the tree is put back, a run whose attacks never ran is unjudged, so Warden puts it back and holds it until a person approves it. **VERIFIED** by `tests/test_in_the_loop.py`.
 - It imports only `warden.roles`, never measures, never writes. **VERIFIED** by `tests/test_independence.py`.
 
 183 tests exist in this tree (28 older ones and 155 in `tests/test_strict_evidence.py`, which reproduces the red-team cases), and all 183 passed on CPython 3.13 on 2026-10-09.

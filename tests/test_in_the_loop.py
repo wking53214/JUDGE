@@ -92,7 +92,8 @@ def test_attacks_that_never_ran_leave_the_run_unjudged(tmp_path, stack):
     stack["attacks"] = None
     result = _run(_repo(tmp_path))
     assert result.decision == "ACCEPT_UNVERIFIED" and result.verdict.decision == "INSUFFICIENT"
-    assert (tmp_path / "NOTE.md").read_text(encoding="utf-8") == "new\n"
+    assert result.held_digest
+    assert (tmp_path / "NOTE.md").read_text(encoding="utf-8") == "old\n"
 
 
 def test_without_a_baseline_report_the_real_warden_run_is_unjudged(tmp_path, stack):
