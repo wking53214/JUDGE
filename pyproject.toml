@@ -21,9 +21,9 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Quality Assurance",
 ]
-# Pinned to a Warden tag (v0.10.1), not a branch, so a change on Warden main cannot silently break this seat.
+# Pinned to a Warden tag (v0.11.0), not a branch, so a change on Warden main cannot silently break this seat.
 # To bump: see "Bumping the Warden pin" in README.md.
-dependencies = ["warden @ git+https://github.com/wking53214/Warden.git@v0.10.1"]
+dependencies = ["warden @ git+https://github.com/wking53214/Warden.git@v0.11.0"]
 
 [project.urls]
 Homepage = "https://github.com/wking53214/Judge"
