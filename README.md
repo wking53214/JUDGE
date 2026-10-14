@@ -6,7 +6,7 @@ The third party that decides. It reads the evidence of a whole run and says ACCE
 
 One of seven repositories in a stack that improves code under human control. Judge has one job: given the evidence a run produced, decide whether the run is acceptable, and say why. [Warden](https://github.com/wking53214/Warden) runs the loop and is the only one that writes files. When the loop is done, Warden hands Judge the evidence and does what the verdict says. Warden cannot say ACCEPT on its own.
 
-Version `0.3.0`. Python 3.11 or newer. It depends on Warden for the shapes of the evidence and the verdict, and on nothing else. It is pinned to Warden tag `v0.10.1` (`476d6a2`); see "Testing against the pin" below.
+Version `0.3.0`. Python 3.11 or newer. It depends on Warden for the shapes of the evidence and the verdict, and on nothing else. It is pinned to Warden tag `v0.11.0`; see "Testing against the pin" below.
 
 ## WHAT IT DOES NOT OWN
 
@@ -52,7 +52,7 @@ Judge is a different seat from SWIZZLE on purpose. SWIZZLE reports whether an in
 ## Install
 
 ```bash
-pip install "git+https://github.com/wking53214/Warden.git@v0.10.1"
+pip install "git+https://github.com/wking53214/Warden.git@v0.11.0"
 pip install git+https://github.com/wking53214/Judge.git
 ```
 
@@ -87,15 +87,16 @@ Warden calls `Judge.decide` once, after the last cycle and after the finisher. O
 
 - Each rule above, one at a time, on hand-made evidence. **VERIFIED** by `tests/test_judge.py`.
 - Seated in the real Warden loop: a clean run is accepted, a run with a violated SWIZZLE attack is turned away and the tree is put back, a run whose attacks never ran is unjudged, so Warden puts it back and holds it until a person approves it. **VERIFIED** by `tests/test_in_the_loop.py`.
+- Seated in the whole circuit with live Ghost, SWIZZLE (12 of 12 proofs, 26 of 26 governor attacks held), ASSAY (3 of 5 failure modes caught, floor 3), Drafter and Burnish, through `warden tagteam --stack`: the verdict was ACCEPT with every number in its reason, and the run exited 0. **VERIFIED** by hand on 2026-10-14 on a scratch repository; recorded in Warden's `docs/REGISTRY.json`.
 - It imports only `warden.roles`, never measures, never writes. **VERIFIED** by `tests/test_independence.py`.
 
 288 tests are collected in this tree: 155 in `tests/test_strict_evidence.py` (the red-team cases), 100 in `tests/test_red_team_round2.py`, 22 in `tests/test_judge.py`, 4 in `tests/test_in_the_loop.py`, 3 in `tests/test_independence.py`, 3 in `tests/test_contract.py` and 1 in `tests/test_warden_pin.py`. None are skipped or marked expected-to-fail.
 
 ### Testing against the pin
 
-Judge's tests import Warden from whatever is on the import path. Checked on 2026-10-12:
+Judge's tests import Warden from whatever is on the import path.
 
-- Against Warden `v0.10.1` (the pin, which CI installs): all 288 pass on CPython 3.13. Checked 2026-10-13.
+- Against Warden `v0.11.0` (the pin, which CI installs): all 288 pass on CPython 3.13. Checked 2026-10-14. The same is true of `v0.10.1`.
 - Against Warden `v0.9.0` (the old pin): 287 pass and one fails, `tests/test_in_the_loop.py::test_attacks_that_never_ran_leave_the_run_unjudged`. That test expects a held result (`held_digest`), which `v0.9.0` does not have.
 
 ## WHAT IS BEAUTIFUL
@@ -113,7 +114,7 @@ The tests named above, against hand-built evidence and against the real Warden w
 ## WHAT IS NOT PROVEN
 
 - That the rules are the right ones. They are a first draft written to match the failures found so far.
-- A recorded run against a real repository with live Ghost and SWIZZLE.
+- A recorded run against a real repository. The recorded circuit run used a scratch repository.
 
 ## WHAT DOES NOT WORK
 
@@ -131,7 +132,7 @@ None known beyond the above.
 
 ## WHAT REMAINS OUTSTANDING
 
-A recorded live run. A way for a person to override a verdict with a written reason.
+A recorded run on a real repository. A way for a person to override a verdict with a written reason.
 
 ## CLAIMS VS REALITY
 
