@@ -87,6 +87,7 @@ Warden calls `Judge.decide` once, after the last cycle and after the finisher. O
 
 - Each rule above, one at a time, on hand-made evidence. **VERIFIED** by `tests/test_judge.py`.
 - Seated in the real Warden loop: a clean run is accepted, a run with a violated SWIZZLE attack is turned away and the tree is put back, a run whose attacks never ran is unjudged, so Warden puts it back and holds it until a person approves it. **VERIFIED** by `tests/test_in_the_loop.py`.
+- Seated in the whole circuit with live Ghost, SWIZZLE (12 of 12 proofs, 26 of 26 governor attacks held), ASSAY (3 of 5 failure modes caught, floor 3), Drafter and Burnish, through `warden tagteam --stack`: the verdict was ACCEPT with every number in its reason, and the run exited 0. **VERIFIED** by hand on 2026-10-14 on a scratch repository; recorded in Warden's `docs/REGISTRY.json`.
 - It imports only `warden.roles`, never measures, never writes. **VERIFIED** by `tests/test_independence.py`.
 
 288 tests are collected in this tree: 155 in `tests/test_strict_evidence.py` (the red-team cases), 100 in `tests/test_red_team_round2.py`, 22 in `tests/test_judge.py`, 4 in `tests/test_in_the_loop.py`, 3 in `tests/test_independence.py`, 3 in `tests/test_contract.py` and 1 in `tests/test_warden_pin.py`. None are skipped or marked expected-to-fail.
@@ -113,7 +114,7 @@ The tests named above, against hand-built evidence and against the real Warden w
 ## WHAT IS NOT PROVEN
 
 - That the rules are the right ones. They are a first draft written to match the failures found so far.
-- A recorded run against a real repository with live Ghost and SWIZZLE.
+- A recorded run against a real repository. The recorded circuit run used a scratch repository.
 
 ## WHAT DOES NOT WORK
 
@@ -131,7 +132,7 @@ None known beyond the above.
 
 ## WHAT REMAINS OUTSTANDING
 
-A recorded live run. A way for a person to override a verdict with a written reason.
+A recorded run on a real repository. A way for a person to override a verdict with a written reason.
 
 ## CLAIMS VS REALITY
 
