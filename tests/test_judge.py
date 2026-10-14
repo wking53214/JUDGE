@@ -90,6 +90,13 @@ def test_code_under_a_documentation_grant_is_rejected():
     assert _decide(changed=(("pkg/a.py", "write"),), scope="code").decision == "ACCEPT"
 
 
+@pytest.mark.parametrize("path", ["specimens/pairs/x.py", "tests/fixtures/y.json", "golden/z.txt", "corpus/w.py",
+                                  "pkg/testdata/v.py", "__snapshots__/u.snap"])
+def test_a_fixture_or_specimen_is_judging_material_even_under_a_code_grant(path):
+    v = _decide(changed=((path, "write"),), scope="code")
+    assert v.decision == "REJECT" and any("tests or test settings were changed" in r for r in v.reasons), v.reasons
+
+
 def test_reasons_are_always_given():
     for kw in ({}, {"attacks": None}, {"swizzle_proofs": False}):
         assert _decide(**kw).reasons

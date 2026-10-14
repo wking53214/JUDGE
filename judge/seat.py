@@ -62,7 +62,12 @@ NAME = "judge 0.3"
 _PROSE = (".md", ".rst", ".txt")
 _TEST_DIRS = {"tests", "test", "testing", "__tests__"}
 #: Directories whose contents decide how a run is judged or built: tests, CI, hooks, dependency lists.
-_JUDGING_DIRS = _TEST_DIRS | {".github", ".circleci", ".gitlab", ".buildkite", ".husky", ".githooks",
+#: Directories that hold what tests compare against: fixtures, specimens, golden files, snapshots, a corpus.
+#: A file there is an answer, not code under improvement; even a whitespace change breaks a recorded hash
+#: or a deliberately degraded specimen. Found when the circuit tidied ASSAY's own specimens.
+_FIXTURE_DIRS = {"fixtures", "fixture", "specimens", "specimen", "testdata", "test_data", "golden", "snapshots",
+                 "__snapshots__", "corpus"}
+_JUDGING_DIRS = _TEST_DIRS | _FIXTURE_DIRS | {".github", ".circleci", ".gitlab", ".buildkite", ".husky", ".githooks",
                                ".git-hooks", "githooks", "hooks", "requirements"}
 _JUDGING_NAMES = {
     "conftest.py", "pyproject.toml", "tox.ini", "setup.cfg", "setup.py", "noxfile.py", ".coveragerc",
