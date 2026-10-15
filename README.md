@@ -52,7 +52,7 @@ Judge is a different seat from SWIZZLE on purpose. SWIZZLE reports whether an in
 ## Install
 
 ```bash
-pip install "git+https://github.com/wking53214/Warden.git@v0.11.3"
+pip install "git+https://github.com/wking53214/Warden.git@v0.11.4"
 pip install git+https://github.com/wking53214/Judge.git
 ```
 

@@ -55,7 +55,7 @@ from collections import Counter
 from collections.abc import Mapping
 from pathlib import Path
 
-from warden.roles import Evidence, Verdict
+from cns.seat import Evidence, Verdict
 
 NAME = "judge 0.3"
 
