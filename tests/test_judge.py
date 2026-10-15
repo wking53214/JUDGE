@@ -4,8 +4,8 @@ from dataclasses import replace
 
 import pytest
 
-from warden.roles import Evidence
-from warden.suite import SuiteRun
+from cns.seat import Evidence
+from cns.suite import SuiteRun
 
 from judge import Judge
 
