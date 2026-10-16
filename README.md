@@ -79,11 +79,11 @@ warden tagteam PATH --drafter drafter.seat:Drafter --finisher burnish.finisher:B
 
 Without `--judge`, Warden can only end a run as `ACCEPT_UNVERIFIED`.
 
-### As a CNS gate (optional)
+### As a CNS gate
 
-`judge.cns_connector` lets anything that speaks CNS's gate contract (`cns.gate`) use the Judge's verdict. It is
-optional: the Judge imports nothing from CNS unless that module is used, and `pip install "judge[cns] @ git+..."`
-adds the pinned CNS.
+The Judge already reads and returns CNS's shared rows (`cns.seat`). `judge.cns_connector` adds the other
+direction: anything that speaks CNS's gate contract (`cns.gate`) can use the Judge's verdict. The `judge` package
+does not import it; import the module to use it.
 
 ```python
 from judge.cns_connector import JudgeGate
@@ -108,7 +108,7 @@ Warden calls `Judge.decide` once, after the last cycle and after the finisher. O
 - Seated in the whole circuit with live Ghost, SWIZZLE (12 of 12 proofs, 26 of 26 governor attacks held), ASSAY (3 of 5 failure modes caught, floor 3), Drafter and Burnish, through `warden tagteam --stack`: the verdict was ACCEPT with every number in its reason, and the run exited 0. **VERIFIED** by hand on 2026-10-14 on a scratch repository; recorded in Warden's `docs/REGISTRY.json`.
 - It imports only `warden.roles`, never measures, never writes. **VERIFIED** by `tests/test_independence.py`.
 
-322 tests are collected in this tree: 155 in `tests/test_strict_evidence.py` (the red-team cases), 100 in `tests/test_red_team_round2.py`, 28 in `tests/test_judge.py`, 21 in `tests/test_cns_connector.py`, 7 in `tests/test_cns_independence.py`, 4 in `tests/test_in_the_loop.py`, 3 in `tests/test_independence.py`, 3 in `tests/test_contract.py` and 1 in `tests/test_warden_pin.py`. None are marked expected-to-fail. The one skip is `tests/test_cns_connector.py` as a whole, when the `cns` extra is not installed; CI installs it, so there it runs. Without the extra, 301 pass and that file is reported skipped.
+316 tests are collected in this tree: 155 in `tests/test_strict_evidence.py` (the red-team cases), 100 in `tests/test_red_team_round2.py`, 28 in `tests/test_judge.py`, 21 in `tests/test_cns_connector.py`, 4 in `tests/test_in_the_loop.py`, 3 in `tests/test_independence.py`, 3 in `tests/test_contract.py`, 1 in `tests/test_warden_pin.py` and 1 in `tests/test_cns_pin.py`. None are skipped or marked expected-to-fail.
 
 ### Testing against the pin
 

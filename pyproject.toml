@@ -31,9 +31,6 @@ Homepage = "https://github.com/wking53214/Judge"
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
-# Optional: lets the Judge's verdict be expressed as a CNS gate result (judge.cns_connector). The Judge
-# imports nothing from CNS unless that module is used. Pinned to the commit of CNS v1.7.0.
-cns = ["cns @ git+https://github.com/wking53214/cns.git@84ee0f491b06a2b746c374e76b14d1952addebd7"]
 
 [tool.setuptools]
 packages = ["judge"]

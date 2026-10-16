@@ -1,11 +1,9 @@
-"""Optional connector to CNS (``cns.gate``).
+"""The Judge as a CNS gate (``cns.gate``).
 
-The Judge is independent. It has no CNS dependency, imports nothing from CNS
-when it loads, and its whole suite passes with CNS absent. This module is the
-one place that knows CNS exists, and it asks for CNS only when one of its
-functions is called. Without CNS installed those calls raise
-:class:`CnsNotInstalled` with the install command; nothing else in the Judge
-is affected.
+The Judge already reads its evidence and returns its verdict as CNS rows
+(``cns.seat``). This module adds the other direction: the Judge's decision, offered
+through CNS's shared gate contract so any consumer that speaks it can use the Judge.
+Nothing here is imported by ``judge`` itself; import this module to use it.
 
 What connecting means
 ---------------------
@@ -48,59 +46,28 @@ cannot be described unambiguously (a wrong type, NaN, a cycle, a set) is a
 Because the Judge has only the outcome end, ``cns_chain(...).complete()`` is
 ``False`` by design. A consumer that wants a complete chain supplies the
 ``alpha`` end from a repository that has one.
-
-Install with the extra: ``pip install 'judge[cns]'``.
 """
 
 from __future__ import annotations
 
 import dataclasses
-import importlib
 from collections.abc import Mapping
-from types import ModuleType
 from typing import Any
+
+from cns.gate import GateChain, GateOutcome, GatePosition, GateResult, subject_digest
 
 from .seat import Judge
 
 __all__ = [
-    "CnsNotInstalled",
     "JudgeGate",
-    "cns_available",
     "cns_chain",
 ]
-
-INSTALL_HINT = "pip install 'judge[cns]'"
 
 #: What ``subject`` is set to when the caller does not name the judged evidence.
 DEFAULT_SUBJECT = "run-evidence"
 
 #: Deepest nesting the digest will follow. Evidence is a few levels deep; this stops a cycle.
 _MAX_DEPTH = 32
-
-
-class CnsNotInstalled(ImportError):
-    """Raised by this module's functions when ``cns`` cannot be imported."""
-
-
-def _cns_gate() -> ModuleType:
-    """Import ``cns.gate`` on demand, or say exactly what is missing."""
-    try:
-        return importlib.import_module("cns.gate")
-    except ImportError as exc:
-        raise CnsNotInstalled(
-            "judge.cns_connector needs the CNS package (cns.gate), which is not "
-            f"installed. Install it with: {INSTALL_HINT}. The Judge itself works "
-            "without it."
-        ) from exc
-
-
-def cns_available() -> bool:
-    """Whether the CNS gate contract can be imported in this environment."""
-    try:
-        _cns_gate()
-    except CnsNotInstalled:
-        return False
-    return True
 
 
 def _plain(value: object, depth: int = 0) -> object:
@@ -135,7 +102,6 @@ class JudgeGate:
     """
 
     def __init__(self, judge: Judge | None = None, *, subject: str = DEFAULT_SUBJECT) -> None:
-        _cns_gate()  # fail here, at construction, not on first use
         self._judge = judge if judge is not None else Judge()
         self._subject = subject
 
@@ -145,13 +111,12 @@ class JudgeGate:
 
     @property
     def position(self) -> Any:
-        return _cns_gate().GatePosition.OMEGA
+        return GatePosition.OMEGA
 
     def _result(self, outcome: Any, reason: str, digest: str = "") -> Any:
-        gate = _cns_gate()
-        return gate.GateResult(
+        return GateResult(
             gate=self.name,
-            position=gate.GatePosition.OMEGA,
+            position=GatePosition.OMEGA,
             outcome=outcome,
             reason=reason,
             subject=self._subject,
@@ -159,27 +124,26 @@ class JudgeGate:
         )
 
     def check(self, candidate: object) -> Any:
-        gate = _cns_gate()
         try:
             content = _plain(candidate)
             if not isinstance(content, dict):
                 raise TypeError(f"{type(candidate).__name__} is not run evidence")
-            digest = gate.subject_digest(content)
+            digest = subject_digest(content)
         except (TypeError, ValueError, RecursionError) as exc:
             return self._result(
-                gate.GateOutcome.TERMINAL_BREACH,
+                GateOutcome.TERMINAL_BREACH,
                 f"the evidence cannot be bound to a verdict, so nothing is approved ({exc})",
             )
         verdict = self._judge.decide(candidate)
         outcomes = {
-            "ACCEPT": gate.GateOutcome.PASS,
-            "REJECT": gate.GateOutcome.TERMINAL_BREACH,
-            "INSUFFICIENT": gate.GateOutcome.RETRY,
+            "ACCEPT": GateOutcome.PASS,
+            "REJECT": GateOutcome.TERMINAL_BREACH,
+            "INSUFFICIENT": GateOutcome.RETRY,
         }
         decision = verdict.decision
         if not isinstance(decision, str) or decision not in outcomes:
             return self._result(
-                gate.GateOutcome.TERMINAL_BREACH,
+                GateOutcome.TERMINAL_BREACH,
                 f"the Judge answered {decision!r}, which this connector does not recognise; "
                 "an unknown answer is never read as permission",
                 digest,
@@ -192,4 +156,4 @@ def cns_chain(judge: Judge | None = None, *, subject: str = DEFAULT_SUBJECT) -> 
 
     ``alpha`` stays empty: the Judge has no precondition end.
     """
-    return _cns_gate().GateChain(omega=(JudgeGate(judge, subject=subject),))
+    return GateChain(omega=(JudgeGate(judge, subject=subject),))

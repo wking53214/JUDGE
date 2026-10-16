@@ -1,16 +1,13 @@
-"""The Judge as a CNS gate. These need the cns extra; CI installs it, and they skip where it is absent."""
+"""The Judge as a CNS gate."""
 
+import cns.gate as gate
 import pytest
+from test_judge import _evidence
+from warden.roles import Verdict
+from warden.suite import SuiteRun
 
-gate = pytest.importorskip("cns.gate")
-
-from test_judge import _evidence  # noqa: E402
-
-from warden.roles import Verdict  # noqa: E402
-from warden.suite import SuiteRun  # noqa: E402
-
-from judge import Judge  # noqa: E402
-from judge.cns_connector import DEFAULT_SUBJECT, JudgeGate, cns_chain  # noqa: E402
+from judge import Judge
+from judge.cns_connector import DEFAULT_SUBJECT, JudgeGate, cns_chain
 
 RED = SuiteRun(ran=True, passed=9, failed=1)
 
