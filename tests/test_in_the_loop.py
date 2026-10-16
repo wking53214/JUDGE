@@ -21,7 +21,8 @@ class Rewrites:
         self.done = False
 
     def propose(self, target, observed, baseline):
-        from warden.models import FileEdit, Transformation, TransformationStatus
+        from cns.seat import FileEdit
+        from warden.models import Transformation, TransformationStatus
         if self.done:
             return None
         self.done = True
