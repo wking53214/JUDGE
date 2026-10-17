@@ -52,7 +52,7 @@ Judge is a different seat from SWIZZLE on purpose. SWIZZLE reports whether an in
 ## Install
 
 ```bash
-pip install "git+https://github.com/wking53214/Warden.git@v0.11.4"
+pip install "git+https://github.com/wking53214/Warden.git@df16da8698e6c38906c6573eedefda3dcae780a4"
 pip install git+https://github.com/wking53214/Judge.git
 ```
 
@@ -79,6 +79,24 @@ warden tagteam PATH --drafter drafter.seat:Drafter --finisher burnish.finisher:B
 
 Without `--judge`, Warden can only end a run as `ACCEPT_UNVERIFIED`.
 
+### As a CNS gate
+
+The Judge already reads and returns CNS's shared rows (`cns.seat`). `judge.cns_connector` adds the other
+direction: anything that speaks CNS's gate contract (`cns.gate`) can use the Judge's verdict. The `judge` package
+does not import it; import the module to use it.
+
+```python
+from judge.cns_connector import JudgeGate
+result = JudgeGate().check(evidence)   # a cns.gate.GateResult at the OMEGA end
+```
+
+ACCEPT is `PASS`, REJECT is `TERMINAL_BREACH`, INSUFFICIENT is `RETRY` (bring the missing evidence and ask
+again), and any other answer is `TERMINAL_BREACH`. The result is bound to a digest of the evidence it judged,
+including attributes the Judge reads that are not declared fields, so it cannot be moved onto other evidence.
+Evidence that cannot be described unambiguously is a `TERMINAL_BREACH`. The Judge has only the outcome end, so
+`cns_chain().complete()` is `False` until a consumer adds an `alpha` gate from another repository. Nothing about
+how the Judge decides changes, and Warden does not use this module.
+
 ## LIFECYCLE / EXECUTION MODEL
 
 Warden calls `Judge.decide` once, after the last cycle and after the finisher. On REJECT, Warden restores every file to its state before the run.
@@ -90,7 +108,7 @@ Warden calls `Judge.decide` once, after the last cycle and after the finisher. O
 - Seated in the whole circuit with live Ghost, SWIZZLE (12 of 12 proofs, 26 of 26 governor attacks held), ASSAY (3 of 5 failure modes caught, floor 3), Drafter and Burnish, through `warden tagteam --stack`: the verdict was ACCEPT with every number in its reason, and the run exited 0. **VERIFIED** by hand on 2026-10-14 on a scratch repository; recorded in Warden's `docs/REGISTRY.json`.
 - It imports only `warden.roles`, never measures, never writes. **VERIFIED** by `tests/test_independence.py`.
 
-288 tests are collected in this tree: 155 in `tests/test_strict_evidence.py` (the red-team cases), 100 in `tests/test_red_team_round2.py`, 22 in `tests/test_judge.py`, 4 in `tests/test_in_the_loop.py`, 3 in `tests/test_independence.py`, 3 in `tests/test_contract.py` and 1 in `tests/test_warden_pin.py`. None are skipped or marked expected-to-fail.
+316 tests are collected in this tree: 155 in `tests/test_strict_evidence.py` (the red-team cases), 100 in `tests/test_red_team_round2.py`, 28 in `tests/test_judge.py`, 21 in `tests/test_cns_connector.py`, 4 in `tests/test_in_the_loop.py`, 3 in `tests/test_independence.py`, 3 in `tests/test_contract.py`, 1 in `tests/test_warden_pin.py` and 1 in `tests/test_cns_pin.py`. None are skipped or marked expected-to-fail.
 
 ### Testing against the pin
 
