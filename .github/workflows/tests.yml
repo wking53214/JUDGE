@@ -46,12 +46,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: wking53214/Warden
-          ref: 2cf0eeccf839f88d624deb133fe1cb4b16a99009
+          ref: ec551d8e10f82b6e3e681593a97011ae517d360b
           path: _warden
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[test]"
-      # --no-deps: Judge's own pin supplies CNS, so one CNS commit is installed for both.
-      - run: pip install --no-deps ./_warden
+      # Warden pins CNS by the same full commit as Judge, so a plain install resolves to one CNS.
+      - run: pip install ./_warden
       - run: pytest -q -rs

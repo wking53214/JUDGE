@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "judge"
-version = "0.4.0"
+version = "0.4.1"
 description = "The third party that decides. Reads the evidence of a whole run and says ACCEPT, REJECT or INSUFFICIENT. Measures nothing, writes nothing."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -41,7 +41,7 @@ judge = "judge.cli:main"
 # To bump: see "Bumping the Warden pin" in README.md. CI checks out the same commit (.github/workflows/tests.yml);
 # tests/test_warden_pin.py fails if the two disagree.
 warden = [
-    "warden @ git+https://github.com/wking53214/Warden.git@2cf0eeccf839f88d624deb133fe1cb4b16a99009",  # Warden 0.12.0 (untagged commit)
+    "warden @ git+https://github.com/wking53214/Warden.git@ec551d8e10f82b6e3e681593a97011ae517d360b",  # Warden 0.13.1 (untagged commit)
 ]
 test = ["pytest>=8"]
 lint = ["ruff>=0.6", "mypy>=1.10"]

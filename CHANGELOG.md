@@ -6,6 +6,14 @@ history; no release tags exist yet.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-17
+
+### Changed
+- The Warden test-time pin moved from `2cf0eec` (Warden 0.12.0) to `ec551d8e10f82b6e3e681593a97011ae517d360b`
+  (Warden 0.13.1, untagged), in `pyproject.toml` and in the `ref:` of the CI Warden job.
+- Warden now pins CNS by the same full commit as Judge, so `pip install -e ".[dev]"` resolves without conflict
+  (the earlier `ResolutionImpossible` is gone). The `--no-deps` workaround is removed from the CI Warden job.
+
 ## [0.4.0] - 2026-10-17
 
 ### Added
