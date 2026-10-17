@@ -2,9 +2,33 @@
 
 All notable changes to Judge are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/). Versions 0.1.0 to 0.3.0 are reconstructed from the git
-history; no release tags exist yet.
+history. An older tag `v0.10.0` (and a GitHub release of that name) exists that does not correspond to any version here (it points at the 0.3.0
+code); releases of the current version are not tagged yet, and tagging is the owner's decision.
 
 ## [Unreleased]
+
+## [0.4.2] - 2026-10-17
+
+### Fixed
+- `judge decide` on input nested deeply enough to exhaust the JSON decoder (about 100,000 open brackets) raised an
+  uncaught `RecursionError`: a traceback and exit 1. It is now a usage error, exit 2, like other undecodable input.
+- `cycles` and `declined` were required by the command line but never read by the decision, so evidence that
+  contradicted itself (`cycles` empty beside a listed change, an outcome such as `REVERTED`, declined removals with no
+  declined cycle) was still accepted. The decision now reads both. It names a contradiction and returns INSUFFICIENT
+  for: a cycle outcome it does not know, two cycles with one number, more `APPLIED` cycles than listed edits, listed
+  edits that no `APPLIED` cycle explains (unless a converged loop, ending on `NOTHING_TO_PROPOSE`, could have had a
+  finishing change, whose edits belong to no cycle), and `declined` entries with no `DECLINED` cycle. A wrong type in
+  either field is unreadable evidence. Declined entries beside an applied change are normal and still accepted.
+  Real-loop tests (finish-only, declined plus applied, applied plus finish) and the saved record of a real run
+  show Warden's own evidence is unaffected.
+- The README and this file said no release tags exist; an older tag `v0.10.0` does, and the text now says so.
+
+### Changed
+- Three existing tests built evidence with an `APPLIED` cycle and no listed edit, which is the contradiction now caught;
+  their evidence carries a `NOTHING_TO_PROPOSE` cycle instead and their assertions are unchanged.
+- Every GitHub Action in the workflow is pinned to a full commit (`actions/checkout` v4.2.2, `actions/setup-python`
+  v5.6.0), guarded by `tests/test_ci_pins.py`. The `lint` extra pins ruff (0.17.1) and mypy (2.4.0) to exact versions.
+  The Warden test-time pin is unchanged.
 
 ## [0.4.1] - 2026-10-17
 
