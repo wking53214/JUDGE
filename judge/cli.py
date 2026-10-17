@@ -140,6 +140,9 @@ def _run_decide(source: str) -> int:
     except ValueError as exc:
         print(f"judge: {source!r} is not valid JSON: {exc}", file=sys.stderr)
         return EXIT_USAGE
+    except (RecursionError, MemoryError) as exc:  # input nested or large enough to exhaust the decoder: not usable JSON
+        print(f"judge: {source!r} cannot be decoded as JSON ({type(exc).__name__}): too deeply nested or too large", file=sys.stderr)
+        return EXIT_USAGE
     verdict = _decide(data)
     print(json.dumps({"decision": str(verdict.decision), "reasons": [str(r) for r in verdict.reasons], "judge": str(verdict.judge)},
                      indent=2))

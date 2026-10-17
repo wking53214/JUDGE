@@ -119,6 +119,21 @@ def test_text_that_is_not_json_is_a_usage_error(tmp_path, capsys):
     assert capsys.readouterr().out == ""
 
 
+def test_deeply_nested_input_is_a_usage_error_not_a_traceback(tmp_path, capsys):
+    path = tmp_path / "deep.json"
+    path.write_text("[" * 100_000, encoding="utf-8")
+    assert cli.main(["decide", str(path)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == "" and "Traceback" not in captured.err and "nested" in captured.err
+
+
+def test_deeply_nested_input_through_the_real_command_exits_2(tmp_path):
+    path = tmp_path / "deep.json"
+    path.write_text("[" * 100_000 + "]" * 100_000, encoding="utf-8")
+    done = subprocess.run([sys.executable, "-m", "judge", "decide", str(path)], capture_output=True, text=True, timeout=60)
+    assert done.returncode == 2 and "Traceback" not in done.stderr and done.stdout == ""
+
+
 def test_bytes_that_are_not_text_are_a_usage_error(tmp_path):
     path = tmp_path / "x.json"
     path.write_bytes(b"\xff\xfe\x00\x80")
