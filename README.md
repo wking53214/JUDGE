@@ -6,7 +6,7 @@ The third party that decides. It reads the evidence of a whole run and says ACCE
 
 One of seven repositories in a stack that improves code under human control. Judge has one job: given the evidence a run produced, decide whether the run is acceptable, and say why. [Warden](https://github.com/wking53214/Warden) runs the loop and is the only one that writes files. When the loop is done, Warden hands Judge the evidence and does what the verdict says. Warden cannot say ACCEPT on its own.
 
-Version `0.3.0`. Python 3.11 or newer. It depends on Warden for the shapes of the evidence and the verdict, and on nothing else. It is pinned to Warden tag `v0.11.0`; see "Testing against the pin" below.
+Version `0.4.0` (see `CHANGELOG.md`). Python 3.11 or newer. Its one runtime dependency is [CNS](https://github.com/wking53214/CNS), which defines the shared rows the Judge reads and returns (`cns.seat`) and the gate contract of the optional connector (`cns.gate`); the exact commit is pinned in `pyproject.toml`. The Judge imports no Warden code. Warden is used only by the tests that seat the Judge in the real loop, as the test-time extra `warden`, pinned to a full commit in `pyproject.toml`; see "Testing against the pin" below.
 
 ## WHAT IT DOES NOT OWN
 
@@ -37,12 +37,14 @@ The rules are written at the top of `judge/seat.py`, so a person can read why a 
 | module | owns |
 |---|---|
 | `judge.seat` | the `Judge` class Warden calls, and its rules |
+| `judge.cli` | the `judge` command line: `judge decide` and `judge --version` |
+| `judge.cns_connector` | the Judge as a CNS gate (optional; nothing else imports it) |
 
 ## KEY INTERNAL CONCEPTS
 
 - **Unknown is not approved.** A measurement that did not run, or came back in a shape the Judge does not recognize, can never produce ACCEPT.
 - **Harm outranks missing evidence.** If the suite is red, the verdict is REJECT even when other checks are missing.
-- **Read-only.** Judge imports `warden.roles` and nothing else from the stack. It does not use `ast`, `subprocess` or `os`, and it calls nothing that writes a file. A test reads its source to prove it.
+- **Read-only.** Judge imports only the standard library, CNS's shared rows (`cns.seat`, `cns.suite`) and, in the connector, CNS's gate contract (`cns.gate`). It imports no Warden code and no other role of the stack. It does not use `ast`, `subprocess` or `os`, and it calls nothing that writes a file. A test holds every module to an allowlist of the imports it may make, so a new import fails until a person adds it on purpose.
 - **Reasons are always given.** Every verdict carries at least one sentence.
 
 ## IMPORTANT BOUNDARIES
@@ -52,24 +54,36 @@ Judge is a different seat from SWIZZLE on purpose. SWIZZLE reports whether an in
 ## Install
 
 ```bash
-pip install "git+https://github.com/wking53214/Warden.git@2cf0eeccf839f88d624deb133fe1cb4b16a99009"
 pip install git+https://github.com/wking53214/Judge.git
 ```
 
+That installs the Judge and its one runtime dependency, CNS. To run the whole test suite (including the tests that seat the Judge in the real Warden loop):
+
+```bash
+pip install -e ".[dev]"      # pytest, ruff, mypy and the pinned Warden
+pytest
+```
+
+Without Warden (`pip install -e ".[test]"`) the tests that need it are skipped with a stated reason (`pytest -rs`). CI runs both ways, and its Warden job sets `JUDGE_REQUIRE_WARDEN=1` so a missing Warden is a failure, not a skip.
+
 ### Bumping the Warden pin
 
-This package depends on one exact Warden commit (see `dependencies` in `pyproject.toml`), so a change on
-Warden's `main` cannot break it without anyone noticing. To move to a newer Warden:
+The tests depend on one exact Warden commit (extra `warden` in `pyproject.toml`), so a change on Warden's `main`
+cannot break them without anyone noticing. To move to a newer Warden:
 
-1. Pick the Warden commit (or `vX.Y.Z` tag) you want.
-2. Put it after the `@` in the `warden @ git+...` line of `pyproject.toml`.
-3. Run `pip install -e ".[dev]"` and `pytest`. The tests check that the pin is a tag or a full commit and that
-   this package's `requires_contract` matches the installed Warden's `CONTRACT`.
-4. Open a pull request. CI runs the same checks.
+1. Pick the Warden commit you want and copy its full 40-character SHA.
+2. Put it after the `@` in the `warden @ git+...` line of `pyproject.toml`, and update the Warden version in the comment on that line.
+3. Put the same SHA in the `ref:` of the Warden checkout in `.github/workflows/tests.yml`.
+4. Run `pip install -e ".[dev]"` and `pytest`. `tests/test_warden_pin.py` checks that the pin is a full commit, that CI checks out the same commit, and that the comment names the Warden version that is installed; `tests/test_contract.py` checks that `requires_contract` matches the installed Warden's `CONTRACT`.
+5. Open a pull request. CI runs the same checks.
+
+CNS is pinned the same way (a full commit, with its tag in a comment) in the `dependencies` line of `pyproject.toml`.
 
 ## Usage
 
-No command line of its own. Warden loads it:
+### With Warden
+
+Warden loads the Judge as a seat:
 
 ```bash
 warden tagteam PATH --drafter drafter.seat:Drafter --finisher burnish.finisher:Burnish \
@@ -78,6 +92,33 @@ warden tagteam PATH --drafter drafter.seat:Drafter --finisher burnish.finisher:B
 ```
 
 Without `--judge`, Warden can only end a run as `ACCEPT_UNVERIFIED`.
+
+### From the command line
+
+```bash
+judge --version
+judge decide EVIDENCE.json        # or "-" to read standard input
+python -m judge decide EVIDENCE.json
+```
+
+`judge decide` reads a JSON object with the fields of `cns.seat.Evidence`, the same input `Judge.decide` takes, and prints
+the decision as JSON: `{"decision": "ACCEPT" | "REJECT" | "INSUFFICIENT", "reasons": [...], "judge": "judge X.Y.Z"}`.
+`examples/accept.json` is a complete input that is accepted. Lists are JSON arrays; `null` means "not measured", which is never "fine".
+The fields are `target`, `scope`, `cycles`, `changed`, `judging_files_touched`, `suite_before`, `suite_after`, `ghost_before`,
+`ghost_after`, `declined`, `swizzle_proofs`, `attacks`, `unmeasured` (all required) and `notes`, `assay`,
+`ghost_baseline_before`, `ghost_baseline_after` (optional in the schema, but a missing `assay` or baseline is unknown and so never ACCEPT). A suite is an object with
+the fields of `cns.suite.SuiteRun` (`ran`, `passed`, `failed`, `errors`, `skipped`, `xfailed`, `xpassed`, `reason`, `exit_code`) and,
+if present, the flags the Judge reads (`forged`, `text_only`).
+
+| exit code | meaning |
+|---|---|
+| 0 | ACCEPT. The only approval. |
+| 1 | Anything else: REJECT, INSUFFICIENT, or an input that is not the evidence schema (reported as INSUFFICIENT). |
+| 2 | Usage error: bad arguments, a file that cannot be read, or text that is not JSON. Nothing is printed on standard output. |
+
+The command fails closed: any exception while building or judging the evidence yields INSUFFICIENT and exit 1, never 0.
+Logs go to standard error: `-v` shows each decision, `-vv` adds each reason. As a library, Judge logs to the `judge` logger
+(decision at INFO, reasons at DEBUG, unreadable evidence at WARNING) and installs no handler.
 
 ### As a CNS gate
 
@@ -106,16 +147,17 @@ Warden calls `Judge.decide` once, after the last cycle and after the finisher. O
 - Each rule above, one at a time, on hand-made evidence. **VERIFIED** by `tests/test_judge.py`.
 - Seated in the real Warden loop: a clean run is accepted, a run with a violated SWIZZLE attack is turned away and the tree is put back, a run whose attacks never ran is unjudged, so Warden puts it back and holds it until a person approves it. **VERIFIED** by `tests/test_in_the_loop.py`.
 - Seated in the whole circuit with live Ghost, SWIZZLE (12 of 12 proofs, 26 of 26 governor attacks held), ASSAY (3 of 5 failure modes caught, floor 3), Drafter and Burnish, through `warden tagteam --stack`: the verdict was ACCEPT with every number in its reason, and the run exited 0. **VERIFIED** by hand on 2026-10-14 on a scratch repository; recorded in Warden's `docs/REGISTRY.json`.
-- It imports only `warden.roles`, never measures, never writes. **VERIFIED** by `tests/test_independence.py`.
+- It imports only the standard library and CNS, never measures, never writes. **VERIFIED** by `tests/test_independence.py`, which fails on any import that is not on a per-module allowlist.
+- The `judge` command: exit codes, fail-closed behaviour and the version. **VERIFIED** by `tests/test_cli.py` and `tests/test_version.py`.
 
-316 tests are collected in this tree: 155 in `tests/test_strict_evidence.py` (the red-team cases), 100 in `tests/test_red_team_round2.py`, 28 in `tests/test_judge.py`, 21 in `tests/test_cns_connector.py`, 4 in `tests/test_in_the_loop.py`, 3 in `tests/test_independence.py`, 3 in `tests/test_contract.py`, 1 in `tests/test_warden_pin.py` and 1 in `tests/test_cns_pin.py`. None are skipped or marked expected-to-fail.
+The suite has no skipped, expected-to-fail or deselected tests when Warden is installed. The red-team cases are in `tests/test_strict_evidence.py` and `tests/test_red_team_round2.py`; count them with `pytest --collect-only -q`. This README states no test count on purpose, because a number written here drifts.
 
 ### Testing against the pin
 
-Judge's tests import Warden from whatever is on the import path.
-
-- Against Warden `v0.11.0` (the pin, which CI installs): all 288 pass on CPython 3.13. Checked 2026-10-14. The same is true of `v0.10.1`.
-- Against Warden `v0.9.0` (the old pin): 287 pass and one fails, `tests/test_in_the_loop.py::test_attacks_that_never_ran_leave_the_run_unjudged`. That test expects a held result (`held_digest`), which `v0.9.0` does not have.
+The Judge itself does not import Warden. Two test files do, because they seat the Judge in the real loop and check the contract
+(`tests/test_in_the_loop.py`, `tests/test_contract.py`). They run against the Warden commit pinned in the `warden` extra of
+`pyproject.toml`, which is the commit CI checks out; the pin names its Warden version in a comment. Reference the pin there rather
+than a version written here: this README does not repeat it, so it cannot go stale.
 
 ## WHAT IS BEAUTIFUL
 
@@ -154,11 +196,11 @@ A recorded run on a real repository. A way for a person to override a verdict wi
 
 ## CLAIMS VS REALITY
 
-The README says Judge never writes and never measures. The tests read its source and fail if it imports `ast`, `subprocess` or `os`, or calls anything that writes a file. The README does not say the rules are complete, because they are not.
+The README says Judge never writes and never measures. The tests read its source and fail if any module imports anything not on its allowlist (which excludes `ast`, `subprocess`, `os` and all Warden code), or calls anything that writes a file. The README does not say the rules are complete, because they are not.
 
 ## Status
 
-Experimental, version 0.3.0, maintained by one person.
+Experimental, maintained by one person. The version is the one at the top of this file and in `CHANGELOG.md`; no release tags exist yet.
 
 ## Support
 

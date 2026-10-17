@@ -2,16 +2,56 @@ name: tests
 on:
   push:
   pull_request:
+permissions:
+  contents: read
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[lint]"
+      - run: ruff check .
+      - run: mypy
+
+  # The Judge's runtime needs only CNS. This job installs no Warden, so it proves that, and the tests
+  # that need Warden are skipped here with a stated reason (-rs prints it). The warden job below runs them.
   pytest:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install -e ".[dev]"
-      - run: pytest -q
+      - run: pip install -e ".[test]"
+      - run: pytest -q -rs
+
+  # The whole suite against the Warden commit pinned in pyproject.toml (extra "warden"), so the real-loop and
+  # contract tests are never silently skipped: JUDGE_REQUIRE_WARDEN=1 turns a missing Warden into a failure.
+  # To bump: change the SHA below together with pyproject.toml (tests/test_warden_pin.py fails if they differ).
+  warden:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    env:
+      JUDGE_REQUIRE_WARDEN: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: wking53214/Warden
+          ref: 2cf0eeccf839f88d624deb133fe1cb4b16a99009
+          path: _warden
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[test]"
+      # --no-deps: Judge's own pin supplies CNS, so one CNS commit is installed for both.
+      - run: pip install --no-deps ./_warden
+      - run: pytest -q -rs

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "judge"
-version = "0.3.0"
+version = "0.4.0"
 description = "The third party that decides. Reads the evidence of a whole run and says ACCEPT, REJECT or INSUFFICIENT. Measures nothing, writes nothing."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -19,21 +19,54 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Quality Assurance",
 ]
-# Pinned to a full Warden commit (0.11.5), not a branch, so a change on Warden main cannot silently break this seat.
-# To bump: see "Bumping the Warden pin" in README.md.
-dependencies = ["warden @ git+https://github.com/wking53214/Warden.git@2cf0eeccf839f88d624deb133fe1cb4b16a99009",
-                "cns @ git+https://github.com/wking53214/CNS.git@v1.8.0"]
+# The runtime dependency is CNS, the shared rows (cns.seat) and gate contract (cns.gate).
+# It is pinned to a full commit, not a branch or a movable tag. The tag is in the comment.
+dependencies = [
+    "cns @ git+https://github.com/wking53214/CNS.git@5252ceebe98185f7be81212d988055ccf9884568",  # v1.8.0
+]
 
 [project.urls]
 Homepage = "https://github.com/wking53214/Judge"
 
+[project.scripts]
+judge = "judge.cli:main"
+
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+# Judge imports no Warden code at runtime. Warden is used only by the tests that seat the Judge in the
+# real loop (tests/test_in_the_loop.py, tests/test_contract.py), so it is a test-time extra, not a dependency.
+# The pin is a full Warden commit, so a change on Warden main cannot silently break the tests.
+# To bump: see "Bumping the Warden pin" in README.md. CI checks out the same commit (.github/workflows/tests.yml);
+# tests/test_warden_pin.py fails if the two disagree.
+warden = [
+    "warden @ git+https://github.com/wking53214/Warden.git@2cf0eeccf839f88d624deb133fe1cb4b16a99009",  # Warden 0.12.0 (untagged commit)
+]
+test = ["pytest>=8"]
+lint = ["ruff>=0.6", "mypy>=1.10"]
+dev = ["judge[test,warden,lint]"]
 
 [tool.setuptools]
 packages = ["judge"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["needs_warden: seats the Judge in the real Warden loop; skipped without Warden unless JUDGE_REQUIRE_WARDEN=1"]
+
+[tool.ruff]
+line-length = 140
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["judge"]
+strict_equality = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+no_implicit_optional = true
+check_untyped_defs = true

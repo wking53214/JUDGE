@@ -52,9 +52,10 @@ from __future__ import annotations
 
 import dataclasses
 from collections.abc import Mapping
-from typing import Any
+from typing import cast
 
 from cns.gate import GateChain, GateOutcome, GatePosition, GateResult, subject_digest
+from cns.seat import Evidence
 
 from .seat import Judge
 
@@ -105,25 +106,20 @@ class JudgeGate:
         self._judge = judge if judge is not None else Judge()
         self._subject = subject
 
-    @property
-    def name(self) -> str:
-        return "judge.verdict"
+    name: str = "judge.verdict"
+    position: GatePosition = GatePosition.OMEGA
 
-    @property
-    def position(self) -> Any:
-        return GatePosition.OMEGA
-
-    def _result(self, outcome: Any, reason: str, digest: str = "") -> Any:
+    def _result(self, outcome: GateOutcome, reason: str, digest: str = "") -> GateResult:
         return GateResult(
             gate=self.name,
-            position=GatePosition.OMEGA,
+            position=self.position,
             outcome=outcome,
             reason=reason,
             subject=self._subject,
             subject_digest=digest,
         )
 
-    def check(self, candidate: object) -> Any:
+    def check(self, candidate: object) -> GateResult:
         try:
             content = _plain(candidate)
             if not isinstance(content, dict):
@@ -134,7 +130,9 @@ class JudgeGate:
                 GateOutcome.TERMINAL_BREACH,
                 f"the evidence cannot be bound to a verdict, so nothing is approved ({exc})",
             )
-        verdict = self._judge.decide(candidate)
+        # The gate contract hands over any object. The Judge reads its input defensively and answers
+        # INSUFFICIENT for anything that is not readable evidence, so the cast changes no behaviour.
+        verdict = self._judge.decide(cast(Evidence, candidate))
         outcomes = {
             "ACCEPT": GateOutcome.PASS,
             "REJECT": GateOutcome.TERMINAL_BREACH,
@@ -151,7 +149,7 @@ class JudgeGate:
         return self._result(outcomes[decision], "; ".join(verdict.reasons), digest)
 
 
-def cns_chain(judge: Judge | None = None, *, subject: str = DEFAULT_SUBJECT) -> Any:
+def cns_chain(judge: Judge | None = None, *, subject: str = DEFAULT_SUBJECT) -> GateChain:
     """A ``cns.gate.GateChain`` holding the Judge in the ``omega`` slot.
 
     ``alpha`` stays empty: the Judge has no precondition end.

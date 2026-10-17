@@ -3,12 +3,15 @@
 from pathlib import Path
 
 import pytest
+from conftest import need_warden
 
-import warden.tagteam as tagteam
-from warden.authorization import grant
-from warden.tagteam import TagTeam
+need_warden()
 
-from judge import Judge
+import warden.tagteam as tagteam  # noqa: E402
+from warden.authorization import grant  # noqa: E402
+from warden.tagteam import TagTeam  # noqa: E402
+
+from judge import Judge  # noqa: E402
 
 HELD = ({"scenario": "a", "severity": "high", "status": "held"},)
 VIOLATED = ({"scenario": "a", "severity": "high", "status": "violated"},)

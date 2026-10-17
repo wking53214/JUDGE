@@ -1,9 +1,13 @@
 """The Judge declares which version of Warden's shapes it was written for."""
 
-import warden
-from warden.cli import _load_seat
+from conftest import need_warden
 
-from judge.seat import Judge
+need_warden()
+
+import warden  # noqa: E402
+from warden.cli import _load_seat  # noqa: E402
+
+from judge.seat import Judge  # noqa: E402
 
 
 def test_the_judge_declares_contract_1():

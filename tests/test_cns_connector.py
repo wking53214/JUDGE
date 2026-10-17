@@ -3,8 +3,8 @@
 import cns.gate as gate
 import pytest
 from test_judge import _evidence
-from warden.roles import Verdict
-from warden.suite import SuiteRun
+from cns.seat import Verdict
+from cns.suite import SuiteRun
 
 from judge import Judge
 from judge.cns_connector import DEFAULT_SUBJECT, JudgeGate, cns_chain

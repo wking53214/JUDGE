@@ -49,15 +49,21 @@ A run that changed nothing is ACCEPTed only if the evidence is complete.
 
 from __future__ import annotations
 
+import logging
 import re
 import unicodedata
 from collections import Counter
 from collections.abc import Mapping
 from pathlib import Path
+from typing import TypeGuard
 
 from cns.seat import Evidence, Verdict
 
-NAME = "judge 0.3"
+from ._version import __version__
+
+log = logging.getLogger(__name__)
+
+NAME = f"judge {__version__}"
 
 _PROSE = (".md", ".rst", ".txt")
 _TEST_DIRS = {"tests", "test", "testing", "__tests__"}
@@ -111,16 +117,32 @@ class Judge:
 
     def decide(self, evidence: Evidence) -> Verdict:
         try:
-            return _decide(evidence)
+            verdict = _decide(evidence)
         except _Unreadable as exc:
-            return _unreadable(what=exc.what)
+            log.warning("evidence unreadable, nothing approved: %s", exc.what)
+            verdict = _unreadable(what=exc.what)
         except Exception as exc:  # anything odd in the evidence: fail closed, never raise
-            return _unreadable(what=type(exc).__name__)
+            log.warning("evidence could not be judged (%s), nothing approved", type(exc).__name__)
+            verdict = _unreadable(what=type(exc).__name__)
+        _log_verdict(evidence, verdict)
+        return verdict
+
+
+def _log_verdict(evidence: object, verdict: Verdict) -> None:
+    """Record the decision. Logging never changes the verdict and never raises."""
+    try:
+        target = str(getattr(evidence, "target", None))[:200]
+        log.info("verdict %s for target %s (%d reason(s))", verdict.decision, target, len(verdict.reasons))
+        if log.isEnabledFor(logging.DEBUG):
+            for reason in verdict.reasons:
+                log.debug("reason: %s", reason)
+    except Exception:  # a hostile evidence object must not turn a verdict into an error
+        pass
 
 
 # ---- reading the evidence safely -------------------------------------------------
 
-def _is_count(x: object) -> bool:
+def _is_count(x: object) -> TypeGuard[int]:
     return isinstance(x, int) and not isinstance(x, bool) and x >= 0
 
 
@@ -150,17 +172,20 @@ class _Suite:
         ran = getattr(run, "ran", None)
         if not isinstance(ran, bool):
             raise _Unreadable(f"{name}.ran is a {type(ran).__name__}")
-        counts = {}
+        counts: dict[str, int] = {}
         for f in ("passed", "failed", "errors", "skipped", "xfailed"):
-            v = getattr(run, f, 0) if f == "xfailed" else getattr(run, f, None)
+            v: object = getattr(run, f, 0) if f == "xfailed" else getattr(run, f, None)
             if not _is_count(v):
                 raise _Unreadable(f"{name}.{f} is a {type(v).__name__}, not a count")
             counts[f] = v
         self.ran, self.counts, self.run = ran, counts, run
-        self.passed, self.failed, self.errors = counts["passed"], counts["failed"], counts["errors"]
-        self.skipped, self.xfailed = counts["skipped"], counts["xfailed"]
+        self.passed: int = counts["passed"]
+        self.failed: int = counts["failed"]
+        self.errors: int = counts["errors"]
+        self.skipped: int = counts["skipped"]
+        self.xfailed: int = counts["xfailed"]
         # Optional extras: the process exit code is the truth, printed counts can be forged by the code under test.
-        self.exit_code = None
+        self.exit_code: int | None = None
         for n in _EXIT_NAMES:
             v = getattr(run, n, None)
             if v is not None:

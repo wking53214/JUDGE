@@ -45,8 +45,9 @@ SWIZZLE   attacks the governor; every scenario must be held
 JUDGE     ACCEPT (stands) · REJECT (whole tree put back) · INSUFFICIENT (held for a person)
 ```
 
-Each seat imports Warden's data shapes and declares `requires_contract = "1"`; Warden
-imports none of them. Warden tells the Drafter and the Finisher the grant's scope
+Each seat declares `requires_contract = "1"` and reads and returns the shared rows defined in
+[CNS](https://github.com/wking53214/CNS) (`cns.seat`); Warden imports none of them. Judge itself imports no Warden
+code: its one runtime dependency is CNS, and Warden is only a test-time dependency, pinned in `pyproject.toml`. Warden tells the Drafter and the Finisher the grant's scope
 (`documentation` or `code`) before it asks them.
 
 **One command runs all seven.** With a clone of each repository in one folder (names matched
@@ -64,6 +65,6 @@ Live path: Admission → OBSERVE/Keys → Locks → PERCEIVE → Decision → Co
 Assurance: ASSAY · ghost_tools · SWIZZLE · Warden · Drafter · Judge · Burnish  (this circuit, off the live path)
 ```
 
-CNS (private) holds the interoperability contracts. No repository in the circuit modifies it.
+CNS holds the interoperability contracts. No repository in the circuit modifies it.
 
 See [README.md](README.md).
