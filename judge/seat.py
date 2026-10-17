@@ -12,8 +12,9 @@ read as fine.
 THE RULES, in order. The first group that fires decides.
 
   INSUFFICIENT  (checked first) the evidence cannot be read at all: a wrong
-                type, a negative or fractional count, a missing field. Nothing
-                is approved, and the Judge never raises an error.
+                type, a negative or fractional count, a missing field (the cycle
+                list and the declined list included). Nothing is approved, and
+                the Judge never raises an error.
   REJECT        the evidence shows harm:
     the suite is red, or fewer tests pass than before
     more tests are skipped (or expected-to-fail) than before
@@ -42,6 +43,11 @@ THE RULES, in order. The first group that fires decides.
     Ghost's baseline report is missing, so suppressed findings are unknown
     some tests did not run before, and code was changed
     the Warden reports a check that never ran (anything but 'judge')
+    the evidence contradicts itself about what was applied (see
+      _cycle_contradictions): a cycle outcome the Judge does not know, two
+      cycles with one number, more applied cycles than listed edits, a listed
+      edit that no cycle applied and no finishing step after a converged loop
+      can explain, or declined removals with no declined cycle
   ACCEPT        everything required ran, nothing shows harm, nothing is unknown.
 
 A run that changed nothing is ACCEPTed only if the evidence is complete.
@@ -161,6 +167,52 @@ def _strings(value: object, name: str) -> tuple[str, ...]:
 
 def _optional_strings(value: object, name: str):
     return None if value is None else _strings(value, name)
+
+
+#: Every outcome Warden gives a cycle. Only APPLIED means an edit stood; DECLINED, PUT_BACK, REFUSED and
+#: SUITE_RED mean it did not; NOTHING_TO_PROPOSE ends a converged loop. Any other word is not understood.
+_CYCLE_OUTCOMES = frozenset({"APPLIED", "DECLINED", "NOTHING_TO_PROPOSE", "PUT_BACK", "REFUSED", "SUITE_RED"})
+
+
+def _cycles(value: object) -> tuple[tuple[int, str], ...]:
+    if not isinstance(value, (tuple, list)):
+        raise _Unreadable(f"cycles is a {type(value).__name__}, not a list of cycles")
+    out: list[tuple[int, str]] = []
+    for item in value:
+        if (not isinstance(item, (tuple, list)) or len(item) != 2 or not isinstance(item[1], str)
+                or not isinstance(item[0], int) or isinstance(item[0], bool)):
+            raise _Unreadable(f"a cycle is a {type(item).__name__}, not a (number, outcome) pair")
+        out.append((item[0], item[1]))
+    return tuple(out)
+
+
+def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, declined: tuple[str, ...]) -> list[str]:
+    """Reasons the cycle record and the lists of edits and declined removals cannot both be true.
+
+    Conservative: it only names what Warden's own loop can never produce, so real evidence passes.
+    Warden lists the edits of every APPLIED cycle (at least one each) plus the finishing edits, which
+    run after a converged loop and belong to no cycle; a converged loop always ends on a
+    NOTHING_TO_PROPOSE cycle. A removal is recorded as declined together with a DECLINED cycle.
+    A non-empty declined list beside listed edits is normal (one finding left alone, another fixed).
+    """
+    out: list[str] = []
+    odd = sorted({o for _, o in cycles if o not in _CYCLE_OUTCOMES})
+    if odd:
+        out.append(f"a cycle gave an outcome the Judge does not know ({', '.join(repr(o[:30]) for o in odd[:3])}), "
+                   "so it cannot tell what was applied")
+        return out
+    numbers = [n for n, _ in cycles]
+    if len(set(numbers)) != len(numbers):
+        out.append("two cycles share one number, so the record of what was applied is not trustworthy")
+    applied = sum(o == "APPLIED" for _, o in cycles)
+    if applied > listed:
+        out.append(f"{applied} cycle(s) say a change was applied but only {listed} edit(s) are listed")
+    elif listed and not applied and (not cycles or cycles[-1][1] != "NOTHING_TO_PROPOSE"):
+        out.append(f"{listed} edit(s) are listed as applied but no cycle applied one and no finishing step "
+                   "after a converged loop can account for them")
+    if declined and not any(o == "DECLINED" for _, o in cycles):
+        out.append("removals are listed as declined but no cycle was declined")
+    return out
 
 
 _SLASH = {ord("\\"): "/"}
@@ -297,6 +349,8 @@ def _decide(e: Evidence) -> Verdict:
                 or not isinstance(item[0], str) or not isinstance(item[1], str)):
             raise _Unreadable(f"a changed entry is a {type(item).__name__}, not a (path, kind) pair")
         changed.append((item[0], item[1]))
+    cycles = _cycles(_field(e, "cycles"))
+    declined = _strings(_field(e, "declined"), "declined")
     judging_listed = _strings(_field(e, "judging_files_touched"), "judging_files_touched")
     before, after = _suite(_field(e, "suite_before"), "suite_before"), _suite(_field(e, "suite_after"), "suite_after")
     g_before = _optional_strings(_field(e, "ghost_before"), "ghost_before")
@@ -311,7 +365,7 @@ def _decide(e: Evidence) -> Verdict:
         raise _Unreadable(f"assay is a {type(assay).__name__}, not a report")
 
     harm: list[str] = []
-    unknown: list[str] = []
+    unknown: list[str] = _cycle_contradictions(cycles, len(changed), declined)
 
     # the suite
     if after is not None:

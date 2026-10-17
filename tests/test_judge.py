@@ -43,8 +43,9 @@ def test_complete_clean_evidence_is_accepted():
 
 
 def test_a_run_that_changed_nothing_is_accepted_only_with_complete_evidence():
-    assert _decide(changed=()).decision == "ACCEPT"
-    assert _decide(changed=(), attacks=None).decision == "INSUFFICIENT"
+    # no edits listed, so no cycle may claim to have applied one (cycles are the only line that changed)
+    assert _decide(changed=(), cycles=((1, "NOTHING_TO_PROPOSE"),)).decision == "ACCEPT"
+    assert _decide(changed=(), cycles=((1, "NOTHING_TO_PROPOSE"),), attacks=None).decision == "INSUFFICIENT"
 
 
 @pytest.mark.parametrize("missing,words", [
@@ -126,3 +127,58 @@ def test_an_unproven_answer_key_is_rejected():
 def test_ghost_below_the_floor_is_rejected_and_at_the_floor_is_accepted():
     assert _decide(assay={**ASSAY, "floor": 4}).decision == "REJECT"
     assert _decide(assay={**ASSAY, "floor": 3}).decision == "ACCEPT"
+
+
+# ---- evidence that contradicts itself is never accepted ---------------------------------------------------
+
+def _says(v, *words):
+    return v.decision == "INSUFFICIENT" and any(all(w in r for w in words) for r in v.reasons)
+
+
+@pytest.mark.parametrize("cycles", [(), ((1, "NOTHING_TO_PROPOSE"), (2, "DECLINED")), ((1, "PUT_BACK"),), ((1, "DECLINED"),)])
+def test_a_listed_change_that_no_cycle_applied_is_not_accepted(cycles):
+    assert _says(_decide(cycles=cycles), "no cycle applied")
+
+
+def test_a_cycle_outcome_the_judge_does_not_know_is_not_accepted():
+    assert _says(_decide(cycles=((1, "REVERTED"),)), "does not know", "REVERTED")
+    assert _says(_decide(cycles=((1, "applied"),)), "does not know")
+
+
+def test_more_applied_cycles_than_listed_edits_is_not_accepted():
+    assert _says(_decide(cycles=((1, "APPLIED"), (2, "APPLIED"), (3, "NOTHING_TO_PROPOSE"))), "2 cycle(s)", "1 edit(s)")
+    assert _says(_decide(cycles=((1, "APPLIED"),), changed=()), "1 cycle(s)", "0 edit(s)")
+
+
+def test_two_cycles_with_one_number_are_not_accepted():
+    assert _says(_decide(cycles=((1, "APPLIED"), (1, "NOTHING_TO_PROPOSE"))), "share one number")
+
+
+def test_declined_removals_with_no_declined_cycle_are_not_accepted():
+    assert _says(_decide(declined=("ghost-x",)), "declined")
+
+
+def test_the_cycle_lists_warden_really_writes_are_still_accepted():
+    # a loop that applied one change, then converged
+    assert _decide(cycles=((1, "APPLIED"), (2, "NOTHING_TO_PROPOSE"))).decision == "ACCEPT"
+    # a loop that proposed nothing, then a finishing change (listed, but in no cycle)
+    assert _decide(cycles=((1, "NOTHING_TO_PROPOSE"),)).decision == "ACCEPT"
+    # a declined removal beside an applied change is normal, not a contradiction
+    assert _decide(cycles=((1, "DECLINED"), (2, "APPLIED"), (3, "NOTHING_TO_PROPOSE")), declined=("ghost-x",)).decision == "ACCEPT"
+    # nothing listed, nothing applied
+    assert _decide(cycles=((1, "NOTHING_TO_PROPOSE"),), changed=()).decision == "ACCEPT"
+
+
+def test_harm_still_rejects_when_the_cycles_also_contradict():
+    v = _decide(cycles=(), suite_after=SuiteRun(ran=True, passed=9, failed=1))
+    assert v.decision == "REJECT"
+
+
+@pytest.mark.parametrize("cycles", [None, "APPLIED", [1], [(1,)], [("1", "APPLIED")], [(True, "APPLIED")], [(1, 2)]])
+def test_unreadable_cycles_are_insufficient_not_an_error(cycles):
+    assert _decide(cycles=cycles).decision == "INSUFFICIENT"
+
+
+def test_unreadable_declined_is_insufficient_not_an_error():
+    assert _decide(declined="ghost-x").decision == "INSUFFICIENT"
+    assert _decide(declined=(1,)).decision == "INSUFFICIENT"

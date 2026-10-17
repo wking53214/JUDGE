@@ -251,14 +251,15 @@ def test_skips_not_growing_is_fine():
 
 
 def test_skips_swapped_for_xfails_counts_as_growth_only_in_total():
-    assert _d(suite_before=_suite(skipped=3), suite_after=_suite(xfailed=3), changed=()).decision == "ACCEPT"
+    swapped = _d(suite_before=_suite(skipped=3), suite_after=_suite(xfailed=3), changed=(), cycles=((1, "NOTHING_TO_PROPOSE"),))
+    assert swapped.decision == "ACCEPT"
     assert _d(suite_before=_suite(skipped=3), suite_after=_suite(xfailed=4), changed=()).decision == "REJECT"
 
 
 def test_xfailed_missing_from_an_older_suite_run_counts_as_zero():
     class Old:
         ran, passed, failed, errors, skipped, exit_code = True, 10, 0, 0, 0, 0
-    assert _d(suite_before=Old(), suite_after=Old(), changed=()).decision == "ACCEPT"
+    assert _d(suite_before=Old(), suite_after=Old(), changed=(), cycles=((1, "NOTHING_TO_PROPOSE"),)).decision == "ACCEPT"
 
 
 @pytest.mark.parametrize("kind", ["write", "delete", "Write"])

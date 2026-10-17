@@ -1,5 +1,6 @@
 """Seated in Warden's loop, with the real Warden: the Judge accepts a clean run and turns away a harmful one."""
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -104,3 +105,92 @@ def test_without_a_baseline_report_the_real_warden_run_is_unjudged(tmp_path, sta
     result = _run(_repo(tmp_path), judge=Judge())
     assert result.decision == "ACCEPT_UNVERIFIED" and result.verdict.decision == "INSUFFICIENT"
     assert any("baseline" in r for r in result.verdict.reasons)
+
+
+# ---- the consistency check on cycles and declined must not turn away what the real loop writes ------------
+
+class Nothing:
+    """A Drafter with nothing to propose, so the loop converges at once."""
+
+    def propose(self, target, observed, baseline):
+        return None
+
+
+class Finishes:
+    """A Finisher that rewrites NOTE.md (a change that belongs to no cycle)."""
+
+    def finish(self, target, baseline, facts):
+        from cns.seat import FileEdit
+        from warden.models import Transformation, TransformationStatus
+        return Transformation(
+            target=str(Path(target).resolve()), intent="t", architectural_reason="t", affected_files=("NOTE.md",),
+            expected_behavior="none", preservation_requirements=(), known_defects=(), transformation_scope="documentation",
+            baseline_reference=baseline, evidence=(), edits=(FileEdit("NOTE.md", "write", "final\n", ""),),
+            status=TransformationStatus.PROPOSED)
+
+
+class DeclinedThenRewrites(Rewrites):
+    """First offers a change to a test file that cites a finding (declined), then rewrites NOTE.md."""
+
+    def __init__(self):
+        super().__init__()
+        self.offered = False
+
+    def propose(self, target, observed, baseline):
+        from cns.seat import FileEdit
+        from warden.models import Defect, DefectSeverity, Transformation, TransformationStatus
+        if not self.offered:
+            self.offered = True
+            return Transformation(
+                target=str(Path(target).resolve()), intent="t", architectural_reason="t",
+                affected_files=("tests/test_a.py",), expected_behavior="none", preservation_requirements=(),
+                known_defects=(Defect(summary="unused", severity=DefectSeverity.LOW, ghost_id="ghost-unused"),),
+                transformation_scope="documentation", baseline_reference=baseline, evidence=(),
+                edits=(FileEdit("tests/test_a.py", "write", "x = 1\n", ""),), status=TransformationStatus.PROPOSED)
+        return super().propose(target, observed, baseline)
+
+
+def _run_with(root, drafter, finisher=None):
+    auth = grant("william", "transform", str(root.resolve()), "documentation", "judge integration")
+    team = TagTeam(drafter=drafter, finisher=finisher, judge=WithBaseline(), ghost_tools_root=Path("."),
+                   swizzle_root=Path("."), assay_root=Path("."), assay_floor=3)
+    return team.run(root, findings=[], authorization=auth)
+
+
+def _evidence_the_judge_saw(monkeypatch):
+    seen = []
+
+    class Spy(WithBaseline):
+        def decide(self, evidence):
+            seen.append(evidence)
+            return super().decide(evidence)
+
+    monkeypatch.setattr(sys.modules[__name__], "WithBaseline", Spy)
+    return seen
+
+
+def test_a_finishing_change_that_belongs_to_no_cycle_is_still_accepted(tmp_path, stack, monkeypatch):
+    seen = _evidence_the_judge_saw(monkeypatch)
+    result = _run_with(_repo(tmp_path), Nothing(), Finishes())
+    ev = seen[0]
+    assert [o for _, o in ev.cycles] == ["NOTHING_TO_PROPOSE"] and ev.changed == (("NOTE.md", "write"),)
+    assert result.decision == "ACCEPT", result.verdict.reasons
+    assert (tmp_path / "NOTE.md").read_text(encoding="utf-8") == "final\n"
+
+
+def test_a_declined_proposal_beside_an_applied_change_is_still_accepted(tmp_path, stack, monkeypatch):
+    seen = _evidence_the_judge_saw(monkeypatch)
+    root = _repo(tmp_path)
+    stack["ghost"] = ()
+    result = _run_with(root, DeclinedThenRewrites())
+    ev = seen[0]
+    assert [o for _, o in ev.cycles] == ["DECLINED", "APPLIED", "NOTHING_TO_PROPOSE"]
+    assert ev.declined == ("ghost-unused",) and ev.changed == (("NOTE.md", "write"),)
+    assert result.decision == "ACCEPT", result.verdict.reasons
+
+
+def test_an_applied_change_and_a_finishing_change_together_are_still_accepted(tmp_path, stack, monkeypatch):
+    seen = _evidence_the_judge_saw(monkeypatch)
+    result = _run_with(_repo(tmp_path), Rewrites(), Finishes())
+    assert len(seen[0].changed) == 2 and [o for _, o in seen[0].cycles] == ["APPLIED", "NOTHING_TO_PROPOSE"]
+    assert result.decision == "ACCEPT", result.verdict.reasons
