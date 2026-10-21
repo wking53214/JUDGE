@@ -14,6 +14,7 @@ The command fails closed. Any exception while building or judging the evidence y
 INSUFFICIENT decision and exit 1; nothing but an explicit ACCEPT from the Judge exits 0.
 The command reads one file (or standard input) and writes only to standard output and
 standard error. Logs go to standard error: ``-v`` shows decisions, ``-vv`` adds each reason.
+A closed standard output (``judge decide FILE | head``) is not an error: no traceback, and the exit code is the one earned.
 """
 
 from __future__ import annotations
@@ -144,8 +145,15 @@ def _run_decide(source: str) -> int:
         print(f"judge: {source!r} cannot be decoded as JSON ({type(exc).__name__}): too deeply nested or too large", file=sys.stderr)
         return EXIT_USAGE
     verdict = _decide(data)
-    print(json.dumps({"decision": str(verdict.decision), "reasons": [str(r) for r in verdict.reasons], "judge": str(verdict.judge)},
-                     indent=2))
+    try:
+        print(json.dumps({"decision": str(verdict.decision), "reasons": [str(r) for r in verdict.reasons], "judge": str(verdict.judge)},
+                         indent=2))
+        sys.stdout.flush()
+    except BrokenPipeError:
+        # The reader went away (``judge decide FILE | head``). The documented recipe points stdout at devnull so the flush at
+        # interpreter exit cannot raise again; that needs ``os``, which tests/test_independence.py keeps out of the Judge. Dropping
+        # sys.stdout has the same effect (nothing is flushed at exit) with the same result. The exit code stays the earned one.
+        sys.stdout = None
     return EXIT_APPROVED if verdict.decision == "ACCEPT" else EXIT_NOT_APPROVED
 
 

@@ -3,6 +3,7 @@
 import copy
 import io
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -171,3 +172,35 @@ def test_the_installed_script_and_module_entry_point_agree(tmp_path):
         assert ok.returncode == 0 and json.loads(ok.stdout)["decision"] == "ACCEPT", cmd
         bad = subprocess.run([*cmd, "decide", str(tmp_path / "missing.json")], capture_output=True, text=True, check=False)
         assert bad.returncode == 2, cmd
+
+
+def _run_into_a_closed_pipe(path: str) -> subprocess.CompletedProcess:
+    """Run the real command with stdout on a pipe whose read end is already closed, as in ``judge decide FILE | head``."""
+    read_end, write_end = os.pipe()
+    os.close(read_end)
+    try:
+        return subprocess.run([sys.executable, "-m", "judge", "decide", path], stdout=write_end, stderr=subprocess.PIPE,
+                              text=True, timeout=60, check=False)
+    finally:
+        os.close(write_end)
+
+
+def test_a_closed_stdout_is_not_a_traceback_and_keeps_the_exit_code_of_an_accept():
+    done = _run_into_a_closed_pipe(str(EXAMPLE))
+    assert done.stderr == "" and done.returncode == 0
+
+
+def test_a_closed_stdout_keeps_the_exit_code_of_a_rejection(tmp_path):
+    data = _data()
+    data["suite_after"] = {"ran": True, "passed": 10, "failed": 2, "exit_code": 1}
+    done = _run_into_a_closed_pipe(_write(tmp_path, data))
+    assert done.stderr == "" and done.returncode == 1
+
+
+def test_a_broken_pipe_without_a_file_descriptor_still_returns_the_earned_code(monkeypatch):
+    class Gone(io.StringIO):
+        def write(self, text):
+            raise BrokenPipeError(32, "Broken pipe")
+
+    monkeypatch.setattr(sys, "stdout", Gone())
+    assert cli.main(["decide", str(EXAMPLE)]) == 0
