@@ -1,0 +1,94 @@
+{
+ "target": "/path/to/removal_commented_out_then_finisher",
+ "scope": "code",
+ "cycles": [
+  [
+   1,
+   "APPLIED"
+  ],
+  [
+   2,
+   "NOTHING_TO_PROPOSE"
+  ]
+ ],
+ "changed": [
+  [
+   "pkg/dead.py",
+   "write"
+  ],
+  [
+   "README.md",
+   "write"
+  ]
+ ],
+ "judging_files_touched": [],
+ "suite_before": {
+  "ran": true,
+  "passed": 1,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "reason": "",
+  "xfailed": 0,
+  "xpassed": 0,
+  "exit_code": 0
+ },
+ "suite_after": {
+  "ran": true,
+  "passed": 1,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "reason": "",
+  "xfailed": 0,
+  "xpassed": 0,
+  "exit_code": 0
+ },
+ "ghost_before": [
+  "ghost-dead1"
+ ],
+ "ghost_after": [],
+ "declined": [],
+ "swizzle_proofs": true,
+ "attacks": [
+  {
+   "scenario": "a",
+   "severity": "high",
+   "status": "held"
+  }
+ ],
+ "unmeasured": [],
+ "notes": [
+  "The folder is not inside a git repository, so Warden cannot see whether it holds uncommitted work; the snapshot taken at the start is the only way back.",
+  "ok",
+  "Ghost Tools findings loaded (1), not scanned in this process.",
+  "Rule 7 suite cycle 1 keep test baseline: 1 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+  "Rule 7 suite cycle 1 keep test (code made to fail): 1 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+  "Cycle 1: keep test passed. Nothing ran the code when it was made to fail.",
+  "Rule 7 suite cycle 1 before: 1 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+  "Cycle 1: transformation applied under granted authorization.",
+  "Rule 7 suite cycle 1 after: 1 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+  "Ghost re-inspected: 0 finding(s); closed=['ghost-dead1'] new=[]",
+  "Rule 7 suite converged: 1 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+  "Rule 7 suite cycle 0 before: 1 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+  "Cycle 0: transformation applied under granted authorization.",
+  "Rule 7 suite cycle 0 after: 1 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+  "Ghost re-inspected: 0 finding(s); closed=[] new=[]",
+  "SWIZZLE attacks on the governor: 0 of 1 violated",
+  "Rule 7 suite final state, for the Judge: 1 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed."
+ ],
+ "assay": {
+  "key_proven": true,
+  "failure_modes": 5,
+  "caught": 3,
+  "floor": 3
+ },
+ "ghost_baseline_before": {
+  "path": null,
+  "suppressed": 0
+ },
+ "ghost_baseline_after": {
+  "path": null,
+  "suppressed": 0
+ }
+}

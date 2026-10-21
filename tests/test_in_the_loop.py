@@ -194,3 +194,89 @@ def test_an_applied_change_and_a_finishing_change_together_are_still_accepted(tm
     result = _run_with(_repo(tmp_path), Rewrites(), Finishes())
     assert len(seen[0].changed) == 2 and [o for _, o in seen[0].cycles] == ["APPLIED", "NOTHING_TO_PROPOSE"]
     assert result.decision == "ACCEPT", result.verdict.reasons
+
+
+# ---- the Judge relies on a converged record and a green start: that is what the real loop gives it ------------
+
+def _write(path: str, text: str, scope: str = "documentation"):
+    """A one-edit proposal factory for a stand-in Drafter."""
+    from cns.seat import FileEdit
+    from warden.models import Transformation, TransformationStatus
+
+    def make(target, baseline):
+        return Transformation(
+            target=str(Path(target).resolve()), intent="t", architectural_reason="t", affected_files=(path,),
+            expected_behavior="none", preservation_requirements=(), known_defects=(), transformation_scope=scope,
+            baseline_reference=baseline, evidence=(), edits=(FileEdit(path, "write", text, ""),),
+            status=TransformationStatus.PROPOSED)
+    return make
+
+
+class Offers:
+    """A Drafter that offers each of the given edits in turn, then has nothing."""
+
+    def __init__(self, *edits):
+        self.edits = list(edits)
+
+    def propose(self, target, observed, baseline):
+        return self.edits.pop(0)(target, baseline) if self.edits else None
+
+
+class Endless:
+    """A Drafter that never runs out: a different note every time."""
+
+    def __init__(self):
+        self.n = 0
+
+    def propose(self, target, observed, baseline):
+        self.n += 1
+        return _write("NOTE.md", f"v{self.n}\n")(target, baseline)
+
+
+def _run_scope(root, drafter, scope="code", **team_kw):
+    auth = grant("william", "transform", str(root.resolve()), scope, "judge integration")
+    team = TagTeam(drafter=drafter, judge=WithBaseline(), ghost_tools_root=Path("."), swizzle_root=Path("."),
+                   assay_root=Path("."), assay_floor=3, **team_kw)
+    return team.run(root, findings=[], authorization=auth)
+
+
+def test_every_record_the_real_loop_hands_the_judge_ends_converged_with_a_green_start(tmp_path, stack, monkeypatch):
+    seen = _evidence_the_judge_saw(monkeypatch)
+    for drafter, finisher in ((Rewrites(), None), (Nothing(), Finishes()), (Rewrites(), Finishes()), (DeclinedThenRewrites(), None)):
+        root = tmp_path / f"r{len(seen)}"
+        root.mkdir()
+        assert _run_with(_repo(root), drafter, finisher).decision == "ACCEPT"
+    assert len(seen) == 4
+    for ev in seen:
+        assert ev.cycles[-1][1] == "NOTHING_TO_PROPOSE", ev.cycles
+        before = ev.suite_before
+        assert before is not None and before.ran and before.failed == 0 and before.errors == 0 and before.exit_code == 0
+
+
+def test_a_loop_that_never_converges_is_not_handed_to_the_judge(tmp_path, stack, monkeypatch):
+    seen = _evidence_the_judge_saw(monkeypatch)
+    result = _run_scope(_repo(tmp_path), Endless(), scope="documentation", max_cycles=2)
+    assert result.decision == "NOT_CONVERGED" and not result.converged and seen == []
+    assert result.cycles[-1].outcome == "APPLIED"
+
+
+def test_a_refused_cycle_stops_the_loop_before_the_judge(tmp_path, stack, monkeypatch):
+    seen = _evidence_the_judge_saw(monkeypatch)
+    result = _run_scope(_repo(tmp_path), Offers(_write("../outside.md", "x\n")))
+    assert result.cycles[-1].outcome == "REFUSED" and result.decision != "ACCEPT" and seen == []
+
+
+def test_a_put_back_cycle_stops_the_loop_before_the_judge(tmp_path, stack, monkeypatch):
+    seen = _evidence_the_judge_saw(monkeypatch)
+    root = _repo(tmp_path)
+    result = _run_scope(root, Offers(_write("pkg/__init__.py", "V = 2\n")))
+    assert result.cycles[-1].outcome == "PUT_BACK" and result.decision != "ACCEPT" and seen == []
+    assert (root / "pkg" / "__init__.py").read_text(encoding="utf-8") == "V = 1\n"
+
+
+def test_a_red_start_stops_the_loop_before_the_judge(tmp_path, stack, monkeypatch):
+    seen = _evidence_the_judge_saw(monkeypatch)
+    root = _repo(tmp_path)
+    (root / "tests" / "test_a.py").write_text("def test_a():\n    assert False\n", encoding="utf-8")
+    result = _run_scope(root, Offers(_write("NOTE.md", "new\n")), scope="documentation")
+    assert result.cycles[-1].outcome == "SUITE_RED" and result.decision != "ACCEPT" and seen == []

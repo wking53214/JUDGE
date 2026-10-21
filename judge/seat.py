@@ -12,15 +12,19 @@ read as fine.
 THE RULES, in order. The first group that fires decides.
 
   INSUFFICIENT  (checked first) the evidence cannot be read at all: a wrong
-                type, a negative or fractional count, a missing field (the cycle
-                list and the declined list included). Nothing is approved, and
-                the Judge never raises an error.
+                type (the target included), a negative or fractional count, a
+                missing field (the cycle list and the declined list included),
+                or exit codes of one suite that name different numbers (every
+                exit-code name present is read, none wins). Nothing is
+                approved, and the Judge never raises an error.
   REJECT        the evidence shows harm:
     the suite is red, or fewer tests pass than before
     more tests are skipped (or expected-to-fail) than before
     tests or test settings were changed (the Warden's list, or any path that
-      looks like a test, a test setting or a CI file)
+      looks like a test, a test setting or a CI file; test*.txt counts, because
+      pytest collects it as a doctest by default)
     an edit reached outside the project, or into git or environment folders
+      (.git, .venv, venv, env, .tox, .nox, .eggs, node_modules, site-packages)
     Ghost reports a finding at the end that it did not report at the start
       (counted one by one, so a repeated finding is new)
     Ghost's baseline grew (more suppressed findings) or a baseline file or any
@@ -35,6 +39,11 @@ THE RULES, in order. The first group that fires decides.
   INSUFFICIENT  nothing shows harm, but something is unknown:
     the final suite run, Ghost, SWIZZLE's proofs or attacks, or ASSAY's grade
       is missing, or not exactly the expected value
+    the starting suite run is missing, did not run, or was not green (failed,
+      errors or a non-zero exit code): the before and after comparison needs a
+      known good start
+    the grant's scope is not documentation, code or all, or an edit's kind is
+      not write, replace or delete
     an attack gave no clean answer (error, timeout, crashed, unknown, not run),
       was not a proper entry, or no attack was attempted at all
     ASSAY's floor, caught or failure_modes is missing or not a whole number
@@ -47,10 +56,20 @@ THE RULES, in order. The first group that fires decides.
       _cycle_contradictions): a cycle outcome the Judge does not know, two
       cycles with one number, more applied cycles than listed edits, a listed
       edit that no cycle applied and no finishing step after a converged loop
-      can explain, or declined removals with no declined cycle
+      can explain, declined removals with no declined cycle, or a last cycle
+      that was REFUSED, PUT_BACK or SUITE_RED (the loop never converged)
   ACCEPT        everything required ran, nothing shows harm, nothing is unknown.
 
 A run that changed nothing is ACCEPTed only if the evidence is complete.
+
+WHAT THE CYCLE CHECKS CANNOT DO. The clause "a listed edit that no applied cycle
+explains" cannot fire on a converged run when a finisher may have run: such a
+run ends on NOTHING_TO_PROPOSE whether or not a finisher then edited files, and
+the evidence does not say which, so every listed edit can be blamed on the
+finisher. It catches only hand-made evidence (for example a record that ends on
+a REFUSED cycle), not a fabricated edit list on a converged run. Closing it needs
+a `finisher ran` field in the CNS Evidence shape, which is a change to CNS and the
+owner's call. Nothing here claims that clause protects real evidence.
 """
 
 from __future__ import annotations
@@ -72,6 +91,9 @@ log = logging.getLogger(__name__)
 NAME = f"judge {__version__}"
 
 _PROSE = (".md", ".rst", ".txt")
+#: The grant scopes the Judge understands, and the edit kinds Warden writes. Any other word is unknown, never fine.
+_SCOPES = frozenset({"documentation", "code", "all"})
+_EDIT_KINDS = frozenset({"write", "replace", "delete"})
 _TEST_DIRS = {"tests", "test", "testing", "__tests__"}
 #: Directories whose contents decide how a run is judged or built: tests, CI, hooks, dependency lists.
 #: Directories that hold what tests compare against: fixtures, specimens, golden files, snapshots, a corpus.
@@ -95,11 +117,14 @@ _JUDGING_PATTERNS = (
     re.compile(r"^\.?pytest.*\.(ini|toml|cfg)$"),          # pytest.ini, .pytest.ini, pytest.toml and variants
     re.compile(r"^(requirements|constraints)[^/]*\.(txt|in)$"),
     re.compile(r"^test_.*"), re.compile(r".*_tests?\.py$"),
+    re.compile(r"^test.*\.txt$"),                          # pytest collects test*.txt as doctests by default
     re.compile(r"^docker-compose.*"), re.compile(r"^dockerfile.*"), re.compile(r".*\.dockerfile$"),
     re.compile(r".*\.lock$"), re.compile(r".*\.pth$"),
     re.compile(r"^\.ghost.*"),                              # .ghost_baseline.json and every other Ghost file
 )
-_OUTSIDE_DIRS = {"..", ".git", ".venv"}
+#: Version control and environment folders: nothing in them is the project's source, and a library edited there
+#: runs later with the user's rights.
+_OUTSIDE_DIRS = {"..", ".git", ".venv", "venv", "env", ".tox", ".nox", ".eggs", "node_modules", "site-packages"}
 _BASELINE_NAMES = (".ghost_baseline.json",)
 _HARM_SEVERITIES = {"high", "medium", "critical", "severe"}
 #: Change kinds that only reformat. There are none today, so nothing is excused.
@@ -172,6 +197,8 @@ def _optional_strings(value: object, name: str):
 #: Every outcome Warden gives a cycle. Only APPLIED means an edit stood; DECLINED, PUT_BACK, REFUSED and
 #: SUITE_RED mean it did not; NOTHING_TO_PROPOSE ends a converged loop. Any other word is not understood.
 _CYCLE_OUTCOMES = frozenset({"APPLIED", "DECLINED", "NOTHING_TO_PROPOSE", "PUT_BACK", "REFUSED", "SUITE_RED"})
+#: Outcomes that stop Warden's loop without converging; a run whose record ends on one was never judged by Warden.
+_NOT_CONVERGED = frozenset({"PUT_BACK", "REFUSED", "SUITE_RED"})
 
 
 def _cycles(value: object) -> tuple[tuple[int, str], ...]:
@@ -194,6 +221,16 @@ def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, decl
     run after a converged loop and belong to no cycle; a converged loop always ends on a
     NOTHING_TO_PROPOSE cycle. A removal is recorded as declined together with a DECLINED cycle.
     A non-empty declined list beside listed edits is normal (one finding left alone, another fixed).
+
+    A loop that stopped on a REFUSED, PUT_BACK or SUITE_RED cycle did not converge. Warden judges only
+    converged runs, so a record that ends there is not one Warden produced, and nothing is approved on it.
+
+    KNOWN LIMIT (the clause "a listed edit that no APPLIED cycle explains"): it cannot fire when a finisher
+    may have run. A converged run ends on NOTHING_TO_PROPOSE whether or not a finisher then edited files,
+    and the evidence does not say whether one did, so any listed edit can be blamed on the finisher. The clause
+    therefore catches hand-made evidence only (for example a loop that stopped on a non-converged cycle
+    with edits listed), not a fabricated edit list on a converged run. Closing it needs a `finisher ran`
+    field in the CNS Evidence shape, which is a change to CNS and the owner's call.
     """
     out: list[str] = []
     odd = sorted({o for _, o in cycles if o not in _CYCLE_OUTCOMES})
@@ -201,6 +238,9 @@ def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, decl
         out.append(f"a cycle gave an outcome the Judge does not know ({', '.join(repr(o[:30]) for o in odd[:3])}), "
                    "so it cannot tell what was applied")
         return out
+    if cycles and cycles[-1][1] in _NOT_CONVERGED:
+        out.append(f"the last cycle ended {cycles[-1][1]}, so the loop did not converge and nothing can be "
+                   "approved on it")
     numbers = [n for n, _ in cycles]
     if len(set(numbers)) != len(numbers):
         out.append("two cycles share one number, so the record of what was applied is not trustworthy")
@@ -237,14 +277,19 @@ class _Suite:
         self.skipped: int = counts["skipped"]
         self.xfailed: int = counts["xfailed"]
         # Optional extras: the process exit code is the truth, printed counts can be forged by the code under test.
-        self.exit_code: int | None = None
+        # Every exit-code name that is present is read and they must all be the same whole number: the first one
+        # found must not win over a later one that says the suite failed.
+        codes: dict[str, int] = {}
         for n in _EXIT_NAMES:
             v = getattr(run, n, None)
             if v is not None:
                 if not isinstance(v, int) or isinstance(v, bool):
                     raise _Unreadable(f"{name}.{n} is a {type(v).__name__}, not a number")
-                self.exit_code = v
-                break
+                codes[n] = v
+        if len(set(codes.values())) > 1:
+            said = ", ".join(f"{n} {v}" for n, v in codes.items())
+            raise _Unreadable(f"{name} gives exit codes that disagree ({said})")
+        self.exit_code: int | None = next(iter(codes.values()), None)
         # forged / text_only: anything but a plain False (or absent) counts as set.
         self.forged = any(getattr(run, n, False) not in (False, None) for n in ("forged", "forged_output"))
         self.text_only = getattr(run, "text_only", False) not in (False, None)
@@ -337,6 +382,9 @@ def _symlink_target(target: object, path: str):
 # ---- the decision ----------------------------------------------------------------
 
 def _decide(e: Evidence) -> Verdict:
+    target = _field(e, "target")
+    if not isinstance(target, str):
+        raise _Unreadable(f"target is a {type(target).__name__}, not text")
     scope = _field(e, "scope")
     if not isinstance(scope, str):
         raise _Unreadable(f"scope is a {type(scope).__name__}, not text")
@@ -385,6 +433,13 @@ def _decide(e: Evidence) -> Verdict:
             if before.passed == 0 and changed:
                 harm.append("changes were applied although the suite had no passing tests to protect them")
 
+    # the starting suite: the comparison is only worth anything if it started from a run that ran and was green
+    if before is None:
+        unknown.append("the starting suite run was not given, so nothing can be compared with the final one")
+    elif not before.ran or before.failed or before.errors or before.exit_code not in (None, 0):
+        unknown.append(f"the starting suite was not green ({before.describe()}), so the before and after "
+                       "comparison starts from an unknown state")
+
     # judging files and paths that leave the project
     judging = list(judging_listed)
     outside: list[str] = []
@@ -393,7 +448,7 @@ def _decide(e: Evidence) -> Verdict:
     for path, kind in changed:
         norm = _norm_path(path)
         kind_n = kind.strip().lower()
-        real = _symlink_target(getattr(e, "target", None), path)
+        real = _symlink_target(target, path)
         if _reaches_outside(norm) or real == "OUTSIDE":
             outside.append(path)
             continue
@@ -499,6 +554,11 @@ def _decide(e: Evidence) -> Verdict:
                         f"known failure modes, below the floor of {floor}")
 
     # scope
+    if scope.strip().lower() not in _SCOPES:
+        unknown.append(f"the grant's scope {scope[:30]!r} is not one the Judge knows (documentation, code or all)")
+    odd_kinds = sorted({k.strip().lower()[:20] for _, k in changed if k.strip().lower() not in _EDIT_KINDS})
+    if odd_kinds:
+        unknown.append(f"an edit has a kind the Judge does not know ({', '.join(repr(k) for k in odd_kinds[:3])})")
     code = [p for p, _ in changed if not p.strip().lower().endswith(_PROSE)]
     code += [p for p in resolved_code if p not in code]
     if code and scope.strip().lower() not in {"code", "all"}:

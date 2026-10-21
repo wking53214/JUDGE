@@ -7,6 +7,44 @@ code); releases of the current version are not tagged yet, and tagging is the ow
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-10-21
+
+### Fixed
+A round-3 fuzzing audit found hand-made evidence that was ACCEPTed although something was unknown. Real Warden does not
+produce any of it today; "unknown is not approved" is now true for it too.
+- `suite_before: null` was ACCEPTed and silently skipped every before and after comparison. The starting suite must now be
+  present, must have run and must be green (`failed` 0, `errors` 0, exit code 0), else INSUFFICIENT with the reason named.
+  A starting suite with `failed: 5, errors: 3, exit_code: 1`, or `ran: false`, was ACCEPTed too; the same rule covers it.
+- A suite with `exit_code: 0` beside `returncode: 1` was ACCEPTed because the first exit-code name present won. Every exit-code
+  name present is now read; any disagreement, or a value that is not a whole number, is INSUFFICIENT.
+- An unknown `scope` (`"banana"`, `""`) or an unknown edit `kind` was ACCEPTed when only prose files changed. Both are now
+  INSUFFICIENT (known scopes: `documentation`, `code`, `all`; known kinds: `write`, `replace`, `delete`). `target` must be text.
+- A cycle list whose last cycle was `REFUSED`, `PUT_BACK` or `SUITE_RED`, with edits listed, was ACCEPTed. A last cycle that
+  stopped the loop without converging is now INSUFFICIENT. Warden judges only converged runs, whose last cycle is
+  `NOTHING_TO_PROPOSE`; `tests/test_in_the_loop.py` shows with the real loop that a never-converging, refused, put-back or red
+  run is never handed to the Judge.
+- Protected-path gaps: pytest collects `test*.txt` as doctests by default, so `testing.txt`, `tests.txt` and the like are now
+  judged like tests (REJECT). `venv/`, `env/`, `.tox/`, `.nox/`, `.eggs/`, `node_modules/` and `site-packages/` are now environment
+  folders like `.venv/` (REJECT, edit outside the project).
+
+### Added
+- Captured real evidence: `tests/fixtures/real/` holds the nine evidence shapes the real Warden loop produced (one applied
+  cycle, two cycles, one cycle with two edits, a declined proposal then an applied cycle, a finisher only, an applied cycle then
+  a finisher, nothing to propose, a removal commented out, with and without a finisher), and `tests/fixtures/accept.json` is a
+  copy of `examples/accept.json`. `tests/test_real_evidence.py` checks that every one is ACCEPTed (also through the command line)
+  and that each way of altering the fields the Judge reads, alone and stacked, is not.
+
+### Changed
+- The Warden test pin moved from `9d9a71d` (Warden 0.13.2) to `580f659336818b4a5a2c0ca235d2344012536426` (Warden 0.13.3), in the
+  `warden` extra of `pyproject.toml` and the `ref:` of the Warden CI job.
+- No existing test was edited.
+
+### Known limit (documented, not fixed)
+- The clause "a listed edit that no `APPLIED` cycle explains" cannot fire when a finisher may have run: a converged run ends on
+  `NOTHING_TO_PROPOSE` whether or not a finisher then edited files, so any listed edit can be blamed on the finisher. It catches
+  hand-made evidence only, and the earlier wording that it protects real evidence is withdrawn. Closing it needs a
+  `finisher ran` field in the CNS `Evidence` shape, which is a change to CNS and the owner's call.
+
 ## [0.4.3] - 2026-10-21
 
 ### Changed
@@ -26,8 +64,10 @@ code); releases of the current version are not tagged yet, and tagging is the ow
   edits that no `APPLIED` cycle explains (unless a converged loop, ending on `NOTHING_TO_PROPOSE`, could have had a
   finishing change, whose edits belong to no cycle), and `declined` entries with no `DECLINED` cycle. A wrong type in
   either field is unreadable evidence. Declined entries beside an applied change are normal and still accepted.
-  Real-loop tests (finish-only, declined plus applied, applied plus finish) and the saved record of a real run
-  show Warden's own evidence is unaffected.
+  Real-loop tests (finish-only, declined plus applied, applied plus finish) show Warden's own evidence is unaffected.
+  (This entry first cited "the saved record of a real run", which was not in the repository; the captured evidence is
+  now under `tests/fixtures/real/`, added in 0.4.4. The clause for listed edits that no `APPLIED` cycle explains cannot
+  fire on a converged run when a finisher may have run; see 0.4.4.)
 - The README and this file said no release tags exist; an older tag `v0.10.0` does, and the text now says so.
 
 ### Changed
