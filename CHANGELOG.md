@@ -7,6 +7,14 @@ code); releases of the current version are not tagged yet, and tagging is the ow
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-10-21
+
+### Changed
+- The Warden test pin moved from `580f659` (Warden 0.13.3) to `36e98433f4928b7d12905f02b56e55ee1943b56e` (Warden 0.13.4), in the
+  `warden` extra of `pyproject.toml` and the `ref:` of the Warden CI job. Warden 0.13.4 requires every instrument root to be a
+  git checkout with a readable version.
+- No test or fixture needed a change for Warden 0.13.4: the whole suite passes against it unchanged, with nothing skipped.
+
 ## [0.4.4] - 2026-10-21
 
 ### Fixed
