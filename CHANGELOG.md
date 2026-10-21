@@ -7,6 +7,16 @@ code); releases of the current version are not tagged yet, and tagging is the ow
 
 ## [Unreleased]
 
+## [0.4.6] - 2026-10-21
+
+### Changed
+- The CNS pin moved from `5252ceebe98185f7be81212d988055ccf9884568` (v1.8.0) to `da18e411743d4e3b0e783105394d845fb1c16746` (v1.9.0).
+- The Warden test pin moved from `36e98433f4928b7d12905f02b56e55ee1943b56e` (Warden 0.13.4) to
+  `decc3c3b5af479ad0eef3df4d66dbcb21e90897c` (Warden 0.13.5, not tagged), in the `warden` extra of `pyproject.toml` and the
+  `ref:` of the Warden CI job.
+- `origin/main` (PR #15) was merged into this branch. Its conflicts in `README.md` and `pyproject.toml` were resolved by
+  keeping this branch's full-commit pins and Warden-as-test-extra layout.
+
 ## [0.4.5] - 2026-10-21
 
 ### Changed
