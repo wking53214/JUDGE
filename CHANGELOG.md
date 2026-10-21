@@ -7,6 +7,15 @@ code); releases of the current version are not tagged yet, and tagging is the ow
 
 ## [Unreleased]
 
+## [0.4.7] - 2026-10-21
+
+### Changed
+- The CNS pin is now spelled by release tag, `cns @ git+https://github.com/wking53214/CNS.git@v1.9.0`, with the commit the tag
+  peels to (`da18e411743d4e3b0e783105394d845fb1c16746`) in a comment. It is the same CNS release as before.
+- The Warden test pin moved from `decc3c3b5af479ad0eef3df4d66dbcb21e90897c` (Warden 0.13.5) to
+  `0c1ea567f0b69586cfd735f82260774aec9552bb` (Warden 0.13.6, not tagged), in the `warden` extra of `pyproject.toml` and the
+  `ref:` of the Warden CI job.
+
 ## [0.4.6] - 2026-10-21
 
 ### Changed
