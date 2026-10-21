@@ -7,6 +7,13 @@ code); releases of the current version are not tagged yet, and tagging is the ow
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-10-21
+
+### Changed
+- Warden test pin moved from `ec551d8` (Warden 0.13.1) to `9d9a71d1bc3195f0abd9aee8fe553cc09838b684` (Warden 0.13.2), in the
+  `warden` extra of `pyproject.toml` and in the `ref:` of the Warden CI job. Warden 0.13.2 refuses a ghost scan with no root and
+  enforces instrument roots; the real-loop tests were run against it.
+
 ## [0.4.2] - 2026-10-17
 
 ### Fixed
