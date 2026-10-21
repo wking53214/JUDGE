@@ -52,6 +52,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[test]"
-      # Warden pins CNS by the same full commit as Judge, so a plain install resolves to one CNS.
+      # Warden pins CNS by the same release tag as Judge, so a plain install resolves to one CNS.
       - run: pip install ./_warden
       - run: pytest -q -rs
