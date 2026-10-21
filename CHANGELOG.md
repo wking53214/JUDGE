@@ -7,6 +7,21 @@ code); releases of the current version are not tagged yet, and tagging is the ow
 
 ## [Unreleased]
 
+## [0.4.8] - 2026-10-21
+
+### Changed
+- The Warden test pin moved from `0c1ea567f0b69586cfd735f82260774aec9552bb` (Warden 0.13.6) to
+  `1636e1a21f124eedbf6e158db95dc75344f4308d` (Warden 0.13.7, not tagged), in the `warden` extra of `pyproject.toml` and the
+  `ref:` of the Warden CI job. The `Warden.git` spelling and the CNS tag `@v1.9.0` are unchanged.
+- The CI `lint` job (ruff and mypy) now runs on Python 3.11, 3.12 and 3.13 instead of 3.12 only.
+
+### Fixed
+- `judge decide FILE | head` no longer ends in a `BrokenPipeError` traceback (and exit 1 even for an ACCEPT) when the reader closes the
+  pipe. A closed standard output is handled quietly and the exit code stays the one the decision earned. The documented recipe
+  (`os.dup2` onto `os.devnull`) is not used because `tests/test_independence.py` keeps `os` out of the Judge; the command drops
+  `sys.stdout` instead, which also stops the flush at exit from raising. New tests in `tests/test_cli.py` run the real command
+  with a closed pipe.
+
 ## [0.4.7] - 2026-10-21
 
 ### Changed
