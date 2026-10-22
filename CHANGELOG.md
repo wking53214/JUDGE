@@ -2,10 +2,40 @@
 
 All notable changes to Judge are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/). Versions 0.1.0 to 0.3.0 are reconstructed from the git
-history. An older tag `v0.10.0` (and a GitHub release of that name) exists that does not correspond to any version here (it points at the 0.3.0
-code); releases of the current version are not tagged yet, and tagging is the owner's decision.
+history.
 
 ## [Unreleased]
+
+## [0.4.10] - 2026-10-22
+
+Three changes, nothing else: the CNS pin (step 1), the Warden test pin (step 2) and the README (step 3). No Judge code changed
+and no existing test was edited.
+
+### Changed
+- The CNS pin moved from the tag `v1.9.0` to the tag `v2.0.0`: `cns @ git+https://github.com/wking53214/CNS.git@v2.0.0`, with
+  the commit the tag peels to (`b13e5d2f9e0e4291725f82794b89117c3d840ac1`) in a comment on the pin line. The suite passes against
+  the installed cns 2.0.0 (its `direct_url.json` shows `requested_revision` `v2.0.0` and that commit) with no change to a test.
+- The Warden test pin moved from `380894f0304ef40587dd29efd41b4ceccf94a5d3` (Warden 0.13.8) to
+  `b57b81e1c98333c43d422666c89a8fcf3ae6eaca` (Warden 0.13.9), in the `warden` extra of `pyproject.toml` and the `ref:` of the
+  Warden CI job. pip resolves one CNS (v2.0.0) with Warden installed and `pip check` is clean. The `Warden.git` spelling is unchanged.
+  Judge pins no other sibling.
+- The README was rewritten to state what works (each line names a test or CI job), what does not work or is not proven, the open
+  defects, what broke and how it was fixed, what has and has not been recorded about the circuit governing this repository, and
+  the limits code cannot fix. The sections "WHAT IS BEAUTIFUL", "WHAT IS IMPLEMENTED", "WHAT IS PROVEN", "WHAT REMAINS OUTSTANDING"
+  and "CLAIMS VS REALITY" were removed: their content is either in the new sections or could not be shown. The install section
+  warns that the bare name `judge` on PyPI is another project. The README and the header of this file no longer say whether
+  release tags exist.
+
+### Added
+- `tests/test_readme_ledger.py`: the README keeps its required sections in order, every test it names exists, every ledger entry
+  cites a version and date in this file, the CI jobs it names are in the workflow, it uses no marketing words or em dash, its
+  install lines never use a bare package name, and its self-hosting paragraph says the recorded runs predate the current rules.
+
+### Known defects found while writing the README (open, listed in the README)
+- An edit of kind `replace` on a `.py` file does not trigger the "some tests did not run" rule, which lists only `write` and
+  `delete`; with skips before and after, a lone `replace` edit is ACCEPTed. No fix yet.
+- The comments in `judge/seat.py` that say the CNS `Evidence` shape has no `finisher ran` field are out of date: the shape
+  now has `finisher_ran`. Judge does not read it, and adopting it is deferred.
 
 ## [0.4.9] - 2026-10-22
 
