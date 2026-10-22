@@ -7,6 +7,10 @@ code); releases of the current version are not tagged yet, and tagging is the ow
 
 ## [Unreleased]
 
+## [0.4.9] - 2026-10-22
+
+Two changes, nothing else: the Warden test pin (step 1) and delivery of the decision (step 2).
+
 ### Fixed
 - Delivery of the decision is now handled in every case instead of only a broken pipe. The 0.4.8 closed-pipe fix set
   `sys.stdout = None`, which (a) made `judge decide FILE >&-` end in an `AttributeError` traceback (`'NoneType' object has no
@@ -20,8 +24,8 @@ code); releases of the current version are not tagged yet, and tagging is the ow
   the interpreter's flush at exit cannot fail again (exit status 120). The `cli.py` docstring and the README exit-code table state
   the rule. New tests in `tests/test_cli.py` run the real command with a closed stdout, a closed stdin, a full device
   (`/dev/full` opened for writing as the child's stdout), and a broken pipe for ACCEPT and REJECT, with and without
-  `PYTHONUNBUFFERED`, and check `sys.stdout` is untouched after an in-process `main()`; they fail on the 0.4.8 code. No
-  pre-existing test was edited.
+  `PYTHONUNBUFFERED`, and check `sys.stdout` is untouched after an in-process `main()`; all but the broken-pipe regression guards
+  fail on the 0.4.8 code. No pre-existing test was edited.
 
 ### Changed
 - The Warden test pin moved from `1636e1a21f124eedbf6e158db95dc75344f4308d` (Warden 0.13.7) to
