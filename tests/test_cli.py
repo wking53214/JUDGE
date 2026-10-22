@@ -204,3 +204,130 @@ def test_a_broken_pipe_without_a_file_descriptor_still_returns_the_earned_code(m
 
     monkeypatch.setattr(sys, "stdout", Gone())
     assert cli.main(["decide", str(EXAMPLE)]) == 0
+
+
+# Delivery of the decision. The subprocess tests start the real command with standard output or input closed, on a full device
+# (opened for writing and handed over as the child's stdout, never named as an output path) or on a broken pipe. Each runs with
+# and without PYTHONUNBUFFERED, because buffered output fails at exit rather than at the print.
+
+def _close(fd: int):
+    return lambda: os.close(fd)
+
+
+def _env(unbuffered: bool) -> dict:
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONUNBUFFERED"}
+    if unbuffered:
+        env["PYTHONUNBUFFERED"] = "1"
+    return env
+
+
+def _reject(tmp_path: Path) -> str:
+    data = _data()
+    data["suite_after"] = {"ran": True, "passed": 10, "failed": 2, "exit_code": 1}
+    return _write(tmp_path, data)
+
+
+def _plain_line(stderr: str) -> bool:
+    return len(stderr.strip().splitlines()) == 1 and "Traceback" not in stderr and "Exception ignored" not in stderr
+
+
+@pytest.mark.parametrize("unbuffered", [False, True])
+def test_a_closed_stdout_is_one_plain_line_and_an_accept_that_was_not_delivered_exits_1(unbuffered):
+    done = subprocess.run([sys.executable, "-m", "judge", "decide", str(EXAMPLE)], preexec_fn=_close(1), stdin=subprocess.DEVNULL,
+                          stderr=subprocess.PIPE, text=True, timeout=60, check=False, env=_env(unbuffered))
+    assert _plain_line(done.stderr), done.stderr
+    assert "ACCEPT" in done.stderr and "standard output is closed" in done.stderr
+    assert done.returncode == 1
+
+
+@pytest.mark.parametrize("unbuffered", [False, True])
+def test_a_closed_stdout_still_exits_1_for_a_rejection(tmp_path, unbuffered):
+    done = subprocess.run([sys.executable, "-m", "judge", "decide", _reject(tmp_path)], preexec_fn=_close(1), stdin=subprocess.DEVNULL,
+                          stderr=subprocess.PIPE, text=True, timeout=60, check=False, env=_env(unbuffered))
+    assert _plain_line(done.stderr), done.stderr
+    assert "REJECT" in done.stderr and done.returncode == 1
+
+
+@pytest.mark.parametrize("unbuffered", [False, True])
+def test_a_closed_stdin_is_one_plain_line_and_exit_2(unbuffered):
+    done = subprocess.run([sys.executable, "-m", "judge", "decide", "-"], preexec_fn=_close(0), capture_output=True,
+                          text=True, timeout=60, check=False, env=_env(unbuffered))
+    assert _plain_line(done.stderr), done.stderr
+    assert "standard input is closed" in done.stderr
+    assert done.returncode == 2 and done.stdout == ""
+
+
+def _run_onto_a_full_device(path: str, unbuffered: bool) -> subprocess.CompletedProcess:
+    with open("/dev/full", "wb") as full:  # opened for writing and handed to the child as its stdout; never replaced or named as an output
+        return subprocess.run([sys.executable, "-m", "judge", "decide", path], stdout=full, stdin=subprocess.DEVNULL,
+                              stderr=subprocess.PIPE, text=True, timeout=60, check=False, env=_env(unbuffered))
+
+
+@pytest.mark.skipif(not Path("/dev/full").exists(), reason="this system has no /dev/full")
+@pytest.mark.parametrize("unbuffered", [False, True])
+def test_an_accept_that_cannot_be_written_to_a_full_device_exits_1_with_one_plain_line(unbuffered):
+    done = _run_onto_a_full_device(str(EXAMPLE), unbuffered)
+    assert _plain_line(done.stderr), done.stderr
+    assert "ACCEPT" in done.stderr and "No space left" in done.stderr
+    assert done.returncode == 1
+
+
+@pytest.mark.skipif(not Path("/dev/full").exists(), reason="this system has no /dev/full")
+@pytest.mark.parametrize("unbuffered", [False, True])
+def test_a_rejection_on_a_full_device_exits_1_with_one_plain_line(tmp_path, unbuffered):
+    done = _run_onto_a_full_device(_reject(tmp_path), unbuffered)
+    assert _plain_line(done.stderr), done.stderr
+    assert "REJECT" in done.stderr and done.returncode == 1
+
+
+@pytest.mark.parametrize("unbuffered", [False, True])
+def test_a_broken_pipe_keeps_the_earned_code_quietly_for_accept_and_reject(tmp_path, unbuffered):
+    for path, expected in ((str(EXAMPLE), 0), (_reject(tmp_path), 1)):
+        read_end, write_end = os.pipe()
+        os.close(read_end)
+        try:
+            done = subprocess.run([sys.executable, "-m", "judge", "decide", path], stdout=write_end, stdin=subprocess.DEVNULL,
+                                  stderr=subprocess.PIPE, text=True, timeout=60, check=False, env=_env(unbuffered))
+        finally:
+            os.close(write_end)
+        assert done.stderr == "" and done.returncode == expected
+
+
+class _Unwritable(io.StringIO):
+    def __init__(self, error: Exception):
+        super().__init__()
+        self._error = error
+
+    def write(self, text):
+        raise self._error
+
+
+@pytest.mark.parametrize("error", [BrokenPipeError(32, "Broken pipe"), OSError(28, "No space left on device")])
+def test_main_run_in_process_leaves_the_callers_stdout_in_place(monkeypatch, error):
+    stream = _Unwritable(error)
+    monkeypatch.setattr(sys, "stdout", stream)
+    cli.main(["decide", str(EXAMPLE)])
+    assert sys.stdout is stream
+
+
+def test_in_process_an_unwritable_stdout_makes_an_accept_exit_1_and_says_why(monkeypatch, capsys):
+    stream = _Unwritable(OSError(28, "No space left on device"))
+    monkeypatch.setattr(sys, "stdout", stream)
+    assert cli.main(["decide", str(EXAMPLE)]) == 1
+    err = capsys.readouterr().err
+    assert _plain_line(err) and "ACCEPT" in err and "No space left" in err
+    assert sys.stdout is stream
+
+
+def test_in_process_a_stdout_of_none_is_not_a_traceback_and_stays_none(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "stdout", None)
+    assert cli.main(["decide", str(EXAMPLE)]) == 1
+    assert sys.stdout is None
+    assert "standard output is closed" in capsys.readouterr().err
+
+
+def test_in_process_a_stdin_of_none_is_exit_2_with_one_plain_line(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "stdin", None)
+    assert cli.main(["decide", "-"]) == 2
+    err = capsys.readouterr().err
+    assert _plain_line(err) and "standard input is closed" in err

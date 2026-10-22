@@ -7,6 +7,22 @@ code); releases of the current version are not tagged yet, and tagging is the ow
 
 ## [Unreleased]
 
+### Fixed
+- Delivery of the decision is now handled in every case instead of only a broken pipe. The 0.4.8 closed-pipe fix set
+  `sys.stdout = None`, which (a) made `judge decide FILE >&-` end in an `AttributeError` traceback (`'NoneType' object has no
+  attribute 'flush'`) and `judge decide - <&-` end in one for `read`, (b) left an ACCEPT written to a full device ending in an
+  `OSError` traceback (exit 1, or exit status 120 with buffered output), while the same ACCEPT into a broken pipe exited 0, and
+  (c) was process-global, so a program calling `judge.cli.main()` in-process after a broken pipe kept `sys.stdout = None` and lost
+  its later prints. Now `main` never replaces `sys.stdout`; the rule is: the reader left (broken pipe) keeps the earned code
+  quietly; standard output closed or a failed write prints one plain line to standard error and exits 1 for every decision, so an
+  ACCEPT that was not delivered exits 1 (it was overstated before that a closed standard output is never an error); a closed or
+  unreadable standard input prints one plain line and exits 2. After a failed write the process's real standard output is closed so
+  the interpreter's flush at exit cannot fail again (exit status 120). The `cli.py` docstring and the README exit-code table state
+  the rule. New tests in `tests/test_cli.py` run the real command with a closed stdout, a closed stdin, a full device
+  (`/dev/full` opened for writing as the child's stdout), and a broken pipe for ACCEPT and REJECT, with and without
+  `PYTHONUNBUFFERED`, and check `sys.stdout` is untouched after an in-process `main()`; they fail on the 0.4.8 code. No
+  pre-existing test was edited.
+
 ### Changed
 - The Warden test pin moved from `1636e1a21f124eedbf6e158db95dc75344f4308d` (Warden 0.13.7) to
   `380894f0304ef40587dd29efd41b4ceccf94a5d3` (Warden 0.13.8, not tagged), in the `warden` extra of `pyproject.toml` and the

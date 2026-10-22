@@ -6,15 +6,27 @@
 ``decide`` reads a JSON object with the fields of ``cns.seat.Evidence`` (the same input
 ``Judge.decide`` takes), prints the decision as JSON on standard output and exits:
 
-    0  ACCEPT (the only approval)
-    1  anything else: REJECT, INSUFFICIENT, or an input the Judge could not judge
-    2  usage error: bad arguments, a file that cannot be read, text that is not JSON
+    0  ACCEPT (the only approval), and the decision was delivered or the reader of standard output had left
+    1  anything else: REJECT, INSUFFICIENT, an input the Judge could not judge, or an ACCEPT that could not be delivered
+    2  usage error: bad arguments, a file or standard input that cannot be read, text that is not JSON
 
 The command fails closed. Any exception while building or judging the evidence yields an
 INSUFFICIENT decision and exit 1; nothing but an explicit ACCEPT from the Judge exits 0.
 The command reads one file (or standard input) and writes only to standard output and
 standard error. Logs go to standard error: ``-v`` shows decisions, ``-vv`` adds each reason.
-A closed standard output (``judge decide FILE | head``) is not an error: no traceback, and the exit code is the one earned.
+
+Delivery of the decision. The decision is the output, so an ACCEPT whose decision was never delivered is not an approval:
+
+* The reader of standard output left (a broken pipe, ``judge decide FILE | head``): nothing is printed and the exit code is
+  the one earned (0 for ACCEPT, 1 otherwise). The caller chose to stop reading; the Judge did decide.
+* The decision could not be delivered for any other reason (standard output is closed, or the write fails, for example a full
+  device): one plain line on standard error, no traceback, and exit 1 for every decision. An ACCEPT that was not delivered
+  exits 1, never 0.
+* Standard input closed or unreadable (``judge decide - <&-``): one plain line on standard error and exit 2.
+
+A closed or failed standard error only loses that one line; the exit code is still the one above. ``main`` never replaces
+``sys.stdout``. When a write to the process's real standard output fails, that stream is closed so the interpreter does not
+try to flush the same undeliverable bytes again at exit (which would end in exit status 120 and a message from Python).
 """
 
 from __future__ import annotations
@@ -39,6 +51,9 @@ __all__ = ["main", "evidence_from_data"]
 EXIT_APPROVED = 0
 EXIT_NOT_APPROVED = 1
 EXIT_USAGE = 2
+
+#: What ``_deliver`` answers when the reader of standard output went away (a broken pipe).
+_READER_LEFT = "reader left"
 
 log = logging.getLogger(__name__)
 
@@ -110,8 +125,22 @@ def _decide(data: object) -> Verdict:
     return verdict
 
 
+def _say(message: str) -> None:
+    """One plain line on standard error, or nothing when standard error is closed or fails (it has no other channel)."""
+    err = sys.stderr
+    if err is None:
+        return
+    try:
+        print(f"judge: {message}", file=err)
+        err.flush()
+    except (OSError, ValueError):
+        pass
+
+
 def _read(source: str) -> str:
     if source == "-":
+        if sys.stdin is None:
+            raise OSError("standard input is closed")
         return sys.stdin.read()
     return Path(source).read_text(encoding="utf-8")
 
@@ -130,30 +159,54 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _deliver(text: str) -> str | None:
+    """Print ``text`` on standard output. None when delivered, ``_READER_LEFT`` on a broken pipe, else why it was not."""
+    out = sys.stdout
+    if out is None:
+        return "standard output is closed"
+    try:
+        print(text, file=out)
+        out.flush()
+        return None
+    except BrokenPipeError:
+        failure = _READER_LEFT
+    except (OSError, ValueError) as exc:  # ValueError: the stream was closed under us
+        failure = f"{type(exc).__name__}: {exc}"
+    real = sys.__stdout__
+    if real is not None and out is real:
+        # Buffered bytes that could not be written are still queued; the interpreter would try them again at exit and end in
+        # status 120. Closing the stream drops them (the close error is the same failure again, already recorded).
+        try:
+            real.close()
+        except (OSError, ValueError):
+            pass
+    return failure
+
+
 def _run_decide(source: str) -> int:
     try:
         text = _read(source)
-    except (OSError, UnicodeDecodeError) as exc:
-        print(f"judge: cannot read {source!r}: {type(exc).__name__}: {exc}", file=sys.stderr)
+    except (OSError, ValueError) as exc:  # ValueError covers UnicodeDecodeError and a stream closed under us
+        _say(f"cannot read {source!r}: {type(exc).__name__}: {exc}")
         return EXIT_USAGE
     try:
         data = json.loads(text)
     except ValueError as exc:
-        print(f"judge: {source!r} is not valid JSON: {exc}", file=sys.stderr)
+        _say(f"{source!r} is not valid JSON: {exc}")
         return EXIT_USAGE
     except (RecursionError, MemoryError) as exc:  # input nested or large enough to exhaust the decoder: not usable JSON
-        print(f"judge: {source!r} cannot be decoded as JSON ({type(exc).__name__}): too deeply nested or too large", file=sys.stderr)
+        _say(f"{source!r} cannot be decoded as JSON ({type(exc).__name__}): too deeply nested or too large")
         return EXIT_USAGE
     verdict = _decide(data)
-    try:
-        print(json.dumps({"decision": str(verdict.decision), "reasons": [str(r) for r in verdict.reasons], "judge": str(verdict.judge)},
-                         indent=2))
-        sys.stdout.flush()
-    except BrokenPipeError:
-        # The reader went away (``judge decide FILE | head``). The documented recipe points stdout at devnull so the flush at
-        # interpreter exit cannot raise again; that needs ``os``, which tests/test_independence.py keeps out of the Judge. Dropping
-        # sys.stdout has the same effect (nothing is flushed at exit) with the same result. The exit code stays the earned one.
-        sys.stdout = None
+    failure = _deliver(json.dumps({"decision": str(verdict.decision), "reasons": [str(r) for r in verdict.reasons],
+                                   "judge": str(verdict.judge)}, indent=2))
+    if failure == _READER_LEFT:
+        # The reader went away (``judge decide FILE | head``) and chose to stop reading: the exit code stays the earned one.
+        pass
+    elif failure is not None:
+        _say(f"the decision ({verdict.decision}) could not be delivered on standard output ({failure})"
+             + ("; an ACCEPT that was not delivered exits 1" if verdict.decision == "ACCEPT" else ""))
+        return EXIT_NOT_APPROVED
     return EXIT_APPROVED if verdict.decision == "ACCEPT" else EXIT_NOT_APPROVED
 
 

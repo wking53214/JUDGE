@@ -122,9 +122,22 @@ What an ACCEPT requires of the evidence (anything less is INSUFFICIENT, or REJEC
 
 | exit code | meaning |
 |---|---|
-| 0 | ACCEPT. The only approval. |
-| 1 | Anything else: REJECT, INSUFFICIENT, or an input that is not the evidence schema (reported as INSUFFICIENT). |
-| 2 | Usage error: bad arguments, a file that cannot be read, or text that is not JSON. Nothing is printed on standard output. |
+| 0 | ACCEPT, and the decision was delivered on standard output or the reader of standard output had left (a broken pipe). The only approval. |
+| 1 | Anything else: REJECT, INSUFFICIENT, or an input that is not the evidence schema (reported as INSUFFICIENT). Also an ACCEPT whose decision could not be delivered for any reason other than the reader leaving (standard output closed, or a failed write such as a full device): a verdict that was not delivered is not an approval. |
+| 2 | Usage error: bad arguments, a file or standard input that cannot be read (including a closed standard input), or text that is not JSON. Nothing is printed on standard output. |
+
+Delivery of the decision, exactly:
+
+- The reader left (`judge decide FILE | head`, a broken pipe): nothing is printed on standard error and the exit code is the one
+  earned, 0 for an ACCEPT and 1 for any other decision.
+- Standard output closed (`judge decide FILE >&-`) or a write to it fails (for example a full device): one plain line on
+  standard error, no traceback, and exit 1 for every decision. The line names the decision, so an ACCEPT that was not delivered is
+  visible as such.
+- Standard input closed (`judge decide - <&-`): one plain line on standard error and exit 2.
+- If standard error is also unusable, that one line is lost and the exit code is unchanged.
+- `main` never replaces `sys.stdout`, so a program that calls `judge.cli.main()` in-process keeps its own stream. The one
+  exception is the process's real standard output after a failed write: it is closed, so the interpreter does not try to flush the
+  same bytes again at exit (which ends in exit status 120 and a message from Python).
 
 The command fails closed: any exception while building or judging the evidence yields INSUFFICIENT and exit 1, never 0.
 Logs go to standard error: `-v` shows each decision, `-vv` adds each reason. As a library, Judge logs to the `judge` logger
