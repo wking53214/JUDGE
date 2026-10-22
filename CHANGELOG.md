@@ -7,6 +7,11 @@ code); releases of the current version are not tagged yet, and tagging is the ow
 
 ## [Unreleased]
 
+### Changed
+- The Warden test pin moved from `1636e1a21f124eedbf6e158db95dc75344f4308d` (Warden 0.13.7) to
+  `380894f0304ef40587dd29efd41b4ceccf94a5d3` (Warden 0.13.8, not tagged), in the `warden` extra of `pyproject.toml` and the
+  `ref:` of the Warden CI job. The `Warden.git` spelling and the CNS tag `@v1.9.0` are unchanged.
+
 ## [0.4.8] - 2026-10-21
 
 ### Changed
