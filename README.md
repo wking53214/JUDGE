@@ -77,7 +77,7 @@ cannot break them without anyone noticing. To move to a newer Warden:
 4. Run `pip install -e ".[dev]"` and `pytest`. `tests/test_warden_pin.py` checks that the pin is a full commit, that CI checks out the same commit, and that the comment names the Warden version that is installed; `tests/test_contract.py` checks that `requires_contract` matches the installed Warden's `CONTRACT`.
 5. Open a pull request. CI runs the same checks.
 
-CNS is pinned by release tag (`@v1.9.0`, with the commit it peels to in a comment) in the `dependencies` line of `pyproject.toml`; every repository of the stack spells that pin the same way.
+CNS is pinned by release tag (`@v2.0.0`, with the commit it peels to in a comment) in the `dependencies` line of `pyproject.toml`; every repository of the stack spells that pin the same way.
 
 ## Usage
 

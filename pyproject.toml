@@ -26,7 +26,7 @@ classifiers = [
 # It is pinned by release tag, spelled the same way in every repository of the stack (CNS's seat_pins check compares the
 # text, and pip treats a tag URL and a commit URL as two sources). The comment names the commit the tag peels to.
 dependencies = [
-    "cns @ git+https://github.com/wking53214/CNS.git@v1.9.0",  # v1.9.0 = da18e411743d4e3b0e783105394d845fb1c16746
+    "cns @ git+https://github.com/wking53214/CNS.git@v2.0.0",  # v2.0.0 = b13e5d2f9e0e4291725f82794b89117c3d840ac1
 ]
 
 [project.urls]
