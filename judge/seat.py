@@ -589,7 +589,7 @@ def _decide(e: Evidence) -> Verdict:
     if odd:
         reasons.append(f"these checks never ran: {', '.join(odd)}")
     if (before is not None and before.not_run > 0
-            and any(p.strip().lower().endswith(".py") and k.strip().lower() in {"write", "delete"} for p, k in changed)):
+            and any(p.strip().lower().endswith(".py") and k.strip().lower() in _EDIT_KINDS for p, k in changed)):
         reasons.append("some tests did not run, so a code change cannot be shown safe")
     # Counts that come from printed text alone can be faked by the code under test, so they never
     # support a plain ACCEPT. The run is held as unverified instead.

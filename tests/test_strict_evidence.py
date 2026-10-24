@@ -268,6 +268,37 @@ def test_code_change_when_some_tests_did_not_run_before_is_insufficient(kind):
     assert v.decision == "INSUFFICIENT" and any("some tests did not run, so a code change cannot be shown safe" in r for r in v.reasons)
 
 
+@pytest.mark.parametrize("kind", ["write", "replace", "delete", "Replace", " REPLACE "])
+def test_every_edit_kind_that_changes_a_python_file_is_held_when_tests_did_not_run(kind):
+    """``replace`` rewrites file content just as ``write`` does, so the skipped-tests rule covers it too."""
+    v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("pkg/a.py", kind),))
+    assert v.decision == "INSUFFICIENT" and any("some tests did not run, so a code change cannot be shown safe" in r for r in v.reasons)
+
+
+def test_the_skipped_tests_rule_covers_every_kind_the_judge_knows():
+    """If a kind is ever added to the known set, this fails until the rule is shown to cover it (or the kind is excused)."""
+    from judge import seat
+
+    assert seat._EDIT_KINDS == frozenset({"write", "replace", "delete"})
+    for kind in sorted(seat._EDIT_KINDS):
+        v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("pkg/a.py", kind),))
+        assert v.decision == "INSUFFICIENT", kind
+
+
+def test_an_unknown_edit_kind_with_tests_that_did_not_run_is_never_accepted():
+    v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("pkg/a.py", "append"),))
+    assert v.decision == "INSUFFICIENT"
+
+
+def test_a_replaced_python_file_is_still_accepted_when_every_test_ran():
+    assert _d(changed=(("pkg/a.py", "replace"),)).decision == "ACCEPT"
+
+
+def test_a_replaced_prose_file_is_still_accepted_when_tests_did_not_run():
+    v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("README.md", "replace"),))
+    assert v.decision == "ACCEPT"
+
+
 def test_xfailed_before_also_counts():
     v = _d(suite_before=_suite(xfailed=1), suite_after=_suite(xfailed=1))
     assert v.decision == "INSUFFICIENT"
