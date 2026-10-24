@@ -67,9 +67,11 @@ explains" cannot fire on a converged run when a finisher may have run: such a
 run ends on NOTHING_TO_PROPOSE whether or not a finisher then edited files, and
 the evidence does not say which, so every listed edit can be blamed on the
 finisher. It catches only hand-made evidence (for example a record that ends on
-a REFUSED cycle), not a fabricated edit list on a converged run. Closing it needs
-a `finisher ran` field in the CNS Evidence shape, which is a change to CNS and the
-owner's call. Nothing here claims that clause protects real evidence.
+a REFUSED cycle), not a fabricated edit list on a converged run. CNS 2.0.0 gives
+the Evidence shape a `finisher_ran` field (default None), which would close it.
+The Judge does not read that field yet: adopting it is deferred by the owner's
+decision, so the gap is still open. Nothing here claims that clause protects real
+evidence.
 """
 
 from __future__ import annotations
@@ -229,8 +231,9 @@ def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, decl
     may have run. A converged run ends on NOTHING_TO_PROPOSE whether or not a finisher then edited files,
     and the evidence does not say whether one did, so any listed edit can be blamed on the finisher. The clause
     therefore catches hand-made evidence only (for example a loop that stopped on a non-converged cycle
-    with edits listed), not a fabricated edit list on a converged run. Closing it needs a `finisher ran`
-    field in the CNS Evidence shape, which is a change to CNS and the owner's call.
+    with edits listed), not a fabricated edit list on a converged run. CNS 2.0.0 gives the Evidence shape a
+    `finisher_ran` field (default None), which would close it. The Judge does not read that field yet; adopting
+    it is deferred by the owner's decision, so the gap is still open.
     """
     out: list[str] = []
     odd = sorted({o for _, o in cycles if o not in _CYCLE_OUTCOMES})
