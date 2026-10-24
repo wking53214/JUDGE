@@ -6,6 +6,39 @@ history.
 
 ## [Unreleased]
 
+## [0.4.11] - 2026-10-24
+
+Five steps from the round-6 independent audit. Each defect was reproduced before it was changed.
+
+### Fixed
+- Step 1: the "some tests did not run, so a code change cannot be shown safe" rule listed only the edit kinds `write` and
+  `delete` (`judge/seat.py`), so a lone `replace` edit to a `.py` file with skips before and after was ACCEPT while the same
+  edit as `write` was INSUFFICIENT. It now uses the set of known kinds (`write`, `replace`, `delete`); an unknown kind was
+  already INSUFFICIENT. Failing-first tests in `tests/test_strict_evidence.py` cover every kind, case and spacing variants, the
+  unknown kind and the cases that stay ACCEPT.
+- Step 5: `judge --verbos decide FILE` ran, and `--vers` and `--hel` were taken as `--version` and `--help`, because argparse
+  accepts any unambiguous prefix of a long option. Both parsers now set `allow_abbrev=False`, so a prefix is a usage error
+  (exit 2). Failing-first tests in `tests/test_cli.py`; the full spellings still work.
+
+### Changed
+- Step 2: the README no longer says "any path shaped like a test". A new section "What counts as a test, exactly" lists the
+  folders, file names and file name patterns copied from `judge/seat.py`, and states that the "some tests did not run" rule looks
+  only at `.py` files. KNOWN DEFECTS lists what the audit reproduced as ACCEPT (JavaScript, TypeScript, Go, Java and Ruby test
+  files, a Rust source file, `Cargo.toml`, `.gitignore`); language support is not extended. New `tests/test_readme_patterns.py`
+  holds the README lists to the code and documents the gap.
+- Step 3: the comments in `judge/seat.py` (module docstring and `_cycle_contradictions`) that said CNS has no `finisher ran` field
+  now say CNS 2.0.0 has `Evidence.finisher_ran` and that the Judge does not read it, by the owner's decision, so the gap stays
+  open. New `tests/test_finisher_ran_gap.py` holds those statements. No code behaviour changed.
+- Step 4: the README's SELF-HOSTING section cites the CNS repository's `docs/evidence/SELFHOSTING_2026-10-23.md` (on its branch
+  `claude/horsemen-production-status-5wsndb` until merged): run 1 FINISH_REJECTED because the finisher wrote a test count into
+  the README (fixed in the finisher), run 2 ACCEPT with 7 gaps and 42 Ghost findings standing, and what that does not mean.
+  Rule-5 edit: `tests/test_readme_ledger.py::test_self_hosting_says_it_predates_the_current_rules_and_links_the_cns_repository`
+  pinned the old sentence "No fresh run on the current commits is recorded yet"; it is replaced by two tests, one holding the new
+  paragraph with the evidence numbers as constants and one keeping the old assertions that still hold.
+- Step 5: the Warden test pin moved from `b57b81e1c98333c43d422666c89a8fcf3ae6eaca` (Warden 0.13.9) to
+  `9ecd1124e6c1b1c4ad7daed37b17f9009662dd9d` (Warden 0.13.10), in the `warden` extra of `pyproject.toml` and the `ref:` of the
+  Warden CI job. CNS stays `@v2.0.0`; `pip check` is clean.
+
 ## [0.4.10] - 2026-10-22
 
 Three changes, nothing else: the CNS pin (step 1), the Warden test pin (step 2) and the README (step 3). No Judge code changed
