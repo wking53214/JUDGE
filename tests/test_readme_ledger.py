@@ -96,13 +96,32 @@ def test_the_readme_warns_off_the_bare_pypi_name_and_installs_from_git_or_a_chec
     assert not bare, bare
 
 
-def test_self_hosting_says_it_predates_the_current_rules_and_links_the_cns_repository():
-    text = section("## SELF-HOSTING")
-    assert "docs/REGISTRY.json" in text and "row 5" in text.lower() and "row 6" in text.lower()
-    assert "predate Warden 0.13.0" in text
-    assert "No fresh run on the current commits is recorded yet" in text
+# Constants copied from the CNS repository's docs/evidence/SELFHOSTING_2026-10-23.md and its JUDGE.run1/run2 records.
+SELFHOST_COMMIT = "c3001b8"
+SELFHOST_SUITE = "green before and after with nothing skipped"  # the record says 1157 passed, 0 skipped; the README may not state a count
+SELFHOST_GAPS = "7 gaps"
+SELFHOST_GHOST_FINDINGS = "42 findings"
+
+
+def test_self_hosting_cites_the_cns_evidence_and_says_what_it_does_and_does_not_mean():
+    text = " ".join(section("## SELF-HOSTING").split())
+    assert "docs/evidence/SELFHOSTING_2026-10-23.md" in text
+    assert "on its branch `claude/horsemen-production-status-5wsndb`" in text
     assert "https://github.com/wking53214/CNS)" in text
+    assert "FINISH_REJECTED (exit 1)" in text and "fixed in Burnish 0.3.12" in text
+    assert "ended ACCEPT (exit 0)" in text
+    for constant in (SELFHOST_COMMIT, SELFHOST_SUITE, SELFHOST_GAPS, SELFHOST_GHOST_FINDINGS):
+        assert constant in text, constant
+    assert "does not mean there are no secrets or weak tests" in text
+    assert "The record covers commit `c3001b8`, not any later commit" in text
+    assert "No fresh run on the current commits is recorded yet" not in text
     assert "STATUS" not in text
+
+
+def test_self_hosting_keeps_the_older_registry_record_and_says_it_predates_the_current_rules():
+    text = section("## SELF-HOSTING")
+    assert "docs/REGISTRY.json" in text and "row 5" in text and "Row 6" in text
+    assert "predate Warden 0.13.0" in text
 
 
 def test_the_readme_does_not_say_whether_release_tags_exist():
