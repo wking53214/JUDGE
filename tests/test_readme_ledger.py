@@ -80,7 +80,8 @@ def test_the_readme_uses_no_marketing_words():
 
 
 def test_the_readme_and_changelog_use_no_em_dash():
-    assert "—" not in README and "—" not in CHANGELOG
+    dash = chr(0x2014)  # spelled by code point so this file holds no em dash itself
+    assert dash not in README and dash not in CHANGELOG
 
 
 def test_the_readme_gives_the_cns_migration_note_and_the_pin_names_its_commit():
