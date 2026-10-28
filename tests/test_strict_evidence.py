@@ -200,12 +200,12 @@ def test_below_floor_still_rejects():
 def test_a_listed_judging_file_rejects_whatever_the_scope_or_suite():
     for scope in ("code", "documentation"):
         v = _d(scope=scope, changed=(), judging_files_touched=("tests/test_a.py",))
-        assert v.decision == "REJECT" and "tests or test settings were changed" in v.reasons[0]
+        assert v.decision == "INSUFFICIENT" and any("tests or test settings were changed" in r for r in v.reasons)
 
 
 def test_test_file_deletion_with_equal_pass_count_is_rejected_even_if_warden_forgot_to_list_it():
     v = _d(changed=(("tests/test_a.py", "delete"),), suite_after=SuiteRun(ran=True, passed=10))
-    assert v.decision == "REJECT" and "tests or test settings" in v.reasons[0]
+    assert v.decision == "INSUFFICIENT" and "tests or test settings" in v.reasons[0]
 
 
 @pytest.mark.parametrize("path", [
@@ -215,7 +215,7 @@ def test_test_file_deletion_with_equal_pass_count_is_rejected_even_if_warden_for
     "./././Makefile", "tests"])
 def test_judging_paths_are_caught_by_their_shape(path):
     v = _d(changed=((path, "write"),))
-    assert v.decision == "REJECT", path
+    assert v.decision == "INSUFFICIENT", path
 
 
 @pytest.mark.parametrize("path", ["pkg/contest.py", "pkg/attest.py", "pkg/testing_helpers.py", "README.md", "pkg/a.py"])

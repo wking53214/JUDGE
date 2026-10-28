@@ -54,7 +54,7 @@ PROTECTED = [
 @pytest.mark.parametrize("path", PROTECTED)
 def test_protected_paths_are_rejected(path):
     v = _d(changed=((path, "write"),))
-    assert v.decision == "REJECT", path
+    assert v.decision == ("REJECT" if ".ghost_" in path.lower() else "INSUFFICIENT"), path
 
 
 @pytest.mark.parametrize("path", [".ghost_baseline.json", "sub/.GHOST_BASELINE.JSON", ".ghost_anything"])
@@ -73,13 +73,13 @@ def test_symlink_to_a_protected_file_is_protected(tmp_path):
     (tmp_path / "tests" / "t.py").write_text("x\n")
     os.symlink("tests/t.py", tmp_path / "helper.py")
     v = _d(target=str(tmp_path), changed=(("helper.py", "write"),))
-    assert v.decision == "REJECT" and any("helper.py" in r for r in v.reasons)
+    assert v.decision == "INSUFFICIENT" and any("helper.py" in r for r in v.reasons)
 
 
 def test_symlinked_directory_into_tests_is_protected(tmp_path):
     (tmp_path / "tests").mkdir()
     os.symlink("tests", tmp_path / "pkg")
-    assert _d(target=str(tmp_path), changed=(("pkg/new.py", "write"),)).decision == "REJECT"
+    assert _d(target=str(tmp_path), changed=(("pkg/new.py", "write"),)).decision == "INSUFFICIENT"
 
 
 def test_symlink_out_of_the_project_is_outside(tmp_path):

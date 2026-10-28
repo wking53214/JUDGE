@@ -20,9 +20,6 @@ THE RULES, in order. The first group that fires decides.
   REJECT        the evidence shows harm:
     the suite is red, or fewer tests pass than before
     more tests are skipped (or expected-to-fail) than before
-    tests or test settings were changed (the Warden's list, or any path that
-      looks like a test, a test setting or a CI file; test*.txt counts, because
-      pytest collects it as a doctest by default)
     an edit reached outside the project, or into git or environment folders
       (.git, .venv, venv, env, .tox, .nox, .eggs, node_modules, site-packages)
     Ghost reports a finding at the end that it did not report at the start
@@ -39,6 +36,11 @@ THE RULES, in order. The first group that fires decides.
   INSUFFICIENT  nothing shows harm, but something is unknown:
     the final suite run, Ghost, SWIZZLE's proofs or attacks, or ASSAY's grade
       is missing, or not exactly the expected value
+    tests or test settings were changed (the Warden's list, or any path that
+      looks like a test, a test setting or a CI file; test*.txt counts, because
+      pytest collects it as a doctest by default): the machine does not approve
+      that, and a named human keeps or drops the held result (the owner's
+      ruling of 2026-10-28; a changed .ghost_* file is still harm)
     the starting suite run is missing, did not run, or was not green (failed,
       errors or a non-zero exit code): the before and after comparison needs a
       known good start
@@ -466,7 +468,11 @@ def _decide(e: Evidence) -> Verdict:
         harm.append(f"Ghost's baseline or another .ghost_ file was changed ({', '.join(baseline_changed[:3])}), "
                     "which can hide findings")
     if judging:
-        harm.append(f"tests or test settings were changed ({', '.join(judging[:3])})")
+        # Owner's ruling (2026-10-28): a changed test or test setting is unknown, not harm. The machine does not
+        # approve it; Warden holds the result by digest for a named human to keep or drop (`warden keep`).
+        # A changed .ghost_* file is still harm (above), and so is an edit that left the project (below).
+        unknown.append(f"tests or test settings were changed ({', '.join(judging[:3])}); the machine does not "
+                       "approve that; a named human keeps or drops the held result")
     if outside:
         harm.append(f"an edit reached outside the project or into git or environment folders ({', '.join(outside[:3])})")
 

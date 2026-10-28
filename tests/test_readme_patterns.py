@@ -48,13 +48,13 @@ def test_the_readme_lists_the_outside_folders_and_prose_endings_the_code_uses():
 @pytest.mark.parametrize("name", sorted(seat._JUDGING_NAMES))
 def test_every_file_name_the_readme_lists_is_rejected_when_edited(name):
     v = _d(changed=((f"pkg/{name}", "write"),))
-    assert v.decision == "REJECT", name
+    assert v.decision == "INSUFFICIENT", name
 
 
 @pytest.mark.parametrize("folder", sorted(seat._JUDGING_DIRS))
 def test_every_folder_the_readme_lists_is_rejected_when_edited(folder):
     v = _d(changed=((f"{folder}/x.dat", "write"),))
-    assert v.decision == "REJECT", folder
+    assert v.decision == "INSUFFICIENT", folder
 
 
 @pytest.mark.parametrize("path", [
@@ -68,11 +68,11 @@ def test_known_gap_files_of_other_languages_are_not_recognised(path):
 
 
 def test_setup_cfg_is_rejected_as_the_readme_says():
-    assert _d(changed=(("setup.cfg", "write"),)).decision == "REJECT"
+    assert _d(changed=(("setup.cfg", "write"),)).decision == "INSUFFICIENT"
 
 
 def test_a_java_test_in_a_test_folder_is_rejected_as_the_readme_says():
-    assert _d(changed=(("src/test/java/FooTest.java", "write"),)).decision == "REJECT"
+    assert _d(changed=(("src/test/java/FooTest.java", "write"),)).decision == "INSUFFICIENT"
 
 
 def test_the_skipped_tests_rule_looks_only_at_python_files_as_the_readme_says():
