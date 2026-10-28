@@ -23,7 +23,11 @@ THE RULES, in order. The first group that fires decides.
     an edit reached outside the project, or into git or environment folders
       (.git, .venv, venv, env, .tox, .nox, .eggs, node_modules, site-packages)
     Ghost reports a finding at the end that it did not report at the start
-      (counted one by one, so a repeated finding is new)
+      (counted one by one, so a repeated finding is new) whose severity, in
+      Ghost's own word (Evidence.ghost_severity, finding id to word), is major
+      or critical, or has no readable word: no mapping, an id missing from it,
+      or a word that is not one of Ghost's four (Warden's high, medium and low
+      included)
     Ghost's baseline grew (more suppressed findings) or a baseline file or any
       .ghost_* file was changed
     the final suite exited non-zero, or was marked forged
@@ -41,6 +45,9 @@ THE RULES, in order. The first group that fires decides.
       pytest collects it as a doctest by default): the machine does not approve
       that, and a named human keeps or drops the held result (the owner's
       ruling of 2026-10-28; a changed .ghost_* file is still harm)
+    Ghost reports a new finding whose severity, in Ghost's own word, is minor
+      or informational: held for a named human (the owner's ruling of
+      2026-10-28; a mix of held and harmful new findings is harm)
     the starting suite run is missing, did not run, or was not green (failed,
       errors or a non-zero exit code): the before and after comparison needs a
       known good start
@@ -130,7 +137,13 @@ _JUDGING_PATTERNS = (
 #: runs later with the user's rights.
 _OUTSIDE_DIRS = {"..", ".git", ".venv", "venv", "env", ".tox", ".nox", ".eggs", "node_modules", "site-packages"}
 _BASELINE_NAMES = (".ghost_baseline.json",)
+#: SWIZZLE's attack scale: a violated attack at any of these severities is harm, and only "low" is tolerated.
 _HARM_SEVERITIES = {"high", "medium", "critical", "severe"}
+#: Ghost's own four-word scale for a finding (critical, major, minor, informational). It is a different scale from
+#: SWIZZLE's above: "medium" is harm there and is not a Ghost word at all. A new finding carrying one of these two
+#: words is held for a named human (owner's ruling 2, 2026-10-28); any other word, or no word, is harm. Warden's remap
+#: of Ghost's words to critical/high/medium/low must not reach here; if it does, the id has no readable severity.
+_HELD_GHOST_SEVERITIES = frozenset({"minor", "informational"})
 #: Change kinds that only reformat. There are none today, so nothing is excused.
 _FORMAT_ONLY_KINDS: frozenset = frozenset()
 
@@ -481,8 +494,20 @@ def _decide(e: Evidence) -> Verdict:
     if g_before is not None and g_after is not None:
         ghost_start, ghost_end = len(g_before), len(g_after)
         new = sorted((Counter(g_after) - Counter(g_before)).elements())
-        if new:
-            harm.append(f"Ghost reports {len(new)} finding(s) it did not report at the start ({', '.join(new[:3])})")
+        # Owner's ruling 2 (2026-10-28): a new finding whose severity, in the scanner's own word, is minor or
+        # informational is unknown, not harm, and is held for a named human. Major and critical are harm as before.
+        # The word comes from Evidence.ghost_severity (finding id to the scanner's word; CNS 2.1.0, so a Warden
+        # older than the field gives None), compared stripped and lower-cased. An id with no readable severity is
+        # harm: no mapping, an id missing from it, or a word outside the two above (unknown is not approved).
+        severities = getattr(e, "ghost_severity", None)
+        held_new = [x for x in new
+                    if isinstance(severities, Mapping) and _norm_text(severities.get(x)) in _HELD_GHOST_SEVERITIES]
+        harm_new = [x for x in new if x not in held_new]
+        if harm_new:
+            harm.append(f"Ghost reports {len(harm_new)} finding(s) it did not report at the start ({', '.join(harm_new[:3])})")
+        if held_new:
+            unknown.append(f"{len(held_new)} new finding(s) of minor or informational severity ({', '.join(held_new[:3])}) "
+                           "are held for a named human")
 
     # Ghost's baseline: findings it was told to ignore. Growth hides new findings.
     baseline_unknown = None
