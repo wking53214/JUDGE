@@ -6,6 +6,52 @@ history.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-28
+
+Not tagged. Two REJECT outcomes become INSUFFICIENT by the owner's explicit rulings of 2026-10-28, so Warden holds the result by
+digest for a named human (`warden keep`) instead of putting the tree back for good. They are rulings, not defects, and they
+loosen the Judge; nothing else in `_decide` changes: harm is still found first, unknown is still not approved, the verdict is
+deterministic and the Judge never raises. Both commits carry the trailer "Borderline: reviewed by author before commit".
+The CNS pin stays `@v2.0.0`; the new field is read by duck typing and works with and without it.
+
+### Changed
+- Step 1 (rule 1): "tests or test settings were changed (<paths>)" moves from harm to unknown and now ends "; the machine does
+  not approve that; a named human keeps or drops the held result". A change to Ghost's baseline or any other `.ghost_*` file is
+  still harm, an edit outside the project is still harm, and harm still outranks the hold. The README's "Any change to a test
+  file is rejected" became the hold. Rule-5 edits, each asserting INSUFFICIENT where it asserted REJECT for a test-file edit and
+  nothing else: `tests/test_strict_evidence.py::test_a_listed_judging_file_rejects_whatever_the_scope_or_suite` (its
+  `reasons[0]` became `any(...)` because the cycle contradiction of its own evidence is listed first),
+  `tests/test_strict_evidence.py::test_test_file_deletion_with_equal_pass_count_is_rejected_even_if_warden_forgot_to_list_it`,
+  `tests/test_strict_evidence.py::test_judging_paths_are_caught_by_their_shape` (21 parameters),
+  `tests/test_judge.py::test_a_fixture_or_specimen_is_judging_material_even_under_a_code_grant` (6),
+  `tests/test_real_evidence.py::test_a_prose_file_pytest_collects_as_a_doctest_is_judged_like_a_test` (6; `testing.txt.` is not
+  prose, so under its documentation grant the harm "code changed" still outranks the hold and that parameter asserts REJECT on
+  that), `tests/test_readme_patterns.py::test_every_file_name_the_readme_lists_is_rejected_when_edited` (42),
+  `tests/test_readme_patterns.py::test_every_folder_the_readme_lists_is_rejected_when_edited` (24),
+  `tests/test_readme_patterns.py::test_setup_cfg_is_rejected_as_the_readme_says`,
+  `tests/test_readme_patterns.py::test_a_java_test_in_a_test_folder_is_rejected_as_the_readme_says`,
+  `tests/test_red_team_round2.py::test_protected_paths_are_rejected` (60; the 4 `.ghost_` paths still assert REJECT),
+  `tests/test_red_team_round2.py::test_symlink_to_a_protected_file_is_protected`,
+  `tests/test_red_team_round2.py::test_symlinked_directory_into_tests_is_protected`. Twelve test functions, 161 parameters
+  flipped to INSUFFICIENT; the test names were kept as rule 5 requires.
+- Step 2 (rule 2): the Ghost "none new" rule reads `Evidence.ghost_severity` (CNS 2.1.0: finding id to the scanner's own word,
+  `None` from a Warden older than the field) through `getattr`. A new finding whose word is `minor` or `informational`, compared
+  stripped and lower-cased, is unknown ("N new finding(s) of minor or informational severity (ids) are held for a named human");
+  `major` or `critical` is harm as before; no mapping, an id missing from it, a field that is not a mapping, or any other word
+  (Warden's critical/high/medium/low remap included) is harm as before, because an id with no readable severity is harm. A mixed
+  set is harm. `_HARM_SEVERITIES` (SWIZZLE's attack scale, where `medium` is harm) is untouched; the new `_HELD_GHOST_SEVERITIES`
+  carries a comment that the two scales are different. `judge decide` accepts a `ghost_severity` key only when the installed CNS
+  declares the field; under the pinned CNS 2.0.0 such a record is turned away as an unknown field (INSUFFICIENT, exit 1).
+- Step 3: version 0.5.0 (`judge --version`, README), this entry, README WHAT WORKS entries naming the tests, WHAT DOES NOT WORK
+  / NOT PROVEN restated for severity and for the field the pinned CNS lacks, KNOWN DEFECTS 2 reworded for the hold. No ledger
+  entry: no defect was fixed.
+
+### Added
+- `tests/test_owner_rulings.py`: both rulings held to the code, including a replay of the falsifier's two-rule record on the
+  Ghost Tools repository (`patched2/02-e5eccc0`, a changed test file and one new `minor` finding), reconstructed as
+  `tests/fixtures/held/falsifier_02_e5eccc0.json` with its real finding ids; it ends INSUFFICIENT with both sentences in the
+  record's order, and REJECT as before without Ghost's word. The fixture's `notes` say which values the record did not carry.
+
 ## [0.4.11] - 2026-10-24
 
 Five steps from the round-6 independent audit. Each defect was reproduced before it was changed.
