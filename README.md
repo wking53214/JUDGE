@@ -96,6 +96,8 @@ Without Warden (`pip install -e ".[test]"`) the tests that need it are skipped w
 
 The CNS pin moved from `v1.9.0` to `v2.0.0`. Judge's suite passed against it with no change to a test, and no Judge code was edited for it. The pin is the release tag in the `dependencies` line of `pyproject.toml`, with the commit it peels to in a comment; every repository of the stack spells that pin the same way.
 
+The pin then moved from `v2.0.0` to `v2.1.0` (Judge 0.5.1); the comment beside it in `pyproject.toml` names the commit the tag peels to. No Judge code was edited for it, and the Warden pin of the `warden` extra and of the CI job moved with it.
+
 ### Testing against the pin
 
 The Judge itself does not import Warden. Two test files do, because they seat the Judge in the real loop and check the contract

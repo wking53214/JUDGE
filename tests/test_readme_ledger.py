@@ -86,8 +86,8 @@ def test_the_readme_and_changelog_use_no_em_dash():
 
 def test_the_readme_gives_the_cns_migration_note_and_the_pin_names_its_commit():
     assert "from `v1.9.0` to `v2.0.0`" in README
-    assert "cns @ git+https://github.com/wking53214/CNS.git@v2.0.0" in PYPROJECT_TEXT
-    assert "# v2.0.0 = b13e5d2f9e0e4291725f82794b89117c3d840ac1" in PYPROJECT_TEXT
+    assert "cns @ git+https://github.com/wking53214/CNS.git@v2.1.0" in PYPROJECT_TEXT
+    assert "# v2.1.0 = fde931ffa89aebec95647742256ad53033bd3d02" in PYPROJECT_TEXT
     tomllib.loads(PYPROJECT_TEXT)
 
 
