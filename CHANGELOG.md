@@ -6,6 +6,18 @@ history.
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-10-30
+
+Not tagged. No code changed; the Warden pin moved. One commit per step.
+
+### Changed
+- Stage 3 wave 2 step 1: the `warden` extra and the CI `warden` job move together from Warden 0.16.1
+  (`fade3ca5ee6435393d0588782929ff8de72f988f`) to Warden 0.16.2 (`df212db32c230a00cf4100038637be873262a816`), which refuses a
+  `--stack` folder that holds a seat the pinned manifest omits even when `--claim-commit`, `--claim-diff`, `--drafter` or
+  `--finisher` supplies the seat. The suite passed (JUDGE_REQUIRE_WARDEN=1) against CNS 2.2.0 and that Warden. No test was
+  edited.
+- Stage 3 wave 2 step 2: version 0.5.3 (`pyproject.toml`, README version line) and this entry.
+
 ## [0.5.2] - 2026-10-30
 
 Not tagged. No code changed; the pins moved. One commit per step.

@@ -6,7 +6,7 @@ The third party that decides. It reads the evidence of a whole run and says ACCE
 
 One of seven repositories in a stack that improves code under human control. Judge has one job: given the evidence a run produced, decide whether the run is acceptable, and say why. [Warden](https://github.com/wking53214/Warden) runs the loop and is the only one that writes files. When the loop is done, Warden hands Judge the evidence and does what the verdict says. Warden cannot say ACCEPT on its own.
 
-Version `0.5.2` (see `CHANGELOG.md`). Python 3.11 or newer. Its one runtime dependency is [CNS](https://github.com/wking53214/CNS), which defines the shared rows the Judge reads and returns (`cns.seat`) and the gate contract of the optional connector (`cns.gate`); the exact release tag is pinned in `pyproject.toml`. The Judge imports no Warden code. Warden is used only by the tests that seat the Judge in the real loop, as the test-time extra `warden`, pinned to a full commit in `pyproject.toml`; see "Testing against the pin" below.
+Version `0.5.3` (see `CHANGELOG.md`). Python 3.11 or newer. Its one runtime dependency is [CNS](https://github.com/wking53214/CNS), which defines the shared rows the Judge reads and returns (`cns.seat`) and the gate contract of the optional connector (`cns.gate`); the exact release tag is pinned in `pyproject.toml`. The Judge imports no Warden code. Warden is used only by the tests that seat the Judge in the real loop, as the test-time extra `warden`, pinned to a full commit in `pyproject.toml`; see "Testing against the pin" below.
 
 This is an experimental project kept by one person. The rules below are a first draft written to match the failures found so far. Read WHAT DOES NOT WORK / NOT PROVEN and KNOWN DEFECTS before you rely on a verdict.
 
@@ -99,6 +99,8 @@ The CNS pin moved from `v1.9.0` to `v2.0.0`. Judge's suite passed against it wit
 The pin then moved from `v2.0.0` to `v2.1.0` (Judge 0.5.1); the comment beside it in `pyproject.toml` names the commit the tag peels to. No Judge code was edited for it, and the Warden pin of the `warden` extra and of the CI job moved with it.
 
 The pin then moved from `v2.1.0` to `v2.2.0` (Judge 0.5.2), a lightweight tag, so the tag is the commit named in the comment beside the pin. The `cns` package at v2.2.0 equals v2.1.0 except its version string. No Judge code was edited for it, and the Warden pin of the `warden` extra and of the CI job moved to Warden 0.16.1.
+
+The Warden pin then moved to Warden 0.16.2 (Judge 0.5.3), which fixes how a `--stack` folder is compared with the pinned manifest. No Judge code was edited for it.
 
 ### Testing against the pin
 
