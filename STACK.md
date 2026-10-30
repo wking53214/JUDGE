@@ -15,7 +15,7 @@ written without a named human.
 | 2 | Scanner | [ghost_tools](https://github.com/wking53214/ghost_tools) (Ghost Buster) | Observes: finds defects; findings keep their identity across the loop; says what it could not look at. |
 | 3 | Attacker | [SWIZZLE](https://github.com/wking53214/SWIZZLE) | Proves its own planted defects, scores the scanner against the answer key, attacks the governor's rules. |
 | 4 | Governor | [Warden](https://github.com/wking53214/Warden) | Applies, measures, refuses and puts the tree back; the only part allowed to write; human grant, green suite before and after, durable record. |
-| 5 | Judge | [Judge](https://github.com/wking53214/Judge) | Reads the evidence of the whole run and says ACCEPT, REJECT or INSUFFICIENT; Warden reports INSUFFICIENT as a hold. |
+| 5 | Judge | [JUDGE](https://github.com/wking53214/JUDGE) | Reads the evidence of the whole run and says ACCEPT, REJECT or INSUFFICIENT; Warden reports INSUFFICIENT as a hold. |
 
 Any actor's real change enters through Warden's claim seat (`--claim-commit` or `--claim-diff`);
 an optional Drafter may propose one instead. There is no finisher in the loop.

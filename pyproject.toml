@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "judge"
-version = "0.5.4"
+version = "0.5.5"
 description = "The third party that decides. Reads the evidence of a whole run and says ACCEPT, REJECT or INSUFFICIENT. Measures nothing, writes nothing."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -42,7 +42,7 @@ judge = "judge.cli:main"
 # To bump: see "Bumping the Warden pin" in README.md. CI checks out the same commit (.github/workflows/tests.yml);
 # tests/test_warden_pin.py fails if the two disagree.
 warden = [
-    "warden @ git+https://github.com/wking53214/Warden.git@cb45681ea80f845fb8f23bb091bda7f587c6a547",  # Warden 0.16.3
+    "warden @ git+https://github.com/wking53214/Warden.git@57f7bb7b12314f0ba30697cff9a846c749e3d606",  # Warden 0.16.4
 ]
 test = ["pytest>=8"]
 # Exact versions, so a new release of either cannot turn the lint job red (or hide a finding) on its own.

@@ -647,7 +647,8 @@ def _accept_sentence(changes, before, after, g0, g1, held, total, low_only, caug
     if low_only:
         attacks += f", and {low_only} found a violation of only low severity"
     return (
-        f"checked and accepted: {changes} change(s) applied; no tests or test settings were changed and no edit left the project; "
+        f"checked and accepted: {changes} change(s) applied; no tests or test settings were changed and "
+        "no edit that Warden applied left the project (what the suite itself did is not measured); "
         f"suite {after.passed} passed, {after.skipped} skipped, {after.xfailed} xfailed "
         f"(before: {before.passed if before else 'not given'} passed"
         f"{'' if before is None else f', {before.skipped} skipped, {before.xfailed} xfailed'}); "

@@ -6,6 +6,19 @@ history.
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-10-30
+
+Not tagged. Tests, documentation and one message string. No Judge rule changed, and `_is_baseline` was not touched.
+
+### Added
+- `tests/test_harm_is_never_a_hold.py`: for each of nine harm classes (a violated SWIZZLE attack, false SWIZZLE proofs, a false ASSAY key, ASSAY below its floor, ASSAY numbers that contradict, a grown Ghost baseline, a changed baseline path, an edit outside the project, code changed with no final suite), evidence that also carries a changed test file and a new minor finding must give REJECT, name the harm and contain no hold sentence. Each test fails under a local mutation of `judge/seat.py` that turns that harm into a hold when a test file is also changed (the mutation is `harm.append(` becoming `(unknown if judging else harm).append(` at that one site; the nine sites are in the commit message). Also a test that unreadable evidence is checked before harm.
+
+### Changed
+- The ACCEPT sentence said "no edit left the project". It is a plain message string, so it now says "no edit that Warden applied left the project (what the suite itself did is not measured)". No test matched the old text; the recorded runs of the old circuit keep it as they were written.
+- README: the sentence that said the pinned CNS `v2.0.0` does not declare `ghost_severity` and that `judge decide` rejects such a record was false (the pin is `v2.2.0`); it now says what is true and names the test. WHAT DOES NOT WORK says that unreadable evidence is checked before harm, that the CNS connector maps INSUFFICIENT (a hold for a named human included) to `RETRY`, which cannot clear a hold, and what "no edit that Warden applied left the project" covers. KNOWN DEFECTS gains the `.ghost*` folder edge (documented only). The 2026-10-22 self-hosting paragraph is labelled as a dated record of the old circuit. `STACK.md` spells the repository `JUDGE` in its link.
+- The Warden pin of the `warden` extra and of the CI `warden` job moves from 0.16.3 (`cb45681ea80f845fb8f23bb091bda7f587c6a547`) to 0.16.4 (`57f7bb7b12314f0ba30697cff9a846c749e3d606`). No Judge rule was edited for it. The CI tested set is not moved.
+- Version 0.5.5 (`pyproject.toml`, README).
+
 ## [0.5.4] - 2026-10-30
 
 Not tagged. Documentation, a docstring, a test comment and the Warden pin. No Judge rule changed, and `_is_baseline` was not touched.
