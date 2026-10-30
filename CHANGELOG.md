@@ -6,6 +6,24 @@ history.
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-10-30
+
+Not tagged. Documentation, a docstring, a test comment and the Warden pin. No Judge rule changed, and `_is_baseline` was not touched.
+
+### Changed
+- The Warden pin of the `warden` extra and of the CI `warden` job moves from 0.16.2 (`df212db32c230a00cf4100038637be873262a816`) to
+  0.16.3 (`cb45681ea80f845fb8f23bb091bda7f587c6a547`). No Judge code was edited for it. The CI tested set is not moved.
+- `STACK.md` says the circuit is five repositories (ASSAY, ghost_tools, SWIZZLE, Warden, Judge), that any actor's real change enters through Warden's claim seat, that DRAFTER, BURNISH and WATCHER_MCU are released from the circuit, that a bare `--stack` still requires all six checkouts, and that every run declines eight Ghost checks (the count is eight because ghost_tools 1.10.11 lists the ledger as declined under `--no-ledger`, not because Warden declined a new check).
+- The README no longer says "One of seven repositories" or lists the Drafter and Burnish as seats of the circuit (WHAT THIS IS,
+  WHAT IT DOES NOT OWN, the `warden tagteam` example, which now uses the claim seat). The Warden pin history is stated as history. The
+  recorded runs of the old circuit are labelled as such. The Homepage URL and one issues URL in `pyproject.toml` and the README
+  spell the repository name `JUDGE`.
+- The `judge/cns_connector.py` docstring said INSUFFICIENT maps to `RETRY` because "something was not measured; bring the
+  missing evidence and ask again". INSUFFICIENT also means, in the two cases ruled on 2026-10-28, that the change is held for a named human.
+  The docstring says both.
+- A comment in `tests/test_owner_rulings.py` said "pinned CNS (2.0.0)"; the pin is v2.2.0, which declares `ghost_severity`.
+  The docstring now says what happens under 2.2.0 and under 2.0.0. No assertion changed.
+
 ## [0.5.3] - 2026-10-30
 
 Not tagged. No code changed; the Warden pin moved. One commit per step.
