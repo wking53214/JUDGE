@@ -98,6 +98,8 @@ The CNS pin moved from `v1.9.0` to `v2.0.0`. Judge's suite passed against it wit
 
 The pin then moved from `v2.0.0` to `v2.1.0` (Judge 0.5.1); the comment beside it in `pyproject.toml` names the commit the tag peels to. No Judge code was edited for it, and the Warden pin of the `warden` extra and of the CI job moved with it.
 
+The pin then moved from `v2.1.0` to `v2.2.0` (Judge 0.5.2), a lightweight tag, so the tag is the commit named in the comment beside the pin. The `cns` package at v2.2.0 equals v2.1.0 except its version string. No Judge code was edited for it, and the Warden pin of the `warden` extra and of the CI job moved to Warden 0.16.1.
+
 ### Testing against the pin
 
 The Judge itself does not import Warden. Two test files do, because they seat the Judge in the real loop and check the contract
