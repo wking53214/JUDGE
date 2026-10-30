@@ -4,7 +4,7 @@ The third party that decides. It reads the evidence of a whole run and says ACCE
 
 ## WHAT THIS IS
 
-One of seven repositories in a stack that improves code under human control. Judge has one job: given the evidence a run produced, decide whether the run is acceptable, and say why. [Warden](https://github.com/wking53214/Warden) runs the loop and is the only one that writes files. When the loop is done, Warden hands Judge the evidence and does what the verdict says. Warden cannot say ACCEPT on its own.
+One of the five repositories of the circuit (ghost_tools, SWIZZLE, ASSAY, JUDGE and WARDEN), a stack that improves code under human control; DRAFTER, BURNISH and WATCHER_MCU are released from the circuit by owner ruling (2026-10-29). Judge has one job: given the evidence a run produced, decide whether the run is acceptable, and say why. [Warden](https://github.com/wking53214/Warden) runs the loop and is the only one that writes files. When the loop is done, Warden hands Judge the evidence and does what the verdict says. Warden cannot say ACCEPT on its own.
 
 Version `0.5.3` (see `CHANGELOG.md`). Python 3.11 or newer. Its one runtime dependency is [CNS](https://github.com/wking53214/CNS), which defines the shared rows the Judge reads and returns (`cns.seat`) and the gate contract of the optional connector (`cns.gate`); the exact release tag is pinned in `pyproject.toml`. The Judge imports no Warden code. Warden is used only by the tests that seat the Judge in the real loop, as the test-time extra `warden`, pinned to a full commit in `pyproject.toml`; see "Testing against the pin" below.
 
@@ -14,9 +14,9 @@ This is an experimental project kept by one person. The rules below are a first 
 
 - Finding problems (Ghost Tools).
 - Attacking the governor and the detectors (SWIZZLE). Judge reads SWIZZLE's report; it does not ask SWIZZLE for anything.
-- Proposing fixes (Drafter), writing files, granting permission, running tests (Warden).
+- Proposing fixes (any actor, through Warden's claim seat `--claim-commit` or `--claim-diff`, or the Drafter, released from the circuit), writing files, granting permission, running tests (Warden).
 - The answer key (ASSAY).
-- Beautifying the code and writing the final README (Burnish).
+- Beautifying the code and writing the final README (Burnish, released from the circuit).
 
 ## ARCHITECTURAL STORY
 
@@ -98,9 +98,11 @@ The CNS pin moved from `v1.9.0` to `v2.0.0`. Judge's suite passed against it wit
 
 The pin then moved from `v2.0.0` to `v2.1.0` (Judge 0.5.1); the comment beside it in `pyproject.toml` names the commit the tag peels to. No Judge code was edited for it, and the Warden pin of the `warden` extra and of the CI job moved with it.
 
-The pin then moved from `v2.1.0` to `v2.2.0` (Judge 0.5.2), a lightweight tag, so the tag is the commit named in the comment beside the pin. The `cns` package at v2.2.0 equals v2.1.0 except its version string. No Judge code was edited for it, and the Warden pin of the `warden` extra and of the CI job moved to Warden 0.16.1.
+The pin then moved from `v2.1.0` to `v2.2.0` (Judge 0.5.2), a lightweight tag, so the tag is the commit named in the comment beside the pin. The `cns` package at v2.2.0 equals v2.1.0 except its version string. No Judge code was edited for it, and the Warden pin of the `warden` extra and of the CI job moved, at that step, to Warden 0.16.1 (history: it has moved since, see below).
 
 The Warden pin then moved to Warden 0.16.2 (Judge 0.5.3), which fixes how a `--stack` folder is compared with the pinned manifest. No Judge code was edited for it.
+
+The Warden pin then moved to Warden 0.16.3 (Judge 0.5.4), which refuses a claimed mode change, hashes the tree fingerprint with delimiters and refuses a damaged chronicle. No Judge code and no Judge rule was edited for it.
 
 ### Testing against the pin
 
@@ -125,12 +127,12 @@ cannot break them without anyone noticing. To move to a newer Warden:
 Warden loads the Judge as a seat. The flags below are the ones `warden tagteam --help` lists; the paths are placeholders:
 
 ```bash
-warden tagteam PATH --drafter drafter.seat:Drafter --finisher burnish.finisher:Burnish \
+warden tagteam PATH --claim-commit SHA \
   --judge judge.seat:Judge --authorize ACTOR --scope code --reason TEXT \
   --ghost-root GHOST_TOOLS --swizzle-root SWIZZLE --assay-root ASSAY
 ```
 
-Without `--judge`, Warden can only end a run as `ACCEPT_UNVERIFIED`.
+Without `--judge`, Warden can only end a run as `ACCEPT_UNVERIFIED`. The change enters through Warden's claim seat (`--claim-commit` or `--claim-diff`); the released Drafter and Burnish can still be seated with `--drafter` and `--finisher` when a caller wants them.
 
 ### From the command line
 
@@ -202,7 +204,7 @@ how the Judge decides changes, and Warden does not use this module.
 
 ## LIFECYCLE / EXECUTION MODEL
 
-Warden calls `Judge.decide` once, after the last cycle and after the finisher. On REJECT, Warden restores every file to its state before the run.
+Warden calls `Judge.decide` once, after the last cycle and after the finisher (when one is seated). On REJECT, Warden restores every file to its state before the run.
 
 ## WHAT WORKS
 
@@ -222,7 +224,7 @@ Each line names what shows it. "Hand-made evidence" means a test builds the inpu
 - The pins: CNS by release tag with its commit in a comment, Warden by a full commit that CI checks out too, GitHub Actions by full commit, lint tools by exact version. `tests/test_cns_pin.py`, `tests/test_warden_pin.py`, `tests/test_ci_pins.py`.
 - CI runs on every push. Its `lint` job runs ruff and mypy, its `pytest` job runs the suite without Warden, and its `warden` job runs the whole suite against the pinned Warden with `JUDGE_REQUIRE_WARDEN=1`; each on Python 3.11, 3.12 and 3.13 (`.github/workflows/tests.yml`, held by `tests/test_readme_ledger.py::test_every_ci_job_the_readme_names_is_in_the_workflow`).
 - With Warden installed the suite has no skipped, expected-to-fail or deselected tests on a system that has `/dev/full` (see WHAT DOES NOT WORK / NOT PROVEN). This README states no test count on purpose, because a number written here drifts; count them with `pytest --collect-only -q`.
-- Recorded by hand, not by a test in this repository: on 2026-10-14 the whole circuit, with live Ghost, SWIZZLE and ASSAY, Drafter and Burnish, governed a scratch repository through `warden tagteam --stack` and the Judge's verdict was ACCEPT with its numbers in the reason (Warden's `docs/REGISTRY.json`, row 3). The Judge in that run was the 0.3.0 code. Nobody has repeated it with the current Judge.
+- Recorded by hand, not by a test in this repository: on 2026-10-14 the old circuit (before the owner released the Drafter and Burnish from it), with live Ghost, SWIZZLE and ASSAY, Drafter and Burnish, governed a scratch repository through `warden tagteam --stack` and the Judge's verdict was ACCEPT with its numbers in the reason (Warden's `docs/REGISTRY.json`, row 3). The Judge in that run was the 0.3.0 code. Nobody has repeated it with the current Judge.
 
 ## WHAT DOES NOT WORK / NOT PROVEN
 
@@ -268,7 +270,7 @@ Newest first. Versions and dates are the ones in `CHANGELOG.md`. Versions 0.1.0 
 
 ## SELF-HOSTING
 
-A newer record than the one below exists. On 2026-10-22 and 2026-10-23 the whole circuit was run over each of its own eight repositories, and the [CNS repository](https://github.com/wking53214/CNS) keeps the account in `docs/evidence/SELFHOSTING_2026-10-23.md`, with the raw run records beside it. Until the CNS branch is merged, they are on its branch `claude/horsemen-production-status-5wsndb` ([the account](https://github.com/wking53214/CNS/blob/claude/horsemen-production-status-5wsndb/docs/evidence/SELFHOSTING_2026-10-23.md)).
+A newer record than the one below exists, and it describes the old circuit (before the owner's ruling of 2026-10-29 released the Drafter, Burnish and WATCHER_MCU). On 2026-10-22 and 2026-10-23 the whole circuit was run over each of its own eight repositories, and the [CNS repository](https://github.com/wking53214/CNS) keeps the account in `docs/evidence/SELFHOSTING_2026-10-23.md`, with the raw run records beside it. Until the CNS branch is merged, they are on its branch `claude/horsemen-production-status-5wsndb` ([the account](https://github.com/wking53214/CNS/blob/claude/horsemen-production-status-5wsndb/docs/evidence/SELFHOSTING_2026-10-23.md)).
 
 For this repository, at commit `c3001b8` (Judge 0.4.10), it records two runs. The first ended FINISH_REJECTED (exit 1). The finisher, Burnish 0.3.11, wrote the suite's pass count into the README section, and this repository's `tests/test_docs_claims.py::test_no_document_hardcodes_a_test_count_or_a_pin` forbids a count in the README, so Warden put the edit back. That was a defect in Burnish, fixed in Burnish 0.3.12. The second run, with Burnish 0.3.12, ended ACCEPT (exit 0): the suite was green before and after with nothing skipped (the record has the count; this README states no count, because this repository's own test forbids one), SWIZZLE's proofs held (12 of 12) and all 28 governor attacks held, ASSAY's grade was 5 of 7 failure modes caught with floor 3, and one README edit was kept in a throwaway clone.
 
@@ -282,7 +284,7 @@ This is a young repository kept by one person. It has no outside users yet and n
 
 ## Support
 
-Open an issue at https://github.com/wking53214/Judge/issues.
+Open an issue at https://github.com/wking53214/JUDGE/issues.
 
 ## Contributing
 

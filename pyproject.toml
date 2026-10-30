@@ -30,7 +30,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/wking53214/Judge"
+Homepage = "https://github.com/wking53214/JUDGE"
 
 [project.scripts]
 judge = "judge.cli:main"

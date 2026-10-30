@@ -216,7 +216,11 @@ def test_the_falsifier_02_record_without_ghosts_word_is_rejected_as_before():
 
 
 def test_the_command_line_reads_ghost_severity_only_when_the_installed_cns_declares_it(tmp_path, capsys):
-    """Under the pinned CNS (2.0.0) the field is unknown to `judge decide`, so the record is turned away; either way exit 1."""
+    """Under the pinned CNS (2.2.0) the field is declared and the record is read and held.
+
+    Under a CNS without it (2.0.0) the field is unknown to `judge decide` and the record is turned away; either way
+    the decision is INSUFFICIENT and the exit code 1.
+    """
     data = json.loads((FIXTURES / "held" / "falsifier_02_e5eccc0.json").read_text(encoding="utf-8"))
     path = tmp_path / "evidence.json"
     path.write_text(json.dumps(data), encoding="utf-8")
