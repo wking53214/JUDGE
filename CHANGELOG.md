@@ -6,6 +6,23 @@ history.
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-10-30
+
+Not tagged. No code changed; the pins moved. One commit per step.
+
+### Changed
+- Pin22 step 1: the CNS pin is the tag `v2.2.0` (`cns @ git+https://github.com/wking53214/CNS.git@v2.2.0`, comment
+  `v2.2.0 = ce6bd05578a7a3e3cafa0cfa1e9a2cca8a5f171f`, a lightweight tag), from `v2.1.0`. The `cns` package at v2.2.0
+  equals v2.1.0 except its version string. The `warden` extra and the CI `warden` job move together from Warden 0.15.1
+  (`fe9c8b35778de680d04b2a57775ac6a6831f4799`) to Warden 0.16.1 (`fade3ca5ee6435393d0588782929ff8de72f988f`). The suite
+  passed (JUDGE_REQUIRE_WARDEN=1) against CNS 2.2.0 and that Warden. Pre-existing test edited under the exact-behaviour
+  rule, asserting the old pin text and nothing else changed:
+  `tests/test_readme_ledger.py::test_the_readme_gives_the_cns_migration_note_and_the_pin_names_its_commit`.
+- Pin22 step 2: version 0.5.2 (`pyproject.toml`, README version line) and this entry.
+- Runs seated with this Judge by Warden now carry eight declined checks (`mutate`, `kernel`, `structure`, `tests`,
+  `project`, `secrets`, `correlate`, `ledger`), not seven, because ghost_tools 1.10.11 lists the ledger as declined under
+  `--no-ledger`. Judge states no such count in its text and its code is unchanged.
+
 ## [0.5.1] - 2026-10-29
 
 Not tagged. No code changed; the pins moved. One commit per step.
