@@ -100,6 +100,8 @@ The pin then moved from `v2.0.0` to `v2.1.0` (Judge 0.5.1); the comment beside i
 
 The pin then moved from `v2.1.0` to `v2.2.0` (Judge 0.5.2), a lightweight tag, so the tag is the commit named in the comment beside the pin. The `cns` package at v2.2.0 equals v2.1.0 except its version string. No Judge code was edited for it, and the Warden pin of the `warden` extra and of the CI job moved, at that step, to Warden 0.16.1 (history: it has moved since, see below).
 
+As of 2026-10-31 the CNS pin is the tag `v2.3.0` (the commit it names is in the comment beside the pin in `pyproject.toml`), moved from `v2.2.0` so that the circuit installs against one CNS release; no code in this repository changed.
+
 The Warden pin then moved to Warden 0.16.2 (Judge 0.5.3), which fixes how a `--stack` folder is compared with the pinned manifest. No Judge code was edited for it.
 
 The Warden pin then moved to Warden 0.16.3 (Judge 0.5.4), which refuses a claimed mode change, hashes the tree fingerprint with delimiters and refuses a damaged chronicle. No Judge code and no Judge rule was edited for it.
