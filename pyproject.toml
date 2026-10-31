@@ -24,9 +24,9 @@ classifiers = [
 ]
 # The runtime dependency is CNS, the shared rows (cns.seat) and gate contract (cns.gate).
 # It is pinned by release tag, spelled the same way in every repository of the stack (CNS's seat_pins check compares the
-# text, and pip treats a tag URL and a commit URL as two sources). The comment names the commit the tag is (v2.2.0 is a lightweight tag).
+# text, and pip treats a tag URL and a commit URL as two sources). The comment names the commit the tag is (v2.3.0 is a lightweight tag).
 dependencies = [
-    "cns @ git+https://github.com/wking53214/CNS.git@v2.2.0",  # v2.2.0 = ce6bd05578a7a3e3cafa0cfa1e9a2cca8a5f171f
+    "cns @ git+https://github.com/wking53214/CNS.git@v2.3.0",  # v2.3.0 = 41592fb7b6735abe140f745353c09ba3eed8e7a2
 ]
 
 [project.urls]
@@ -42,7 +42,7 @@ judge = "judge.cli:main"
 # To bump: see "Bumping the Warden pin" in README.md. CI checks out the same commit (.github/workflows/tests.yml);
 # tests/test_warden_pin.py fails if the two disagree.
 warden = [
-    "warden @ git+https://github.com/wking53214/Warden.git@57f7bb7b12314f0ba30697cff9a846c749e3d606",  # Warden 0.16.4
+    "warden @ git+https://github.com/wking53214/Warden.git@0e28e9a77bb04a4d3c7c1ac156f0b506365de6b9",  # Warden 0.16.4
 ]
 test = ["pytest>=8"]
 # Exact versions, so a new release of either cannot turn the lint job red (or hide a finding) on its own.
