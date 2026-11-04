@@ -148,12 +148,14 @@ def _read(source: str) -> str:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="judge",
+        allow_abbrev=False,  # a prefix such as --verbos is a usage error, never a guess
         description="The third party that decides. Exit 0 only for ACCEPT; 1 for any other decision; 2 for a usage error.",
     )
     parser.add_argument("--version", action="version", version=f"judge {__version__}")
     parser.add_argument("-v", "--verbose", action="count", default=0, help="log decisions to stderr (-vv: each reason too)")
     sub = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
-    decide = sub.add_parser("decide", help="decide on evidence given as a JSON file and print the decision as JSON")
+    decide = sub.add_parser("decide", allow_abbrev=False,
+                          help="decide on evidence given as a JSON file and print the decision as JSON")
     decide.add_argument("-v", "--verbose", action="count", default=argparse.SUPPRESS, help="same as -v before the command")
     decide.add_argument("input", metavar="EVIDENCE.json", help='path to the evidence, or "-" for standard input')
     return parser

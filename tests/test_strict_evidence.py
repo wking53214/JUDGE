@@ -200,12 +200,12 @@ def test_below_floor_still_rejects():
 def test_a_listed_judging_file_rejects_whatever_the_scope_or_suite():
     for scope in ("code", "documentation"):
         v = _d(scope=scope, changed=(), judging_files_touched=("tests/test_a.py",))
-        assert v.decision == "REJECT" and "tests or test settings were changed" in v.reasons[0]
+        assert v.decision == "INSUFFICIENT" and any("tests or test settings were changed" in r for r in v.reasons)
 
 
 def test_test_file_deletion_with_equal_pass_count_is_rejected_even_if_warden_forgot_to_list_it():
     v = _d(changed=(("tests/test_a.py", "delete"),), suite_after=SuiteRun(ran=True, passed=10))
-    assert v.decision == "REJECT" and "tests or test settings" in v.reasons[0]
+    assert v.decision == "INSUFFICIENT" and "tests or test settings" in v.reasons[0]
 
 
 @pytest.mark.parametrize("path", [
@@ -215,7 +215,7 @@ def test_test_file_deletion_with_equal_pass_count_is_rejected_even_if_warden_for
     "./././Makefile", "tests"])
 def test_judging_paths_are_caught_by_their_shape(path):
     v = _d(changed=((path, "write"),))
-    assert v.decision == "REJECT", path
+    assert v.decision == "INSUFFICIENT", path
 
 
 @pytest.mark.parametrize("path", ["pkg/contest.py", "pkg/attest.py", "pkg/testing_helpers.py", "README.md", "pkg/a.py"])
@@ -266,6 +266,37 @@ def test_xfailed_missing_from_an_older_suite_run_counts_as_zero():
 def test_code_change_when_some_tests_did_not_run_before_is_insufficient(kind):
     v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("pkg/a.py", kind),))
     assert v.decision == "INSUFFICIENT" and any("some tests did not run, so a code change cannot be shown safe" in r for r in v.reasons)
+
+
+@pytest.mark.parametrize("kind", ["write", "replace", "delete", "Replace", " REPLACE "])
+def test_every_edit_kind_that_changes_a_python_file_is_held_when_tests_did_not_run(kind):
+    """``replace`` rewrites file content just as ``write`` does, so the skipped-tests rule covers it too."""
+    v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("pkg/a.py", kind),))
+    assert v.decision == "INSUFFICIENT" and any("some tests did not run, so a code change cannot be shown safe" in r for r in v.reasons)
+
+
+def test_the_skipped_tests_rule_covers_every_kind_the_judge_knows():
+    """If a kind is ever added to the known set, this fails until the rule is shown to cover it (or the kind is excused)."""
+    from judge import seat
+
+    assert seat._EDIT_KINDS == frozenset({"write", "replace", "delete"})
+    for kind in sorted(seat._EDIT_KINDS):
+        v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("pkg/a.py", kind),))
+        assert v.decision == "INSUFFICIENT", kind
+
+
+def test_an_unknown_edit_kind_with_tests_that_did_not_run_is_never_accepted():
+    v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("pkg/a.py", "append"),))
+    assert v.decision == "INSUFFICIENT"
+
+
+def test_a_replaced_python_file_is_still_accepted_when_every_test_ran():
+    assert _d(changed=(("pkg/a.py", "replace"),)).decision == "ACCEPT"
+
+
+def test_a_replaced_prose_file_is_still_accepted_when_tests_did_not_run():
+    v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("README.md", "replace"),))
+    assert v.decision == "ACCEPT"
 
 
 def test_xfailed_before_also_counts():

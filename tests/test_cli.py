@@ -141,6 +141,24 @@ def test_bytes_that_are_not_text_are_a_usage_error(tmp_path):
     assert cli.main(["decide", str(path)]) == 2
 
 
+@pytest.mark.parametrize("argv", [
+    ["--verbos", "decide", str(EXAMPLE)], ["--verb", "decide", str(EXAMPLE)], ["--vers"], ["--hel"],
+    ["decide", "--verbos", str(EXAMPLE)], ["decide", "--verb", str(EXAMPLE)], ["decide", "--hel", str(EXAMPLE)],
+])
+def test_an_abbreviated_option_is_a_usage_error_not_a_guess(argv, capsys):
+    """argparse accepts any unambiguous prefix of a long option unless told not to; a guessed option is not what was asked for."""
+    assert cli.main(argv) == 2
+    assert capsys.readouterr().out == ""
+
+
+@pytest.mark.parametrize("argv", [
+    ["--verbose", "decide", str(EXAMPLE)], ["decide", "--verbose", str(EXAMPLE)], ["-v", "decide", str(EXAMPLE)],
+])
+def test_the_full_spelling_of_an_option_still_works(argv, capsys):
+    assert cli.main(argv) == 0
+    assert json.loads(capsys.readouterr().out)["decision"] == "ACCEPT"
+
+
 @pytest.mark.parametrize("argv", [[], ["decide"], ["nonsense"], ["decide", "a", "b"], ["--bogus"]])
 def test_bad_usage_exits_2(argv, capsys):
     assert cli.main(argv) == 2

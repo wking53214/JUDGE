@@ -25,8 +25,10 @@ gate position          ``OMEGA``. The Judge reads what a whole run
                        this connector does not invent one.
 ACCEPT                 ``PASS``
 REJECT                 ``TERMINAL_BREACH``  (the evidence shows harm)
-INSUFFICIENT           ``RETRY``  (something was not measured; bring
-                       the missing evidence and ask again)
+INSUFFICIENT           ``RETRY``  (something was not measured: bring
+                       the missing evidence and ask again; or, in the
+                       two ruled cases, the change is held for a named
+                       human, who keeps or drops it)
 any other answer       ``TERMINAL_BREACH``  (an answer the connector
                        does not recognise is never read as permission)
 reasons                ``reason``, joined with ``"; "``
