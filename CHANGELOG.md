@@ -6,6 +6,14 @@ history.
 
 ## [Unreleased]
 
+## [0.5.6] - 2026-11-04
+
+Not tagged. A pin move only. No Judge code, rule or test changed.
+
+### Changed
+- The Warden pin of the `warden` extra and of the CI `warden` job moves from 0.16.4 (`1a263fbefd164dff40b7064ab5381cda281694f2`) to 0.16.5 (`84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4`), which refuses a pinned stack manifest that omits any of the five circuit members, WARDEN included. The CI tested set is not moved. The CNS pin (`v2.3.0`) is untouched.
+- Version 0.5.6 (`pyproject.toml`, README).
+
 ## [0.5.5] - 2026-10-30
 
 Not tagged. Tests, documentation and one message string. No Judge rule changed, and `_is_baseline` was not touched.
