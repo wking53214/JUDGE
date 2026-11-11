@@ -6,7 +6,7 @@ The third party that decides. It reads the evidence of a whole run and says ACCE
 
 One of the five repositories of the circuit (ghost_tools, SWIZZLE, ASSAY, JUDGE and WARDEN), a stack that improves code under human control; DRAFTER, BURNISH and WATCHER_MCU are released from the circuit by owner ruling (2026-10-29). Judge has one job: given the evidence a run produced, decide whether the run is acceptable, and say why. [Warden](https://github.com/wking53214/Warden) runs the loop and is the only one that writes files. When the loop is done, Warden hands Judge the evidence and does what the verdict says. Warden cannot say ACCEPT on its own.
 
-Version `0.5.6` (see `CHANGELOG.md`). Python 3.11 or newer. Its one runtime dependency is [CNS](https://github.com/wking53214/CNS), which defines the shared rows the Judge reads and returns (`cns.seat`) and the gate contract of the optional connector (`cns.gate`); the exact release tag is pinned in `pyproject.toml`. The Judge imports no Warden code. Warden is used only by the tests that seat the Judge in the real loop, as the test-time extra `warden`, pinned to a full commit in `pyproject.toml`; see "Testing against the pin" below.
+Version `0.5.7` (see `CHANGELOG.md`). Python 3.11 or newer. Its one runtime dependency is [CNS](https://github.com/wking53214/CNS), which defines the shared rows the Judge reads and returns (`cns.seat`) and the gate contract of the optional connector (`cns.gate`); the exact release tag is pinned in `pyproject.toml`. The Judge imports no Warden code. Warden is used only by the tests that seat the Judge in the real loop, as the test-time extra `warden`, pinned to a full commit in `pyproject.toml`; see "Testing against the pin" below.
 
 This is an experimental project kept by one person. The rules below are a first draft written to match the failures found so far. Read WHAT DOES NOT WORK / NOT PROVEN and KNOWN DEFECTS before you rely on a verdict.
 
@@ -109,6 +109,8 @@ The Warden pin then moved to Warden 0.16.3 (Judge 0.5.4), which refuses a claime
 The Warden pin then moved to Warden 0.16.4 (Judge 0.5.5), which writes a claimed change's bytes exactly, strips credentials from the recorded origin and records whether the whole target stood at the parent. No Judge rule was edited for it.
 
 The Warden pin then moved to Warden 0.16.5 (Judge 0.5.6), which refuses a pinned stack manifest that does not name all five circuit members, WARDEN included. No Judge code and no Judge rule was edited for it.
+
+The Warden pin then moved to Warden 0.16.6 (Judge 0.5.7), which ignores `git replace` refs in every git call it makes. No Judge code and no Judge rule was edited for it.
 
 ### Testing against the pin
 
@@ -260,6 +262,8 @@ Open, with no fix yet.
 ## WHAT BROKE AND HOW IT WAS FIXED
 
 Newest first. Versions and dates are the ones in `CHANGELOG.md`. Versions 0.1.0 to 0.3.0 are reconstructed from git history there. "Test" names what now prevents it coming back.
+
+**0.5.7** (2026-11-11): the Warden pin moves to the Warden that ignores `git replace` refs in every git call (a stack checkout or a claimed commit could be made to report one commit while holding another's content). No Judge code, rule or test changed; nothing in this repository broke.
 
 **0.5.6** (2026-11-04): the Warden pin moves to the Warden that closes a hole in Warden's roster check: a manifest that omitted WARDEN was accepted with a dirty WARDEN checkout. No Judge code, rule or test changed; the pin tests (`tests/test_warden_pin.py::test_ci_checks_out_the_pinned_warden_commit`) hold the pyproject pin and the CI checkout together.
 
