@@ -8,6 +8,7 @@ history.
 
 ### Changed
 
+- The CNS pin moves from the tag `v2.3.0` to the tag `v3.0.0` (`cns @ git+https://github.com/wking53214/CNS.git@v3.0.0`, comment `v3.0.0 = 31cb6f568219ef62cf3748701c895aa086abf1b8`, the commit the annotated tag peels to). The README line that names the pinned CNS and `tests/test_readme_ledger.py` (its two assertions on the pin text) move with it. No Judge code changed. The Warden pin is untouched.
 - Documentation only, no code. The README no longer says the pinned CNS is `v2.2.0` (it is `v2.3.0`, as `pyproject.toml` says), and KNOWN DEFECTS gains item 4: look-alike folder names, `text_only: true` beside `exit_code: 0` and a space-padded `unmeasured` entry are ACCEPTed (reproduced 2026-11-11, parked, not fixed). No test was edited.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
