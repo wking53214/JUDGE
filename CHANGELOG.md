@@ -15,6 +15,17 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.6.0] - 2026-11-12
+
+### Changed
+
+- Judge reads `Evidence.finisher_ran`. When it is exactly `False` and no cycle applied anything, a listed edit is a contradiction
+  and the run is held as INSUFFICIENT. `True` and `None` (older evidence) behave as before, so no existing record changes its
+  verdict. A value that is not `True`, `False` or `None` is unreadable and held. This reverses the earlier owner decision to defer
+  adopting the field. The gap for runs where some cycle did apply an edit stays open and is documented (README KNOWN DEFECTS 1).
+- `tests/test_finisher_ran_gap.py` now holds the new behaviour and the remaining limit.
+- Version 0.6.0 (`pyproject.toml`, README).
+
 ## [0.5.7] - 2026-11-11
 
 Not tagged. A pin move only. No Judge code, rule or test changed.

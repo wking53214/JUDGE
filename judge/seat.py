@@ -71,16 +71,13 @@ THE RULES, in order. The first group that fires decides.
 
 A run that changed nothing is ACCEPTed only if the evidence is complete.
 
-WHAT THE CYCLE CHECKS CANNOT DO. The clause "a listed edit that no applied cycle
-explains" cannot fire on a converged run when a finisher may have run: such a
-run ends on NOTHING_TO_PROPOSE whether or not a finisher then edited files, and
-the evidence does not say which, so every listed edit can be blamed on the
-finisher. It catches only hand-made evidence (for example a record that ends on
-a REFUSED cycle), not a fabricated edit list on a converged run. CNS 2.0.0 gives
-the Evidence shape a `finisher_ran` field (default None), which would close it.
-The Judge does not read that field yet: adopting it is deferred by the owner's
-decision, so the gap is still open. Nothing here claims that clause protects real
-evidence.
+WHAT THE CYCLE CHECKS CAN AND CANNOT DO. The clause "a listed edit that no applied
+cycle explains" reads the `finisher_ran` field of the Evidence (CNS 2.0.0, default
+None). When the field is exactly False and no cycle applied anything, a listed edit
+is a contradiction and the Judge holds. When the field is True or None, a converged
+run may have had a finishing change, so listed edits are not questioned. Even with
+the field, a run in which some cycle did apply an edit can still carry extra listed
+edits unnoticed, because the evidence does not say how many belong to the finisher.
 """
 
 from __future__ import annotations
@@ -230,7 +227,8 @@ def _cycles(value: object) -> tuple[tuple[int, str], ...]:
     return tuple(out)
 
 
-def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, declined: tuple[str, ...]) -> list[str]:
+def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, declined: tuple[str, ...],
+                          finisher_ran: bool | None = None) -> list[str]:
     """Reasons the cycle record and the lists of edits and declined removals cannot both be true.
 
     Conservative: it only names what Warden's own loop can never produce, so real evidence passes.
@@ -242,13 +240,14 @@ def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, decl
     A loop that stopped on a REFUSED, PUT_BACK or SUITE_RED cycle did not converge. Warden judges only
     converged runs, so a record that ends there is not one Warden produced, and nothing is approved on it.
 
-    KNOWN LIMIT (the clause "a listed edit that no APPLIED cycle explains"): it cannot fire when a finisher
-    may have run. A converged run ends on NOTHING_TO_PROPOSE whether or not a finisher then edited files,
-    and the evidence does not say whether one did, so any listed edit can be blamed on the finisher. The clause
-    therefore catches hand-made evidence only (for example a loop that stopped on a non-converged cycle
-    with edits listed), not a fabricated edit list on a converged run. CNS 2.0.0 gives the Evidence shape a
-    `finisher_ran` field (default None), which would close it. The Judge does not read that field yet; adopting
-    it is deferred by the owner's decision, so the gap is still open.
+    The clause "a listed edit that no APPLIED cycle explains" uses `finisher_ran` (CNS 2.0.0 and later; default
+    None). When the field is exactly False, no finisher ran, so a loop that applied nothing cannot have any listed
+    edit: that is a contradiction. When it is True, or None (older evidence), the old reading stands: a converged
+    loop ending on NOTHING_TO_PROPOSE may have had a finishing change, so listed edits are not questioned.
+
+    KNOWN LIMIT: the field settles only the case where no cycle applied anything. When some cycle did apply an edit,
+    the evidence still does not say how many of the listed edits belong to cycles and how many to a finisher, so a
+    padded edit list on such a run is not caught, whatever `finisher_ran` says.
     """
     out: list[str] = []
     odd = sorted({o for _, o in cycles if o not in _CYCLE_OUTCOMES})
@@ -268,6 +267,9 @@ def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, decl
     elif listed and not applied and (not cycles or cycles[-1][1] != "NOTHING_TO_PROPOSE"):
         out.append(f"{listed} edit(s) are listed as applied but no cycle applied one and no finishing step "
                    "after a converged loop can account for them")
+    elif listed and not applied and finisher_ran is False:
+        out.append(f"{listed} edit(s) are listed as applied but no cycle applied one and the evidence says no "
+                   "finisher ran, so nothing can account for them")
     if declined and not any(o == "DECLINED" for _, o in cycles):
         out.append("removals are listed as declined but no cycle was declined")
     return out
@@ -431,7 +433,10 @@ def _decide(e: Evidence) -> Verdict:
         raise _Unreadable(f"assay is a {type(assay).__name__}, not a report")
 
     harm: list[str] = []
-    unknown: list[str] = _cycle_contradictions(cycles, len(changed), declined)
+    finisher_ran = getattr(e, "finisher_ran", None)
+    if finisher_ran is not None and not isinstance(finisher_ran, bool):
+        raise _Unreadable(f"finisher_ran is a {type(finisher_ran).__name__}, not true, false or empty")
+    unknown: list[str] = _cycle_contradictions(cycles, len(changed), declined, finisher_ran)
 
     # the suite
     if after is not None:
