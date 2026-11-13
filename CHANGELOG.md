@@ -8,6 +8,7 @@ history.
 
 ### Changed
 
+- The Warden pin moves from `0e273bc543926c490cdad2c21124521c45aea28c` (Warden 0.16.6) to `0339c09a69497be2d2fc34d71872c8c8616c6668` (Warden 1.0.0, the merge commit that `v1.0.0` is tagged on), in `pyproject.toml` and in the CI `warden` job. The suite passes against it (1336 tests, `JUDGE_REQUIRE_WARDEN=1`). No Judge code and no Judge rule was edited. CNS stays at `v4.0.0`, which Warden 1.0.0 also pins.
 - The Warden pin moves from `db210f94018575220ddebbd8e3139f4272d75ae0` to `b6d8ebb50f50c8c4d62a40a6bc66630f2c65d426`, the head of Warden's `main` after its second ghost_tools pin move (Warden 0.16.6 at both; pin text only in Warden). Reason: the CNS `stack` job needs every repository to name the same Warden commit. No Judge code or test changed.
 - The Warden pin moves from `986f1d6ab1e103888a8b8a1c07706d4321dbc9c8` to `db210f94018575220ddebbd8e3139f4272d75ae0`, the head of Warden's `main` after its ghost_tools pin move (Warden 0.16.6 at both; pin text only in Warden). Reason: the CNS `stack` job needs every repository to name the same Warden commit. No Judge code or test changed.
 - The CNS pin moves from the tag `v2.3.0` to the tag `v3.0.0` (`cns @ git+https://github.com/wking53214/CNS.git@v3.0.0`, comment `v3.0.0 = 31cb6f568219ef62cf3748701c895aa086abf1b8`, the commit the annotated tag peels to). The README line that names the pinned CNS and `tests/test_readme_ledger.py` (its two assertions on the pin text) move with it. No Judge code changed. The Warden pin is untouched.
