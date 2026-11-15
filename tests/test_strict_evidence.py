@@ -268,6 +268,18 @@ def test_code_change_when_some_tests_did_not_run_before_is_insufficient(kind):
     assert v.decision == "INSUFFICIENT" and any("some tests did not run, so a code change cannot be shown safe" in r for r in v.reasons)
 
 
+@pytest.mark.parametrize("kind", ["replace", "Replace", " replace "])
+def test_a_replaced_py_file_when_some_tests_did_not_run_before_is_insufficient(kind):
+    v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("pkg/a.py", kind),))
+    assert v.decision == "INSUFFICIENT" and any("some tests did not run, so a code change cannot be shown safe" in r for r in v.reasons)
+
+
+@pytest.mark.parametrize("path", ["src/lib.rs", "pkg/data.json", "web/app.js", "Cargo.toml"])
+def test_any_code_file_changed_when_some_tests_did_not_run_before_is_insufficient(path):
+    v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=((path, "replace"),))
+    assert v.decision != "ACCEPT"
+
+
 def test_xfailed_before_also_counts():
     v = _d(suite_before=_suite(xfailed=1), suite_after=_suite(xfailed=1))
     assert v.decision == "INSUFFICIENT"

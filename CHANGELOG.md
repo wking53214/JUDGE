@@ -6,6 +6,17 @@ history.
 
 ## [Unreleased]
 
+## [0.4.11] - 2026-11-15
+
+### Fixed
+- A code change was INSUFFICIENT while some tests did not run only when a `.py` file was written or deleted, so a `replace` edit of a `.py` file (the usual kind) was ACCEPTed (README KNOWN DEFECT 1, now closed). The rule no longer looks at the edit kind or the extension.
+
+### Changed
+- Behavior is stricter in one more case: a change to any non-prose file that is not Python (`.rs`, `.js`, `.json`, `Cargo.toml`) is now INSUFFICIENT while some tests did not run before. No existing test was edited.
+
+### Added
+- `tests/test_strict_evidence.py::test_a_replaced_py_file_when_some_tests_did_not_run_before_is_insufficient` and `::test_any_code_file_changed_when_some_tests_did_not_run_before_is_insufficient`.
+
 ## [0.4.10] - 2026-10-22
 
 Three changes, nothing else: the CNS pin (step 1), the Warden test pin (step 2) and the README (step 3). No Judge code changed
