@@ -20,13 +20,14 @@ THE RULES, in order. The first group that fires decides.
   REJECT        the evidence shows harm:
     the suite is red, or fewer tests pass than before
     more tests are skipped (or expected-to-fail) than before
-    tests or test settings were changed (the Warden's list, or any path that
-      looks like a test, a test setting or a CI file; test*.txt counts, because
-      pytest collects it as a doctest by default)
     an edit reached outside the project, or into git or environment folders
       (.git, .venv, venv, env, .tox, .nox, .eggs, node_modules, site-packages)
     Ghost reports a finding at the end that it did not report at the start
-      (counted one by one, so a repeated finding is new)
+      (counted one by one, so a repeated finding is new) whose severity, in
+      Ghost's own word (Evidence.ghost_severity, finding id to word), is major
+      or critical, or has no readable word: no mapping, an id missing from it,
+      or a word that is not one of Ghost's four (Warden's high, medium and low
+      included)
     Ghost's baseline grew (more suppressed findings) or a baseline file or any
       .ghost_* file was changed
     the final suite exited non-zero, or was marked forged
@@ -39,6 +40,14 @@ THE RULES, in order. The first group that fires decides.
   INSUFFICIENT  nothing shows harm, but something is unknown:
     the final suite run, Ghost, SWIZZLE's proofs or attacks, or ASSAY's grade
       is missing, or not exactly the expected value
+    tests or test settings were changed (the Warden's list, or any path that
+      looks like a test, a test setting or a CI file; test*.txt counts, because
+      pytest collects it as a doctest by default): the machine does not approve
+      that, and a named human keeps or drops the held result (the owner's
+      ruling of 2026-10-28; a changed .ghost_* file is still harm)
+    Ghost reports a new finding whose severity, in Ghost's own word, is minor
+      or informational: held for a named human (the owner's ruling of
+      2026-10-28; a mix of held and harmful new findings is harm)
     the starting suite run is missing, did not run, or was not green (failed,
       errors or a non-zero exit code): the before and after comparison needs a
       known good start
@@ -62,14 +71,13 @@ THE RULES, in order. The first group that fires decides.
 
 A run that changed nothing is ACCEPTed only if the evidence is complete.
 
-WHAT THE CYCLE CHECKS CANNOT DO. The clause "a listed edit that no applied cycle
-explains" cannot fire on a converged run when a finisher may have run: such a
-run ends on NOTHING_TO_PROPOSE whether or not a finisher then edited files, and
-the evidence does not say which, so every listed edit can be blamed on the
-finisher. It catches only hand-made evidence (for example a record that ends on
-a REFUSED cycle), not a fabricated edit list on a converged run. Closing it needs
-a `finisher ran` field in the CNS Evidence shape, which is a change to CNS and the
-owner's call. Nothing here claims that clause protects real evidence.
+WHAT THE CYCLE CHECKS CAN AND CANNOT DO. The clause "a listed edit that no applied
+cycle explains" reads the `finisher_ran` field of the Evidence (CNS 2.0.0, default
+None). When the field is exactly False and no cycle applied anything, a listed edit
+is a contradiction and the Judge holds. When the field is True or None, a converged
+run may have had a finishing change, so listed edits are not questioned. Even with
+the field, a run in which some cycle did apply an edit can still carry extra listed
+edits unnoticed, because the evidence does not say how many belong to the finisher.
 """
 
 from __future__ import annotations
@@ -126,7 +134,13 @@ _JUDGING_PATTERNS = (
 #: runs later with the user's rights.
 _OUTSIDE_DIRS = {"..", ".git", ".venv", "venv", "env", ".tox", ".nox", ".eggs", "node_modules", "site-packages"}
 _BASELINE_NAMES = (".ghost_baseline.json",)
+#: SWIZZLE's attack scale: a violated attack at any of these severities is harm, and only "low" is tolerated.
 _HARM_SEVERITIES = {"high", "medium", "critical", "severe"}
+#: Ghost's own four-word scale for a finding (critical, major, minor, informational). It is a different scale from
+#: SWIZZLE's above: "medium" is harm there and is not a Ghost word at all. A new finding carrying one of these two
+#: words is held for a named human (owner's ruling 2, 2026-10-28); any other word, or no word, is harm. Warden's remap
+#: of Ghost's words to critical/high/medium/low must not reach here; if it does, the id has no readable severity.
+_HELD_GHOST_SEVERITIES = frozenset({"minor", "informational"})
 #: Change kinds that only reformat. There are none today, so nothing is excused.
 _FORMAT_ONLY_KINDS: frozenset = frozenset()
 
@@ -213,7 +227,8 @@ def _cycles(value: object) -> tuple[tuple[int, str], ...]:
     return tuple(out)
 
 
-def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, declined: tuple[str, ...]) -> list[str]:
+def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, declined: tuple[str, ...],
+                          finisher_ran: bool | None = None) -> list[str]:
     """Reasons the cycle record and the lists of edits and declined removals cannot both be true.
 
     Conservative: it only names what Warden's own loop can never produce, so real evidence passes.
@@ -225,12 +240,14 @@ def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, decl
     A loop that stopped on a REFUSED, PUT_BACK or SUITE_RED cycle did not converge. Warden judges only
     converged runs, so a record that ends there is not one Warden produced, and nothing is approved on it.
 
-    KNOWN LIMIT (the clause "a listed edit that no APPLIED cycle explains"): it cannot fire when a finisher
-    may have run. A converged run ends on NOTHING_TO_PROPOSE whether or not a finisher then edited files,
-    and the evidence does not say whether one did, so any listed edit can be blamed on the finisher. The clause
-    therefore catches hand-made evidence only (for example a loop that stopped on a non-converged cycle
-    with edits listed), not a fabricated edit list on a converged run. Closing it needs a `finisher ran`
-    field in the CNS Evidence shape, which is a change to CNS and the owner's call.
+    The clause "a listed edit that no APPLIED cycle explains" uses `finisher_ran` (CNS 2.0.0 and later; default
+    None). When the field is exactly False, no finisher ran, so a loop that applied nothing cannot have any listed
+    edit: that is a contradiction. When it is True, or None (older evidence), the old reading stands: a converged
+    loop ending on NOTHING_TO_PROPOSE may have had a finishing change, so listed edits are not questioned.
+
+    KNOWN LIMIT: the field settles only the case where no cycle applied anything. When some cycle did apply an edit,
+    the evidence still does not say how many of the listed edits belong to cycles and how many to a finisher, so a
+    padded edit list on such a run is not caught, whatever `finisher_ran` says.
     """
     out: list[str] = []
     odd = sorted({o for _, o in cycles if o not in _CYCLE_OUTCOMES})
@@ -250,6 +267,9 @@ def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, decl
     elif listed and not applied and (not cycles or cycles[-1][1] != "NOTHING_TO_PROPOSE"):
         out.append(f"{listed} edit(s) are listed as applied but no cycle applied one and no finishing step "
                    "after a converged loop can account for them")
+    elif listed and not applied and finisher_ran is False:
+        out.append(f"{listed} edit(s) are listed as applied but no cycle applied one and the evidence says no "
+                   "finisher ran, so nothing can account for them")
     if declined and not any(o == "DECLINED" for _, o in cycles):
         out.append("removals are listed as declined but no cycle was declined")
     return out
@@ -413,7 +433,10 @@ def _decide(e: Evidence) -> Verdict:
         raise _Unreadable(f"assay is a {type(assay).__name__}, not a report")
 
     harm: list[str] = []
-    unknown: list[str] = _cycle_contradictions(cycles, len(changed), declined)
+    finisher_ran = getattr(e, "finisher_ran", None)
+    if finisher_ran is not None and not isinstance(finisher_ran, bool):
+        raise _Unreadable(f"finisher_ran is a {type(finisher_ran).__name__}, not true, false or empty")
+    unknown: list[str] = _cycle_contradictions(cycles, len(changed), declined, finisher_ran)
 
     # the suite
     if after is not None:
@@ -463,7 +486,11 @@ def _decide(e: Evidence) -> Verdict:
         harm.append(f"Ghost's baseline or another .ghost_ file was changed ({', '.join(baseline_changed[:3])}), "
                     "which can hide findings")
     if judging:
-        harm.append(f"tests or test settings were changed ({', '.join(judging[:3])})")
+        # Owner's ruling (2026-10-28): a changed test or test setting is unknown, not harm. The machine does not
+        # approve it; Warden holds the result by digest for a named human to keep or drop (`warden keep`).
+        # A changed .ghost_* file is still harm (above), and so is an edit that left the project (below).
+        unknown.append(f"tests or test settings were changed ({', '.join(judging[:3])}); the machine does not "
+                       "approve that; a named human keeps or drops the held result")
     if outside:
         harm.append(f"an edit reached outside the project or into git or environment folders ({', '.join(outside[:3])})")
 
@@ -472,8 +499,20 @@ def _decide(e: Evidence) -> Verdict:
     if g_before is not None and g_after is not None:
         ghost_start, ghost_end = len(g_before), len(g_after)
         new = sorted((Counter(g_after) - Counter(g_before)).elements())
-        if new:
-            harm.append(f"Ghost reports {len(new)} finding(s) it did not report at the start ({', '.join(new[:3])})")
+        # Owner's ruling 2 (2026-10-28): a new finding whose severity, in the scanner's own word, is minor or
+        # informational is unknown, not harm, and is held for a named human. Major and critical are harm as before.
+        # The word comes from Evidence.ghost_severity (finding id to the scanner's word; CNS 2.1.0, so a Warden
+        # older than the field gives None), compared stripped and lower-cased. An id with no readable severity is
+        # harm: no mapping, an id missing from it, or a word outside the two above (unknown is not approved).
+        severities = getattr(e, "ghost_severity", None)
+        held_new = [x for x in new
+                    if isinstance(severities, Mapping) and _norm_text(severities.get(x)) in _HELD_GHOST_SEVERITIES]
+        harm_new = [x for x in new if x not in held_new]
+        if harm_new:
+            harm.append(f"Ghost reports {len(harm_new)} finding(s) it did not report at the start ({', '.join(harm_new[:3])})")
+        if held_new:
+            unknown.append(f"{len(held_new)} new finding(s) of minor or informational severity ({', '.join(held_new[:3])}) "
+                           "are held for a named human")
 
     # Ghost's baseline: findings it was told to ignore. Growth hides new findings.
     baseline_unknown = None
@@ -588,7 +627,8 @@ def _decide(e: Evidence) -> Verdict:
     odd = [u for u in unmeasured if _norm_text(u) != "judge"]
     if odd:
         reasons.append(f"these checks never ran: {', '.join(odd)}")
-    if before is not None and before.not_run > 0 and code:
+    if (before is not None and before.not_run > 0
+            and any(p.strip().lower().endswith(".py") and k.strip().lower() in _EDIT_KINDS for p, k in changed)):
         reasons.append("some tests did not run, so a code change cannot be shown safe")
     # Counts that come from printed text alone can be faked by the code under test, so they never
     # support a plain ACCEPT. The run is held as unverified instead.
@@ -612,7 +652,8 @@ def _accept_sentence(changes, before, after, g0, g1, held, total, low_only, caug
     if low_only:
         attacks += f", and {low_only} found a violation of only low severity"
     return (
-        f"checked and accepted: {changes} change(s) applied; no tests or test settings were changed and no edit left the project; "
+        f"checked and accepted: {changes} change(s) applied; no tests or test settings were changed and "
+        "no edit that Warden applied left the project (what the suite itself did is not measured); "
         f"suite {after.passed} passed, {after.skipped} skipped, {after.xfailed} xfailed "
         f"(before: {before.passed if before else 'not given'} passed"
         f"{'' if before is None else f', {before.skipped} skipped, {before.xfailed} xfailed'}); "

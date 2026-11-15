@@ -313,7 +313,10 @@ def test_a_prose_file_pytest_collects_as_a_doctest_is_judged_like_a_test(name):
     d["changed"].append([name, "write"])
     d["cycles"] = [[1, "APPLIED"], [2, "APPLIED"], [3, "NOTHING_TO_PROPOSE"]]
     verdict = Judge().decide(evidence_from_data(d))
-    assert verdict.decision == "REJECT" and any("tests or test settings" in r for r in verdict.reasons)
+    if name.endswith("."):  # not prose either, so under this documentation grant the harm "code changed" outranks the hold
+        assert verdict.decision == "REJECT" and any("code changed" in r for r in verdict.reasons)
+    else:
+        assert verdict.decision == "INSUFFICIENT" and any("tests or test settings" in r for r in verdict.reasons)
 
 
 @pytest.mark.parametrize("name", ["NOTES.txt", "docs/contest.txt", "latest.txt", "attest.md", "docs/testing.md"])

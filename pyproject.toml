@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "judge"
-version = "0.4.11"
+version = "0.6.0"
 description = "The third party that decides. Reads the evidence of a whole run and says ACCEPT, REJECT or INSUFFICIENT. Measures nothing, writes nothing."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -24,13 +24,13 @@ classifiers = [
 ]
 # The runtime dependency is CNS, the shared rows (cns.seat) and gate contract (cns.gate).
 # It is pinned by release tag, spelled the same way in every repository of the stack (CNS's seat_pins check compares the
-# text, and pip treats a tag URL and a commit URL as two sources). The comment names the commit the tag peels to.
+# text, and pip treats a tag URL and a commit URL as two sources). The comment names the commit the tag peels to (v3.0.0 is an annotated tag).
 dependencies = [
-    "cns @ git+https://github.com/wking53214/CNS.git@v2.0.0",  # v2.0.0 = b13e5d2f9e0e4291725f82794b89117c3d840ac1
+    "cns @ git+https://github.com/wking53214/CNS.git@v4.0.0",  # v4.0.0 = eabe6c72d71557b6327b80b42b0afab572acce80
 ]
 
 [project.urls]
-Homepage = "https://github.com/wking53214/Judge"
+Homepage = "https://github.com/wking53214/JUDGE"
 
 [project.scripts]
 judge = "judge.cli:main"
@@ -42,7 +42,7 @@ judge = "judge.cli:main"
 # To bump: see "Bumping the Warden pin" in README.md. CI checks out the same commit (.github/workflows/tests.yml);
 # tests/test_warden_pin.py fails if the two disagree.
 warden = [
-    "warden @ git+https://github.com/wking53214/Warden.git@b57b81e1c98333c43d422666c89a8fcf3ae6eaca",  # Warden 0.13.9
+    "warden @ git+https://github.com/wking53214/Warden.git@5680f5cd4bc0f15b2d6cdbd8d2ec7607266430d6",  # Warden 1.0.0
 ]
 test = ["pytest>=8"]
 # Exact versions, so a new release of either cannot turn the lint job red (or hide a finding) on its own.

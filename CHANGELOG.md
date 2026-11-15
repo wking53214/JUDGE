@@ -6,16 +6,195 @@ history.
 
 ## [Unreleased]
 
-## [0.4.11] - 2026-11-15
+### Changed
 
-### Fixed
-- A code change was INSUFFICIENT while some tests did not run only when a `.py` file was written or deleted, so a `replace` edit of a `.py` file (the usual kind) was ACCEPTed (README KNOWN DEFECT 1, now closed). The rule no longer looks at the edit kind or the extension.
+- The Warden pin moves from `0339c09a69497be2d2fc34d71872c8c8616c6668` to `3ed76136a8ad8c8a78ea8aaec4c5350026073f97`, the head of Warden's `main` after its ghost_tools pin move (Warden 1.0.0 at both; pin text only in Warden), in `pyproject.toml` and in the CI `warden` checkout in `.github/workflows/tests.yml`. Reason: `seat_pins` in the CNS `stack` job reports that the seats pin Warden at a different commit from the install file, and pip cannot install two commits of warden together. No version change, no code change and no test was edited.
+- The Warden pin moves from `0e273bc543926c490cdad2c21124521c45aea28c` (Warden 0.16.6) to `0339c09a69497be2d2fc34d71872c8c8616c6668` (Warden 1.0.0, the merge commit that `v1.0.0` is tagged on), in `pyproject.toml` and in the CI `warden` job. The suite passes against it (1336 tests, `JUDGE_REQUIRE_WARDEN=1`). No Judge code and no Judge rule was edited. CNS stays at `v4.0.0`, which Warden 1.0.0 also pins.
+- The Warden pin moves from `db210f94018575220ddebbd8e3139f4272d75ae0` to `b6d8ebb50f50c8c4d62a40a6bc66630f2c65d426`, the head of Warden's `main` after its second ghost_tools pin move (Warden 0.16.6 at both; pin text only in Warden). Reason: the CNS `stack` job needs every repository to name the same Warden commit. No Judge code or test changed.
+- The Warden pin moves from `986f1d6ab1e103888a8b8a1c07706d4321dbc9c8` to `db210f94018575220ddebbd8e3139f4272d75ae0`, the head of Warden's `main` after its ghost_tools pin move (Warden 0.16.6 at both; pin text only in Warden). Reason: the CNS `stack` job needs every repository to name the same Warden commit. No Judge code or test changed.
+- The CNS pin moves from the tag `v2.3.0` to the tag `v3.0.0` (`cns @ git+https://github.com/wking53214/CNS.git@v3.0.0`, comment `v3.0.0 = 31cb6f568219ef62cf3748701c895aa086abf1b8`, the commit the annotated tag peels to). The README line that names the pinned CNS and `tests/test_readme_ledger.py` (its two assertions on the pin text) move with it. No Judge code changed. The Warden pin is untouched.
+- Documentation only, no code. The README no longer says the pinned CNS is `v2.2.0` (it is `v2.3.0`, as `pyproject.toml` says), and KNOWN DEFECTS gains item 4: look-alike folder names, `text_only: true` beside `exit_code: 0` and a space-padded `unmeasured` entry are ACCEPTed (reproduced 2026-11-11, parked, not fixed). No test was edited.
+- The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
+
+
+## [0.6.0] - 2026-11-12
 
 ### Changed
-- Behavior is stricter in one more case: a change to any non-prose file that is not Python (`.rs`, `.js`, `.json`, `Cargo.toml`) is now INSUFFICIENT while some tests did not run before. No existing test was edited.
+
+- Judge reads `Evidence.finisher_ran`. When it is exactly `False` and no cycle applied anything, a listed edit is a contradiction
+  and the run is held as INSUFFICIENT. `True` and `None` (older evidence) behave as before, so no existing record changes its
+  verdict. A value that is not `True`, `False` or `None` is unreadable and held. This reverses the earlier owner decision to defer
+  adopting the field. The gap for runs where some cycle did apply an edit stays open and is documented (README KNOWN DEFECTS 1).
+- `tests/test_finisher_ran_gap.py` now holds the new behaviour and the remaining limit.
+- Version 0.6.0 (`pyproject.toml`, README).
+
+## [0.5.7] - 2026-11-11
+
+Not tagged. A pin move only. No Judge code, rule or test changed.
+
+### Changed
+- The Warden pin of the `warden` extra and of the CI `warden` job moves from 0.16.5 (`8704ee7c89e1536c6946132e4544c371cc82a4a2`) to 0.16.6 (`4869ca3ccb5433cf6bb448e20e43042aadcf389c`), which ignores `git replace` refs in every git call it makes. The tested-set lines are not moved.
+- Version 0.5.7 (`pyproject.toml`, README).
+
+## [0.5.6] - 2026-11-04
+
+Not tagged. A pin move only. No Judge code, rule or test changed.
+
+### Changed
+- The Warden pin of the `warden` extra and of the CI `warden` job moves from 0.16.4 (`1a263fbefd164dff40b7064ab5381cda281694f2`) to 0.16.5 (`84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4`), which refuses a pinned stack manifest that omits any of the five circuit members, WARDEN included. The CI tested set is not moved. The CNS pin (`v2.3.0`) is untouched.
+- Version 0.5.6 (`pyproject.toml`, README).
+
+## [0.5.5] - 2026-10-30
+
+Not tagged. Tests, documentation and one message string. No Judge rule changed, and `_is_baseline` was not touched.
 
 ### Added
-- `tests/test_strict_evidence.py::test_a_replaced_py_file_when_some_tests_did_not_run_before_is_insufficient` and `::test_any_code_file_changed_when_some_tests_did_not_run_before_is_insufficient`.
+- `tests/test_harm_is_never_a_hold.py`: for each of nine harm classes (a violated SWIZZLE attack, false SWIZZLE proofs, a false ASSAY key, ASSAY below its floor, ASSAY numbers that contradict, a grown Ghost baseline, a changed baseline path, an edit outside the project, code changed with no final suite), evidence that also carries a changed test file and a new minor finding must give REJECT, name the harm and contain no hold sentence. Each test fails under a local mutation of `judge/seat.py` that turns that harm into a hold when a test file is also changed (the mutation is `harm.append(` becoming `(unknown if judging else harm).append(` at that one site; the nine sites are in the commit message). Also a test that unreadable evidence is checked before harm.
+
+### Changed
+- The ACCEPT sentence said "no edit left the project". It is a plain message string, so it now says "no edit that Warden applied left the project (what the suite itself did is not measured)". No test matched the old text; the recorded runs of the old circuit keep it as they were written.
+- README: the sentence that said the pinned CNS `v2.0.0` does not declare `ghost_severity` and that `judge decide` rejects such a record was false (the pin is `v2.2.0`); it now says what is true and names the test. WHAT DOES NOT WORK says that unreadable evidence is checked before harm, that the CNS connector maps INSUFFICIENT (a hold for a named human included) to `RETRY`, which cannot clear a hold, and what "no edit that Warden applied left the project" covers. KNOWN DEFECTS gains the `.ghost*` folder edge (documented only). The 2026-10-22 self-hosting paragraph is labelled as a dated record of the old circuit. `STACK.md` spells the repository `JUDGE` in its link.
+- The Warden pin of the `warden` extra and of the CI `warden` job moves from 0.16.3 (`cb45681ea80f845fb8f23bb091bda7f587c6a547`) to 0.16.4 (`57f7bb7b12314f0ba30697cff9a846c749e3d606`). No Judge rule was edited for it. The CI tested set is not moved.
+- Version 0.5.5 (`pyproject.toml`, README).
+
+## [0.5.4] - 2026-10-30
+
+Not tagged. Documentation, a docstring, a test comment and the Warden pin. No Judge rule changed, and `_is_baseline` was not touched.
+
+### Changed
+- The Warden pin of the `warden` extra and of the CI `warden` job moves from 0.16.2 (`df212db32c230a00cf4100038637be873262a816`) to
+  0.16.3 (`cb45681ea80f845fb8f23bb091bda7f587c6a547`). No Judge code was edited for it. The CI tested set is not moved.
+- `STACK.md` says the circuit is five repositories (ASSAY, ghost_tools, SWIZZLE, Warden, Judge), that any actor's real change enters through Warden's claim seat, that DRAFTER, BURNISH and WATCHER_MCU are released from the circuit, that a bare `--stack` still requires all six checkouts, and that every run declines eight Ghost checks (the count is eight because ghost_tools 1.10.11 lists the ledger as declined under `--no-ledger`, not because Warden declined a new check).
+- The README no longer says "One of seven repositories" or lists the Drafter and Burnish as seats of the circuit (WHAT THIS IS,
+  WHAT IT DOES NOT OWN, the `warden tagteam` example, which now uses the claim seat). The Warden pin history is stated as history. The
+  recorded runs of the old circuit are labelled as such. The Homepage URL and one issues URL in `pyproject.toml` and the README
+  spell the repository name `JUDGE`.
+- The `judge/cns_connector.py` docstring said INSUFFICIENT maps to `RETRY` because "something was not measured; bring the
+  missing evidence and ask again". INSUFFICIENT also means, in the two cases ruled on 2026-10-28, that the change is held for a named human.
+  The docstring says both.
+- A comment in `tests/test_owner_rulings.py` said "pinned CNS (2.0.0)"; the pin is v2.2.0, which declares `ghost_severity`.
+  The docstring now says what happens under 2.2.0 and under 2.0.0. No assertion changed.
+
+## [0.5.3] - 2026-10-30
+
+Not tagged. No code changed; the Warden pin moved. One commit per step.
+
+### Changed
+- Stage 3 wave 2 step 1: the `warden` extra and the CI `warden` job move together from Warden 0.16.1
+  (`fade3ca5ee6435393d0588782929ff8de72f988f`) to Warden 0.16.2 (`df212db32c230a00cf4100038637be873262a816`), which refuses a
+  `--stack` folder that holds a seat the pinned manifest omits even when `--claim-commit`, `--claim-diff`, `--drafter` or
+  `--finisher` supplies the seat. The suite passed (JUDGE_REQUIRE_WARDEN=1) against CNS 2.2.0 and that Warden. No test was
+  edited.
+- Stage 3 wave 2 step 2: version 0.5.3 (`pyproject.toml`, README version line) and this entry.
+
+## [0.5.2] - 2026-10-30
+
+Not tagged. No code changed; the pins moved. One commit per step.
+
+### Changed
+- Pin22 step 1: the CNS pin is the tag `v2.2.0` (`cns @ git+https://github.com/wking53214/CNS.git@v2.2.0`, comment
+  `v2.2.0 = ce6bd05578a7a3e3cafa0cfa1e9a2cca8a5f171f`, a lightweight tag), from `v2.1.0`. The `cns` package at v2.2.0
+  equals v2.1.0 except its version string. The `warden` extra and the CI `warden` job move together from Warden 0.15.1
+  (`fe9c8b35778de680d04b2a57775ac6a6831f4799`) to Warden 0.16.1 (`fade3ca5ee6435393d0588782929ff8de72f988f`). The suite
+  passed (JUDGE_REQUIRE_WARDEN=1) against CNS 2.2.0 and that Warden. Pre-existing test edited under the exact-behaviour
+  rule, asserting the old pin text and nothing else changed:
+  `tests/test_readme_ledger.py::test_the_readme_gives_the_cns_migration_note_and_the_pin_names_its_commit`.
+- Pin22 step 2: version 0.5.2 (`pyproject.toml`, README version line) and this entry.
+- Runs seated with this Judge by Warden now carry eight declined checks (`mutate`, `kernel`, `structure`, `tests`,
+  `project`, `secrets`, `correlate`, `ledger`), not seven, because ghost_tools 1.10.11 lists the ledger as declined under
+  `--no-ledger`. Judge states no such count in its text and its code is unchanged.
+
+## [0.5.1] - 2026-10-29
+
+Not tagged. No code changed; the pins moved. One commit per step.
+
+### Changed
+- Pin21 step 1: the CNS pin is the tag `v2.1.0` (`cns @ git+https://github.com/wking53214/CNS.git@v2.1.0`, comment
+  `v2.1.0 = fde931ffa89aebec95647742256ad53033bd3d02`), from `v2.0.0`. The `warden` extra and the CI `warden` job move
+  together from Warden 0.14.0 (`68f2a955f486a8ebb230c4395c88f7e99ee47c48`) to Warden 0.15.1
+  (`fe9c8b35778de680d04b2a57775ac6a6831f4799`). The suite passed (JUDGE_REQUIRE_WARDEN=1) against CNS 2.1.0 and that
+  Warden. Pre-existing test edited under the exact-behaviour rule, asserting the old pin text and nothing else changed:
+  `tests/test_readme_ledger.py::test_the_readme_gives_the_cns_migration_note_and_the_pin_names_its_commit`.
+- Pin21 step 2: version 0.5.1 (`pyproject.toml`, README version line) and this entry.
+
+## [0.5.0] - 2026-10-28
+
+Not tagged. Two REJECT outcomes become INSUFFICIENT by the owner's explicit rulings of 2026-10-28, so Warden holds the result by
+digest for a named human (`warden keep`) instead of putting the tree back for good. They are rulings, not defects, and they
+loosen the Judge; nothing else in `_decide` changes: harm is still found first, unknown is still not approved, the verdict is
+deterministic and the Judge never raises. Both commits carry the trailer "Borderline: reviewed by author before commit".
+The CNS pin stays `@v2.0.0`; the new field is read by duck typing and works with and without it.
+
+### Changed
+- Step 1 (rule 1): "tests or test settings were changed (<paths>)" moves from harm to unknown and now ends "; the machine does
+  not approve that; a named human keeps or drops the held result". A change to Ghost's baseline or any other `.ghost_*` file is
+  still harm, an edit outside the project is still harm, and harm still outranks the hold. The README's "Any change to a test
+  file is rejected" became the hold. Rule-5 edits, each asserting INSUFFICIENT where it asserted REJECT for a test-file edit and
+  nothing else: `tests/test_strict_evidence.py::test_a_listed_judging_file_rejects_whatever_the_scope_or_suite` (its
+  `reasons[0]` became `any(...)` because the cycle contradiction of its own evidence is listed first),
+  `tests/test_strict_evidence.py::test_test_file_deletion_with_equal_pass_count_is_rejected_even_if_warden_forgot_to_list_it`,
+  `tests/test_strict_evidence.py::test_judging_paths_are_caught_by_their_shape` (21 parameters),
+  `tests/test_judge.py::test_a_fixture_or_specimen_is_judging_material_even_under_a_code_grant` (6),
+  `tests/test_real_evidence.py::test_a_prose_file_pytest_collects_as_a_doctest_is_judged_like_a_test` (6; `testing.txt.` is not
+  prose, so under its documentation grant the harm "code changed" still outranks the hold and that parameter asserts REJECT on
+  that), `tests/test_readme_patterns.py::test_every_file_name_the_readme_lists_is_rejected_when_edited` (42),
+  `tests/test_readme_patterns.py::test_every_folder_the_readme_lists_is_rejected_when_edited` (24),
+  `tests/test_readme_patterns.py::test_setup_cfg_is_rejected_as_the_readme_says`,
+  `tests/test_readme_patterns.py::test_a_java_test_in_a_test_folder_is_rejected_as_the_readme_says`,
+  `tests/test_red_team_round2.py::test_protected_paths_are_rejected` (60; the 4 `.ghost_` paths still assert REJECT),
+  `tests/test_red_team_round2.py::test_symlink_to_a_protected_file_is_protected`,
+  `tests/test_red_team_round2.py::test_symlinked_directory_into_tests_is_protected`. Twelve test functions, 161 parameters
+  flipped to INSUFFICIENT; the test names were kept as rule 5 requires.
+- Step 2 (rule 2): the Ghost "none new" rule reads `Evidence.ghost_severity` (CNS 2.1.0: finding id to the scanner's own word,
+  `None` from a Warden older than the field) through `getattr`. A new finding whose word is `minor` or `informational`, compared
+  stripped and lower-cased, is unknown ("N new finding(s) of minor or informational severity (ids) are held for a named human");
+  `major` or `critical` is harm as before; no mapping, an id missing from it, a field that is not a mapping, or any other word
+  (Warden's critical/high/medium/low remap included) is harm as before, because an id with no readable severity is harm. A mixed
+  set is harm. `_HARM_SEVERITIES` (SWIZZLE's attack scale, where `medium` is harm) is untouched; the new `_HELD_GHOST_SEVERITIES`
+  carries a comment that the two scales are different. `judge decide` accepts a `ghost_severity` key only when the installed CNS
+  declares the field; under the pinned CNS 2.0.0 such a record is turned away as an unknown field (INSUFFICIENT, exit 1).
+- Step 3: version 0.5.0 (`judge --version`, README), this entry, README WHAT WORKS entries naming the tests, WHAT DOES NOT WORK
+  / NOT PROVEN restated for severity and for the field the pinned CNS lacks, KNOWN DEFECTS 2 reworded for the hold. No ledger
+  entry: no defect was fixed.
+
+### Added
+- `tests/test_owner_rulings.py`: both rulings held to the code, including a replay of the falsifier's two-rule record on the
+  Ghost Tools repository (`patched2/02-e5eccc0`, a changed test file and one new `minor` finding), reconstructed as
+  `tests/fixtures/held/falsifier_02_e5eccc0.json` with its real finding ids; it ends INSUFFICIENT with both sentences in the
+  record's order, and REJECT as before without Ghost's word. The fixture's `notes` say which values the record did not carry.
+
+## [0.4.11] - 2026-10-24
+
+Five steps from the round-6 independent audit. Each defect was reproduced before it was changed.
+
+### Fixed
+- Step 1: the "some tests did not run, so a code change cannot be shown safe" rule listed only the edit kinds `write` and
+  `delete` (`judge/seat.py`), so a lone `replace` edit to a `.py` file with skips before and after was ACCEPT while the same
+  edit as `write` was INSUFFICIENT. It now uses the set of known kinds (`write`, `replace`, `delete`); an unknown kind was
+  already INSUFFICIENT. Failing-first tests in `tests/test_strict_evidence.py` cover every kind, case and spacing variants, the
+  unknown kind and the cases that stay ACCEPT.
+- Step 5: `judge --verbos decide FILE` ran, and `--vers` and `--hel` were taken as `--version` and `--help`, because argparse
+  accepts any unambiguous prefix of a long option. Both parsers now set `allow_abbrev=False`, so a prefix is a usage error
+  (exit 2). Failing-first tests in `tests/test_cli.py`; the full spellings still work.
+
+### Changed
+- Step 2: the README no longer says "any path shaped like a test". A new section "What counts as a test, exactly" lists the
+  folders, file names and file name patterns copied from `judge/seat.py`, and states that the "some tests did not run" rule looks
+  only at `.py` files. KNOWN DEFECTS lists what the audit reproduced as ACCEPT (JavaScript, TypeScript, Go, Java and Ruby test
+  files, a Rust source file, `Cargo.toml`, `.gitignore`); language support is not extended. New `tests/test_readme_patterns.py`
+  holds the README lists to the code and documents the gap.
+- Step 3: the comments in `judge/seat.py` (module docstring and `_cycle_contradictions`) that said CNS has no `finisher ran` field
+  now say CNS 2.0.0 has `Evidence.finisher_ran` and that the Judge does not read it, by the owner's decision, so the gap stays
+  open. New `tests/test_finisher_ran_gap.py` holds those statements. No code behaviour changed.
+- Step 4: the README's SELF-HOSTING section cites the CNS repository's `docs/evidence/SELFHOSTING_2026-10-23.md` (on its branch
+  `claude/horsemen-production-status-5wsndb` until merged): run 1 FINISH_REJECTED because the finisher wrote a test count into
+  the README (fixed in the finisher), run 2 ACCEPT with 7 gaps and 42 Ghost findings standing, and what that does not mean.
+  Rule-5 edit: `tests/test_readme_ledger.py::test_self_hosting_says_it_predates_the_current_rules_and_links_the_cns_repository`
+  pinned the old sentence "No fresh run on the current commits is recorded yet"; it is replaced by two tests, one holding the new
+  paragraph with the evidence numbers as constants and one keeping the old assertions that still hold.
+- Step 5: the Warden test pin moved from `b57b81e1c98333c43d422666c89a8fcf3ae6eaca` (Warden 0.13.9) to
+  `9ecd1124e6c1b1c4ad7daed37b17f9009662dd9d` (Warden 0.13.10), in the `warden` extra of `pyproject.toml` and the `ref:` of the
+  Warden CI job. CNS stays `@v2.0.0`; `pip check` is clean.
 
 ## [0.4.10] - 2026-10-22
 
