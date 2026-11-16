@@ -49,7 +49,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           repository: wking53214/Warden
-          ref: 5680f5cd4bc0f15b2d6cdbd8d2ec7607266430d6
+          ref: 676d9ca7a4fe019d683f7c5e80955bda59ea8375
           path: _warden
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
