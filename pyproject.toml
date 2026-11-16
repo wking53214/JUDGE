@@ -26,7 +26,7 @@ classifiers = [
 # It is pinned by release tag, spelled the same way in every repository of the stack (CNS's seat_pins check compares the
 # text, and pip treats a tag URL and a commit URL as two sources). The comment names the commit the tag peels to (v3.0.0 is an annotated tag).
 dependencies = [
-    "cns @ git+https://github.com/wking53214/CNS.git@v4.0.0",  # v4.0.0 = eabe6c72d71557b6327b80b42b0afab572acce80
+    "cns @ git+https://github.com/wking53214/CNS.git@v4.1.0",  # v4.1.0 = c84ef8c60079aae1753f92d9169d89081c670c22
 ]
 
 [project.urls]
@@ -42,7 +42,7 @@ judge = "judge.cli:main"
 # To bump: see "Bumping the Warden pin" in README.md. CI checks out the same commit (.github/workflows/tests.yml);
 # tests/test_warden_pin.py fails if the two disagree.
 warden = [
-    "warden @ git+https://github.com/wking53214/Warden.git@5680f5cd4bc0f15b2d6cdbd8d2ec7607266430d6",  # Warden 1.0.0
+    "warden @ git+https://github.com/wking53214/Warden.git@676d9ca7a4fe019d683f7c5e80955bda59ea8375",  # Warden 1.0.0
 ]
 test = ["pytest>=8"]
 # Exact versions, so a new release of either cannot turn the lint job red (or hide a finding) on its own.
