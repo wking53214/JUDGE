@@ -1,6 +1,6 @@
 # Stack role: Judge
 
-**ASSURANCE (not the live decision path).**
+**ASSURANCE (not the orchestrator path).**
 
 The seat that decides. Reads the evidence of a whole run and says ACCEPT, REJECT or INSUFFICIENT, with the numbers in its reason. Measures nothing, writes nothing.
 
@@ -72,8 +72,8 @@ earlier recorded run (2026-10-14, every seat live on a scratch repository, `ACCE
 see Warden's `docs/REGISTRY.json`) used the older circuit that seated them.
 
 ```text
-Live path: Admission → OBSERVE/Keys → Locks → PERCEIVE → Decision → Conservation → Execution → Custody
-Assurance: ASSAY · ghost_tools · SWIZZLE · Warden · Judge  (this circuit, off the live path)
+Orchestrator path: Admission → OBSERVE/Keys → Locks → PERCEIVE → Decision → Conservation → Execution → Custody
+Assurance: ASSAY · ghost_tools · SWIZZLE · Warden · Judge  (this circuit, off the orchestrator path)
 ```
 
 CNS holds the interoperability contracts. No repository in the circuit modifies it.
