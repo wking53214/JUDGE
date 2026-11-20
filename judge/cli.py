@@ -185,6 +185,16 @@ def _deliver(text: str) -> str | None:
     return failure
 
 
+def _no_repeated_keys(pairs):
+    """Refuse a JSON object that repeats a key, instead of silently keeping the last one."""
+    seen = {}
+    for key, value in pairs:
+        if key in seen:
+            raise ValueError(f"repeated key {key!r}")
+        seen[key] = value
+    return seen
+
+
 def _run_decide(source: str) -> int:
     try:
         text = _read(source)
@@ -192,7 +202,7 @@ def _run_decide(source: str) -> int:
         _say(f"cannot read {source!r}: {type(exc).__name__}: {exc}")
         return EXIT_USAGE
     try:
-        data = json.loads(text)
+        data = json.loads(text, object_pairs_hook=_no_repeated_keys)
     except ValueError as exc:
         _say(f"{source!r} is not valid JSON: {exc}")
         return EXIT_USAGE
