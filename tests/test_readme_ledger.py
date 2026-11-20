@@ -107,7 +107,7 @@ SELFHOST_GHOST_FINDINGS = "42 findings"
 def test_self_hosting_cites_the_cns_evidence_and_says_what_it_does_and_does_not_mean():
     text = " ".join(section("## SELF-HOSTING").split())
     assert "docs/evidence/SELFHOSTING_2026-10-23.md" in text
-    assert "on its branch `claude/horsemen-production-status-5wsndb`" in text
+    assert "They are on CNS `main`" in text
     assert "https://github.com/wking53214/CNS)" in text
     assert "FINISH_REJECTED (exit 1)" in text and "fixed in Burnish 0.3.12" in text
     assert "ended ACCEPT (exit 0)" in text
