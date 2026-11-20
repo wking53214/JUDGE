@@ -377,6 +377,19 @@ def _reaches_outside(norm: str) -> bool:
     return absolute or bool(set(_parts(norm)) & _OUTSIDE_DIRS)
 
 
+def _link_check_note(target: object, changed) -> str:
+    """Say so when the symbolic-link check could not run: edits were made but the project folder is not here."""
+    if not changed or not isinstance(target, str) or not target or "\0" in target:
+        return ""
+    try:
+        if Path(target).resolve().is_dir():
+            return ""
+    except (OSError, ValueError, RuntimeError):
+        pass
+    return ("the check for symbolic links did not run, because the project folder named in target was not found "
+            "on this machine; an edit that goes through a link was not looked at")
+
+
 def _symlink_target(target: object, path: str):
     """Where an edited path really lands, as a path inside the project (text), "OUTSIDE", or None.
 
@@ -606,6 +619,7 @@ def _decide(e: Evidence) -> Verdict:
         harm.append("code changed and no final suite result was given")
 
     text_note = _text_note(after)
+    link_note = _link_check_note(target, changed)
     if harm:
         return Verdict("REJECT", tuple(harm) + ((text_note,) if text_note else ()), NAME)
 
@@ -638,9 +652,10 @@ def _decide(e: Evidence) -> Verdict:
     if reasons:
         return Verdict("INSUFFICIENT", tuple(reasons) + ((text_note,) if text_note else ()), NAME)
 
+    # An ACCEPT that skipped the symbolic-link check says so, because that is the one verdict that rests on it.
     return Verdict("ACCEPT", (_accept_sentence(
         len(changed), before, after, ghost_start, ghost_end, held, total, low_only, caught, modes, floor),
-        *((text_note,) if text_note else ())), NAME)
+        *((text_note,) if text_note else ()), *((link_note,) if link_note else ())), NAME)
 
 
 def _norm_text(x: object) -> str:
