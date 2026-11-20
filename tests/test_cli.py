@@ -349,3 +349,31 @@ def test_in_process_a_stdin_of_none_is_exit_2_with_one_plain_line(monkeypatch, c
     assert cli.main(["decide", "-"]) == 2
     err = capsys.readouterr().err
     assert _plain_line(err) and "standard input is closed" in err
+
+
+def test_a_repeated_json_key_is_refused_not_resolved_to_the_last_one(tmp_path, capsys):
+    """A file with a red suite_after first and a green one last used to be read as green (the last key won)."""
+    good = _data()
+    text = json.dumps(good)
+    red = json.dumps({"ran": True, "passed": 10, "failed": 2, "exit_code": 1})
+    repeated = text.replace('"suite_after":', f'"suite_after": {red}, "suite_after":', 1)
+    assert repeated != text
+    path = tmp_path / "evidence.json"
+    path.write_text(repeated, encoding="utf-8")
+    assert cli.main(["decide", str(path)]) == cli.EXIT_USAGE
+    assert "appears more than once" in capsys.readouterr().err
+
+
+def test_an_accept_says_so_when_the_symbolic_link_check_could_not_run(capsys):
+    """The example names a project folder that does not exist here, so the link check is skipped and the ACCEPT says so."""
+    assert cli.main(["decide", str(EXAMPLE)]) == 0
+    out = _decision(capsys)
+    assert out["decision"] == "ACCEPT"
+    assert any("check for symbolic links did not run" in r for r in out["reasons"])
+
+
+def test_an_accept_with_the_project_folder_present_has_no_link_note(tmp_path, capsys):
+    data = _data()
+    data["target"] = str(tmp_path)
+    assert cli.main(["decide", _write(tmp_path, data)]) == 0
+    assert not any("symbolic links" in r for r in _decision(capsys)["reasons"])

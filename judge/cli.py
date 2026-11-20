@@ -185,6 +185,20 @@ def _deliver(text: str) -> str | None:
     return failure
 
 
+def _no_repeated_keys(pairs: list) -> dict:
+    """Build a JSON object, refusing a key that appears twice (ValueError, so the caller reports unusable input).
+
+    json keeps the last of a repeated key by default, which let a file with a red ``suite_after`` first and a green one
+    last read as green. Refusing it makes the file unusable instead of quietly picking one.
+    """
+    seen: dict = {}
+    for key, value in pairs:
+        if key in seen:
+            raise ValueError(f"the key {key!r} appears more than once, so it is not clear which value is meant")
+        seen[key] = value
+    return seen
+
+
 def _run_decide(source: str) -> int:
     try:
         text = _read(source)
@@ -192,7 +206,7 @@ def _run_decide(source: str) -> int:
         _say(f"cannot read {source!r}: {type(exc).__name__}: {exc}")
         return EXIT_USAGE
     try:
-        data = json.loads(text)
+        data = json.loads(text, object_pairs_hook=_no_repeated_keys)
     except ValueError as exc:
         _say(f"{source!r} is not valid JSON: {exc}")
         return EXIT_USAGE
