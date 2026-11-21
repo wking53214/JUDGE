@@ -2,7 +2,7 @@
 
 **ASSURANCE (not the orchestrator path).**
 
-The seat that decides. Reads the evidence of a whole run and says ACCEPT, REJECT or INSUFFICIENT, with the numbers in its reason. Measures nothing, writes nothing.
+The seat that decides. Reads the evidence of a whole run and says ACCEPT, REJECT or INSUFFICIENT, with the numbers in its reason. Runs nothing, writes nothing.
 
 ## The circuit
 
