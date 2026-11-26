@@ -17,6 +17,28 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.9.0] - 2026-11-26
+
+### Added
+
+- The Judge reads `Evidence.edit_sources` (CNS 4.2.0): one label per entry of `changed`, the number of the cycle whose
+  applied proposal made it or the word "finish". A run is held (INSUFFICIENT) when the labels are not one per edit, name a
+  cycle that applied nothing, leave an applied cycle without an edit, say "finish" without a finisher after a converged
+  loop, are out of order (cycles in order, then the finisher's), or put one file twice under one label. A label that is
+  neither a whole number nor "finish" is held; labels that are not a list are unreadable.
+- Owner's decision of 2026-11-26: when the installed CNS declares the field, a run with no labels in which some cycle
+  applied an edit is held. Under an older CNS (the pinned `v4.1.0`) no governor can say, so nothing changes until the pins
+  move. A run whose only edits are the finisher's is not held for missing labels (left open).
+- `judge.seat.CNS_DECLARES_EDIT_SOURCES`, and `edit_sources` in `ROW_ATTRIBUTES`, so the CNS connector digests the labels.
+- Tests: `tests/test_edit_sources.py`. `tests/conftest.py` gains `label_edits`, which gives hand-made evidence the labels a
+  Warden on CNS 4.2.0 would write, only when the installed CNS declares the field; the recorded runs get hand-added labels
+  the same way (`tests/test_real_evidence.py`, `LABELS`), because they were recorded before Warden said so.
+
+### Changed
+
+- `tests/test_finisher_ran_gap.py`: the known-limit test now expects a hold when the installed CNS declares the field and
+  the old ACCEPT otherwise. Version 0.9.0 (`pyproject.toml`, README).
+
 ## [0.8.0] - 2026-11-26
 
 ### Changed

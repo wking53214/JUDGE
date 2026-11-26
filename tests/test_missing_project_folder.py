@@ -6,7 +6,7 @@ Up to 0.7.0, when that folder was not there, the check was skipped and the run c
 """
 
 import pytest
-from conftest import PROJECT_DIR
+from conftest import PROJECT_DIR, label_edits
 from test_strict_evidence import _d, _suite
 
 from judge.cli import evidence_from_data
@@ -53,7 +53,7 @@ def test_the_command_line_and_the_python_interface_agree():
         "unmeasured": [], "assay": {"key_proven": True, "failure_modes": 5, "caught": 3, "floor": 0},
         "ghost_baseline_before": {"path": None, "suppressed": 0}, "ghost_baseline_after": {"path": None, "suppressed": 0},
     }
-    from_json = Judge().decide(evidence_from_data(data))
+    from_json = Judge().decide(evidence_from_data(label_edits(data)))
     by_hand = _d(target="/no/such/project")
     assert from_json.decision == by_hand.decision == "INSUFFICIENT"
     assert from_json.reasons == by_hand.reasons

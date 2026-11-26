@@ -62,6 +62,11 @@ THE RULES, in order. The first group that fires decides.
     Ghost's baseline report is missing, so suppressed findings are unknown
     some tests did not run before, and code was changed
     the Warden reports a check that never ran (anything but 'judge')
+    the labels in edit_sources (where each listed edit came from) contradict the
+      edits: not one per edit, a cycle that applied nothing, an applied cycle with
+      no edit, "finish" without a finisher after a converged loop, out of order, or
+      one file twice under one label (see _source_contradictions); or, under a CNS
+      that declares the field, no labels at all while some cycle applied an edit
     edits were made but the project folder named in target is not on this machine,
       so the symbolic-link check could not run (the owner's decision of 2026-11-26)
     a path that, with look-alike letters from another script swapped for Latin ones,
@@ -282,6 +287,77 @@ def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, decl
     return out
 
 
+#: True when the installed CNS declares `Evidence.edit_sources` (CNS 4.2.0 and later). A governor on that contract says
+#: where every listed edit came from, so evidence that does not say is held when some cycle applied an edit.
+CNS_DECLARES_EDIT_SOURCES = "edit_sources" in Evidence.__dataclass_fields__
+_FINISH = "finish"
+
+
+def _source_contradictions(cycles: tuple[tuple[int, str], ...], changed: list[tuple[str, str]], sources: object,
+                           finisher_ran: bool | None) -> list[str]:
+    """Reasons the labels in `edit_sources` and the edits they label cannot both be true.
+
+    Warden lists the edits of every APPLIED cycle, in cycle order, then the Finisher's, and labels each with its cycle's
+    number or "finish". Anything else is a record Warden did not write. The labels close KNOWN DEFECTS 1 of 0.8.0: with
+    one applied cycle, two listed edits can be that cycle's two or one of its and one of the Finisher's, and only the
+    labels say which, so a padded list is caught.
+
+    No labels: when the installed CNS declares the field and some cycle applied an edit, the run is held (the owner's
+    decision of 2026-11-26), because a padded list cannot be ruled out. Under an older CNS no governor can say, so
+    nothing is added. A run whose only edits are the Finisher's is not held for missing labels (left open by the owner).
+    """
+    applied = [n for n, o in cycles if o == "APPLIED"]
+    if sources is None:
+        if CNS_DECLARES_EDIT_SOURCES and applied and changed:
+            return ["the evidence does not say where each listed edit came from (edit_sources), so a padded list of "
+                    "edits cannot be ruled out"]
+        return []
+    if not isinstance(sources, (tuple, list)):
+        raise _Unreadable(f"edit_sources is a {type(sources).__name__}, not a list of labels")
+    labels: list[object] = []
+    odd = False
+    for x in sources:
+        if isinstance(x, int) and not isinstance(x, bool):
+            labels.append(x)
+        elif isinstance(x, str) and _norm_text(x) == _FINISH:
+            labels.append(_FINISH)
+        else:
+            odd = True
+    if odd:
+        return ["a label in edit_sources is neither a cycle number nor \"finish\", so it cannot say where an edit came from"]
+    out: list[str] = []
+    if len(labels) != len(changed):
+        out.append(f"edit_sources names {len(labels)} source(s) for {len(changed)} listed edit(s), so the labels do not "
+                   "match the edits")
+        return out
+    numbers = [x for x in labels if isinstance(x, int)]
+    stray = sorted({n for n in numbers if n not in applied})
+    if stray:
+        out.append(f"edit_sources names cycle(s) {', '.join(map(str, stray[:3]))} that applied nothing, so those edits "
+                   "have no source")
+    silent = [n for n in applied if n not in numbers]
+    if silent:
+        out.append(f"cycle(s) {', '.join(map(str, silent[:3]))} applied a change but no listed edit is labelled with it")
+    finishing = [x for x in labels if x == _FINISH]
+    if finishing and (finisher_ran is not True or not cycles or cycles[-1][1] != "NOTHING_TO_PROPOSE"):
+        out.append(f"{len(finishing)} edit(s) are labelled \"finish\" but the evidence does not say a finisher ran after "
+                   "a converged loop")
+    first_finish = labels.index(_FINISH) if finishing else len(labels)
+    if any(isinstance(x, int) for x in labels[first_finish:]) or numbers != sorted(numbers):
+        out.append("edit_sources is out of order: Warden lists the cycles' edits in cycle order, then the finisher's")
+    seen: set = set()
+    twice: list[str] = []
+    for (path, _), label in zip(changed, labels, strict=True):
+        key = (_norm_path(path), label)
+        if key in seen and path not in twice:
+            twice.append(path)
+        seen.add(key)
+    if twice:
+        out.append(f"the same file is listed twice under one source ({', '.join(twice[:3])}), so one of the entries "
+                   "has no edit behind it")
+    return out
+
+
 _SLASH = {ord("\\"): "/"}
 _EXIT_NAMES = ("exit_code", "returncode", "exitcode", "exit_status")
 _FORGED_NAMES = ("forged", "forged_output")
@@ -292,7 +368,7 @@ _SUITE_COUNTS = ("passed", "failed", "errors", "skipped", "xfailed")
 ROW_ATTRIBUTES = frozenset({
     "target", "scope", "changed", "cycles", "declined", "judging_files_touched", "suite_before", "suite_after",
     "ghost_before", "ghost_after", "ghost_severity", "unmeasured", "swizzle_proofs", "attacks", "assay", "finisher_ran",
-    "ghost_baseline_before", "ghost_baseline_after", "ghost_baseline",
+    "ghost_baseline_before", "ghost_baseline_after", "ghost_baseline", "edit_sources",
     "ran", "reason", "text_only", *_SUITE_COUNTS, *_EXIT_NAMES, *_FORGED_NAMES,
 })
 
@@ -495,6 +571,7 @@ def _decide(e: Evidence) -> Verdict:
     if finisher_ran is not None and not isinstance(finisher_ran, bool):
         raise _Unreadable(f"finisher_ran is a {type(finisher_ran).__name__}, not true, false or empty")
     unknown: list[str] = _cycle_contradictions(cycles, len(changed), declined, finisher_ran)
+    unknown += _source_contradictions(cycles, changed, getattr(e, "edit_sources", None), finisher_ran)
 
     # the suite
     if after is not None:

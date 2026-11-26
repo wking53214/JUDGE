@@ -42,3 +42,22 @@ atexit.register(shutil.rmtree, PROJECT_DIR, ignore_errors=True)
 def with_project(data: dict) -> dict:
     """A copy of decoded evidence whose `target` is the real project folder above."""
     return {**data, "target": PROJECT_DIR}
+
+
+def label_edits(base: dict) -> dict:
+    """Give hand-made evidence the `edit_sources` labels a Warden on CNS 4.2.0 would write, when the installed CNS declares
+    the field and the test did not set them: the applied cycles in order, the last one taking any further edits. Without
+    labels the Judge holds a run in which a cycle applied an edit (0.9.0), and these helpers build evidence that is meant
+    to be judged on something else. A record with no applied cycle, or fewer edits than applied cycles, is left unlabelled,
+    so the contradiction the test is about is the one the Judge sees."""
+    from cns.seat import Evidence
+
+    if "edit_sources" not in Evidence.__dataclass_fields__ or "edit_sources" in base:
+        return base
+    cycles, changed = base.get("cycles") or (), base.get("changed") or ()
+    if not isinstance(cycles, (tuple, list)) or not isinstance(changed, (tuple, list)):
+        return base
+    applied = [c[0] for c in cycles if isinstance(c, (tuple, list)) and len(c) == 2 and c[1] == "APPLIED"]
+    if not applied or len(changed) < len(applied):
+        return base
+    return {**base, "edit_sources": tuple(applied + [applied[-1]] * (len(changed) - len(applied)))}

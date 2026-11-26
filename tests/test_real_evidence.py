@@ -19,15 +19,45 @@ import pytest
 from conftest import with_project
 from judge import Judge
 from judge.cli import evidence_from_data, main
+from judge.seat import CNS_DECLARES_EDIT_SOURCES
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 REAL = sorted((FIXTURES / "real").glob("*.json"))
 ALL = REAL + [FIXTURES / "accept.json"]
 
 
+#: Where each listed edit of a recorded run came from. The runs were recorded before Warden said so (`edit_sources`,
+#: CNS 4.2.0), so these labels are added by hand from what each run is named for; a run whose name says a finisher wrote
+#: an edit also gets `finisher_ran: true`. They are added only when the installed CNS declares the field, because a CNS
+#: that does not refuses the key.
+LABELS: dict[str, tuple[list, bool | None]] = {
+    "applied_cycle_then_finisher": ([1, "finish"], True),
+    "declined_proposal_then_applied_cycle": ([2], None),
+    "finisher_only_after_a_converged_loop": (["finish"], True),
+    "nothing_to_propose": ([], None),
+    "one_applied_cycle": ([1], None),
+    "one_cycle_with_two_edits": ([1, 1], None),
+    "removal_commented_out": ([1], None),
+    "removal_commented_out_then_finisher": ([1, "finish"], True),
+    "two_applied_cycles": ([1, 2], None),
+    "accept": ([1], None),
+}
+
+
 def _load(path: Path) -> dict[str, Any]:
-    """A recorded file, with its neutralised `target` pointed at a real folder so the link check can run (0.8.0)."""
-    return with_project(json.loads(path.read_text(encoding="utf-8")))
+    """A recorded file, with its neutralised `target` pointed at a real folder so the link check can run (0.8.0), and,
+    under a CNS that declares `edit_sources`, the labels above."""
+    data = with_project(json.loads(path.read_text(encoding="utf-8")))
+    if CNS_DECLARES_EDIT_SOURCES:
+        sources, finisher_ran = LABELS[path.stem]
+        data["edit_sources"] = sources
+        if finisher_ran is not None:
+            data["finisher_ran"] = finisher_ran
+    return data
+
+
+def test_every_recorded_file_has_labels():
+    assert {p.stem for p in ALL} == set(LABELS)
 
 
 def _decision(data: dict[str, Any]) -> str:
@@ -85,12 +115,19 @@ def _suite(which: str, **fields: Any) -> Mutation:
     return apply
 
 
+def _relabel(d: dict[str, Any]) -> None:
+    """After a mutation that gives each applied cycle one edit, keep the labels (when there are any) saying so."""
+    if "edit_sources" in d:
+        d["edit_sources"] = [n for n, o in d["cycles"] if o == "APPLIED"]
+
+
 def _add_edit(path: str, kind: str = "write") -> Mutation:
     def apply(d: dict[str, Any]) -> None:
         d["changed"].append([path, kind])
         d["cycles"].insert(len(d["cycles"]) - 1, [max(n for n, _ in d["cycles"]) + 1, "APPLIED"])
         for i, c in enumerate(d["cycles"]):
             c[0] = i + 1
+        _relabel(d)
     return apply
 
 
@@ -328,6 +365,7 @@ def test_other_prose_is_not_mistaken_for_a_test(name):
     d = _base()
     d["changed"].append([name, "write"])
     d["cycles"] = [[1, "APPLIED"], [2, "APPLIED"], [3, "NOTHING_TO_PROPOSE"]]
+    _relabel(d)
     assert _decision(d) == "ACCEPT"
 
 
@@ -345,4 +383,5 @@ def test_folders_that_only_look_like_environments_are_not_outside(name):
     d = _base()
     d["changed"].append([name, "write"])
     d["cycles"] = [[1, "APPLIED"], [2, "APPLIED"], [3, "NOTHING_TO_PROPOSE"]]
+    _relabel(d)
     assert _decision(d) == "ACCEPT"
