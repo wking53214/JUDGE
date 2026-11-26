@@ -16,6 +16,7 @@ from typing import Any
 
 import pytest
 
+from conftest import with_project
 from judge import Judge
 from judge.cli import evidence_from_data, main
 
@@ -25,7 +26,8 @@ ALL = REAL + [FIXTURES / "accept.json"]
 
 
 def _load(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    """A recorded file, with its neutralised `target` pointed at a real folder so the link check can run (0.8.0)."""
+    return with_project(json.loads(path.read_text(encoding="utf-8")))
 
 
 def _decision(data: dict[str, Any]) -> str:
@@ -48,8 +50,10 @@ def test_real_evidence_is_accepted(path):
 
 
 @pytest.mark.parametrize("path", ALL, ids=_ids(ALL))
-def test_real_evidence_is_accepted_by_the_command_line(path, capsys):
-    assert main(["decide", str(path)]) == 0
+def test_real_evidence_is_accepted_by_the_command_line(path, tmp_path, capsys):
+    copy_path = tmp_path / path.name
+    copy_path.write_text(json.dumps(_load(path)), encoding="utf-8")
+    assert main(["decide", str(copy_path)]) == 0
     assert json.loads(capsys.readouterr().out)["decision"] == "ACCEPT"
 
 

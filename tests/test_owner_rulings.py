@@ -16,6 +16,7 @@ from cns.seat import Evidence
 from cns.suite import SuiteRun
 from test_strict_evidence import MISSING, _d, _ev
 
+from conftest import PROJECT_DIR, with_project
 from judge import Judge, seat
 from judge.cli import evidence_from_data, main
 
@@ -68,7 +69,7 @@ def test_the_hold_keeps_company_with_the_other_unknowns():
 
 def test_the_command_line_holds_a_changed_test_file_with_exit_1(tmp_path, capsys):
     data = {
-        "target": "/t", "scope": "code", "cycles": [[1, "APPLIED"]], "changed": [["tests/test_a.py", "write"]],
+        "target": PROJECT_DIR, "scope": "code", "cycles": [[1, "APPLIED"]], "changed": [["tests/test_a.py", "write"]],
         "judging_files_touched": ["tests/test_a.py"], "suite_before": {"ran": True, "passed": 10, "exit_code": 0},
         "suite_after": {"ran": True, "passed": 10, "exit_code": 0}, "ghost_before": ["g"], "ghost_after": ["g"],
         "declined": [], "swizzle_proofs": True, "attacks": [{"scenario": "a", "severity": "high", "status": "held"}],
@@ -190,7 +191,7 @@ def test_the_decision_is_deterministic():
 
 def test_the_falsifier_02_record_replayed_is_held_with_both_sentences():
     """The falsifier's two-rule run on ghost_tools e5eccc0, reconstructed from its record (see the fixture's notes)."""
-    data = json.loads((FIXTURES / "held" / "falsifier_02_e5eccc0.json").read_text(encoding="utf-8"))
+    data = with_project(json.loads((FIXTURES / "held" / "falsifier_02_e5eccc0.json").read_text(encoding="utf-8")))
     severity = data.pop("ghost_severity")
     if CNS_DECLARES_THE_FIELD:
         data["ghost_severity"] = severity

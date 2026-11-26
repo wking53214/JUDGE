@@ -17,6 +17,19 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.8.0] - 2026-11-26
+
+### Changed
+
+- A run with edits whose project folder (named in `target`) is not on the machine running the Judge is held as INSUFFICIENT,
+  because the symbolic-link check could not run. An empty `target`, or one that names a file, is held the same way. Up to 0.7.0
+  such a run could still be ACCEPTed, with "the check for symbolic links did not run" among its reasons (KNOWN DEFECTS 3 in
+  0.7.0, now closed). Owner's decision of 2026-11-26. A run with no edits needs no folder, and harm still outranks the hold.
+- `examples/accept.json` and `tests/fixtures/accept.json` name `.` as `target`, so they are ACCEPTed when `judge decide` runs
+  from a real folder.
+- Tests: hand-made evidence names a real temporary folder (`tests/conftest.py`), and recorded evidence is pointed at it before
+  it is judged; the recorded files themselves are unchanged. New: `tests/test_missing_project_folder.py`. Version 0.8.0.
+
 ## [0.7.0] - 2026-11-26
 
 ### Fixed

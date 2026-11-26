@@ -7,6 +7,7 @@ import pytest
 from cns.seat import Evidence
 from cns.suite import SuiteRun
 
+from conftest import PROJECT_DIR
 from judge import Judge
 
 GREEN = SuiteRun(ran=True, passed=10, exit_code=0)
@@ -19,7 +20,7 @@ ASSAY = {"key_proven": True, "failure_modes": 5, "caught": 3, "floor": 0}
 
 def _evidence(**kw) -> Evidence:
     base = dict(
-        target="/t", scope="documentation", cycles=((1, "APPLIED"),), changed=(("README.md", "write"),),
+        target=PROJECT_DIR, scope="documentation", cycles=((1, "APPLIED"),), changed=(("README.md", "write"),),
         judging_files_touched=(), suite_before=GREEN, suite_after=GREEN,
         ghost_before=("ghost-a",), ghost_after=("ghost-a",), declined=(), swizzle_proofs=True,
         attacks=HELD, unmeasured=(), assay=ASSAY)

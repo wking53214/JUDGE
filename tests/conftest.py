@@ -6,8 +6,11 @@ JUDGE_REQUIRE_WARDEN=1 is set (CI's Warden job sets it), in which case a missing
 never a silent skip.
 """
 
+import atexit
 import importlib.util
 import os
+import shutil
+import tempfile
 
 import pytest
 
@@ -27,3 +30,15 @@ def need_warden() -> None:
 def pytest_report_header(config: pytest.Config) -> str:
     state = "installed" if HAVE_WARDEN else "NOT installed"
     return f"warden: {state}; JUDGE_REQUIRE_WARDEN={'1' if REQUIRE_WARDEN else '0'}"
+
+
+# A real, empty project folder for hand-made evidence. Since 0.8.0 the Judge holds a run with edits when the folder named
+# in `target` is not on the machine (it cannot follow symbolic links there), so evidence that should be ACCEPTed names
+# a folder that exists. Created once per test session and removed at exit.
+PROJECT_DIR = tempfile.mkdtemp(prefix="judge-project-")
+atexit.register(shutil.rmtree, PROJECT_DIR, ignore_errors=True)
+
+
+def with_project(data: dict) -> dict:
+    """A copy of decoded evidence whose `target` is the real project folder above."""
+    return {**data, "target": PROJECT_DIR}
