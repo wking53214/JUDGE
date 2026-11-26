@@ -7,7 +7,7 @@ import pytest
 from cns.seat import Evidence
 from cns.suite import SuiteRun
 
-from conftest import PROJECT_DIR
+from conftest import PROJECT_DIR, label_edits
 from judge import Judge
 
 GREEN = SuiteRun(ran=True, passed=10, exit_code=0)
@@ -22,7 +22,7 @@ def _ev(baseline_before=BASE, baseline_after=BASE, **kw):
         judging_files_touched=(), suite_before=GREEN, suite_after=GREEN, ghost_before=("g",), ghost_after=("g",),
         declined=(), swizzle_proofs=True, attacks=HELD, unmeasured=(), assay=ASSAY)
     base.update(kw)
-    ev = Evidence(**base)
+    ev = Evidence(**label_edits(base))
     for k, v in (("ghost_baseline_before", baseline_before), ("ghost_baseline_after", baseline_after)):
         if v is not None:
             object.__setattr__(ev, k, v)

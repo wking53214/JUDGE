@@ -9,7 +9,7 @@ import dataclasses
 from pathlib import Path
 
 from cns.seat import Evidence
-from test_strict_evidence import _d
+from test_strict_evidence import _d, _ev
 
 ROOT = Path(__file__).resolve().parent.parent
 SEAT = (ROOT / "judge" / "seat.py").read_text(encoding="utf-8")
@@ -38,9 +38,19 @@ def test_a_run_with_no_listed_edit_is_not_held_for_finisher_ran_false():
     assert _d(cycles=((1, "NOTHING_TO_PROPOSE"),), changed=(), finisher_ran=False).decision == "ACCEPT"
 
 
-def test_known_limit_a_padded_edit_list_on_a_run_that_applied_something_is_not_caught():
-    """If this fails, the Judge now catches padded lists: update KNOWN DEFECTS 1 in the README and the comments in judge/seat.py."""
-    assert {_d(**CONVERGED_APPLIED, finisher_ran=value).decision for value in (None, True, False)} == {"ACCEPT"}
+def test_a_padded_edit_list_without_labels_is_caught_only_where_the_cns_can_carry_labels():
+    """Was KNOWN DEFECTS 1 (0.8.0). With no `edit_sources`, the Judge holds such a run when the installed CNS declares the
+    field (4.2.0 and later) and, under an older CNS, where no governor can say, the old reading stands
+    (tests/test_edit_sources.py holds both ways)."""
+    from judge import seat
+    from judge import Judge
+    expected = {"INSUFFICIENT"} if seat.CNS_DECLARES_EDIT_SOURCES else {"ACCEPT"}
+    seen = set()
+    for value in (None, True, False):
+        ev = _ev(**CONVERGED_APPLIED, finisher_ran=value)
+        object.__setattr__(ev, "edit_sources", None)  # no labels, whatever the shared helper would add
+        seen.add(Judge().decide(ev).decision)
+    assert seen == expected
 
 
 def test_a_finisher_ran_that_is_not_true_false_or_empty_is_unreadable():

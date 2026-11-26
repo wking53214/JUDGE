@@ -7,7 +7,7 @@ import pytest
 from cns.seat import Evidence
 from cns.suite import SuiteRun
 
-from conftest import PROJECT_DIR
+from conftest import PROJECT_DIR, label_edits
 from judge import Judge
 
 GREEN = SuiteRun(ran=True, passed=10, exit_code=0)
@@ -26,7 +26,7 @@ def _evidence(**kw) -> Evidence:
         attacks=HELD, unmeasured=(), assay=ASSAY)
     base.update(kw)
     extra = {k: base.pop(k) for k in ("ghost_baseline_before", "ghost_baseline_after") if k in base}
-    ev = Evidence(**base)
+    ev = Evidence(**label_edits(base))
     # Ghost's baseline report is not an Evidence field in the pinned Warden yet; the Judge reads it if present.
     for k, v in {"ghost_baseline_before": CLEAN_BASELINE, "ghost_baseline_after": CLEAN_BASELINE, **extra}.items():
         if v is not MISSING:

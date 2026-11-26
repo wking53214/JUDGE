@@ -16,7 +16,7 @@ from cns.seat import Evidence
 from cns.suite import SuiteRun
 from test_strict_evidence import MISSING, _d, _ev
 
-from conftest import PROJECT_DIR, with_project
+from conftest import PROJECT_DIR, label_edits, with_project
 from judge import Judge, seat
 from judge.cli import evidence_from_data, main
 
@@ -77,7 +77,7 @@ def test_the_command_line_holds_a_changed_test_file_with_exit_1(tmp_path, capsys
         "ghost_baseline_before": {"path": None, "suppressed": 0}, "ghost_baseline_after": {"path": None, "suppressed": 0},
     }
     path = tmp_path / "evidence.json"
-    path.write_text(json.dumps(data), encoding="utf-8")
+    path.write_text(json.dumps(label_edits(data)), encoding="utf-8")
     assert main(["decide", str(path)]) == 1
     out = json.loads(capsys.readouterr().out)
     assert out["decision"] == "INSUFFICIENT" and out["reasons"] == [f"tests or test settings were changed (tests/test_a.py); {HOLD}"]
@@ -191,7 +191,7 @@ def test_the_decision_is_deterministic():
 
 def test_the_falsifier_02_record_replayed_is_held_with_both_sentences():
     """The falsifier's two-rule run on ghost_tools e5eccc0, reconstructed from its record (see the fixture's notes)."""
-    data = with_project(json.loads((FIXTURES / "held" / "falsifier_02_e5eccc0.json").read_text(encoding="utf-8")))
+    data = label_edits(with_project(json.loads((FIXTURES / "held" / "falsifier_02_e5eccc0.json").read_text(encoding="utf-8"))))
     severity = data.pop("ghost_severity")
     if CNS_DECLARES_THE_FIELD:
         data["ghost_severity"] = severity
@@ -224,7 +224,7 @@ def test_the_command_line_reads_ghost_severity_only_when_the_installed_cns_decla
     """
     data = json.loads((FIXTURES / "held" / "falsifier_02_e5eccc0.json").read_text(encoding="utf-8"))
     path = tmp_path / "evidence.json"
-    path.write_text(json.dumps(data), encoding="utf-8")
+    path.write_text(json.dumps(label_edits(data)), encoding="utf-8")
     assert main(["decide", str(path)]) == 1
     out = json.loads(capsys.readouterr().out)
     assert out["decision"] == "INSUFFICIENT"
