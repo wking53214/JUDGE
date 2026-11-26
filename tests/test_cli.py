@@ -364,12 +364,22 @@ def test_a_repeated_json_key_is_refused_not_resolved_to_the_last_one(tmp_path, c
     assert "appears more than once" in capsys.readouterr().err
 
 
-def test_an_accept_says_so_when_the_symbolic_link_check_could_not_run(capsys):
-    """The example names a project folder that does not exist here, so the link check is skipped and the ACCEPT says so."""
-    assert cli.main(["decide", str(EXAMPLE)]) == 0
+def test_a_missing_project_folder_is_held_not_accepted(tmp_path, capsys):
+    """Owner's decision (2026-11-26): with edits listed and the folder named in target absent, the link check cannot
+    run, so the run is held (0.6.0 to 0.7.0: ACCEPT with a note)."""
+    data = _data()
+    data["target"] = str(tmp_path / "not-here")
+    assert cli.main(["decide", _write(tmp_path, data)]) == 1
     out = _decision(capsys)
-    assert out["decision"] == "ACCEPT"
-    assert any("check for symbolic links did not run" in r for r in out["reasons"])
+    assert out["decision"] == "INSUFFICIENT"
+    assert any("check for symbolic links did not run" in r and "nothing is approved" in r for r in out["reasons"])
+
+
+def test_the_example_names_the_folder_judge_runs_from_and_is_accepted(capsys):
+    """examples/accept.json names "." as its project folder, so run from any real folder it can be checked and ACCEPTed."""
+    assert json.loads(EXAMPLE.read_text(encoding="utf-8"))["target"] == "."
+    assert cli.main(["decide", str(EXAMPLE)]) == 0
+    assert _decision(capsys)["decision"] == "ACCEPT"
 
 
 def test_an_accept_with_the_project_folder_present_has_no_link_note(tmp_path, capsys):

@@ -7,6 +7,7 @@ import pytest
 from cns.seat import Evidence
 from cns.suite import SuiteRun
 
+from conftest import PROJECT_DIR
 from judge import Judge
 
 GREEN = SuiteRun(ran=True, passed=10, exit_code=0)
@@ -17,7 +18,7 @@ BASE = {"path": None, "suppressed": 0}
 
 def _ev(baseline_before=BASE, baseline_after=BASE, **kw):
     base = dict(
-        target="/nonexistent-target", scope="code", cycles=((1, "APPLIED"),), changed=(("pkg/a.py", "write"),),
+        target=PROJECT_DIR, scope="code", cycles=((1, "APPLIED"),), changed=(("pkg/a.py", "write"),),
         judging_files_touched=(), suite_before=GREEN, suite_after=GREEN, ghost_before=("g",), ghost_after=("g",),
         declined=(), swizzle_proofs=True, attacks=HELD, unmeasured=(), assay=ASSAY)
     base.update(kw)

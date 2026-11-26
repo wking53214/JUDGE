@@ -1,5 +1,5 @@
 {
-  "target": "/path/to/project",
+  "target": ".",
   "scope": "documentation",
   "cycles": [[1, "APPLIED"]],
   "changed": [["README.md", "write"]],

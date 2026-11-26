@@ -5,6 +5,7 @@ import logging
 import pytest
 from test_judge import _evidence
 
+from conftest import PROJECT_DIR
 from judge import Judge
 
 
@@ -60,8 +61,15 @@ def test_a_target_that_breaks_str_does_not_change_the_verdict(caplog):
         def __str__(self):
             raise ValueError
 
+    # Logging calls str() on the target; that failure must not change the verdict. Since 0.8.0 the verdict itself may
+    # depend on reading the folder name (Python 3.11's pathlib calls str() too, so the folder cannot be checked and the
+    # run is held), so the logged verdict is compared with the same decision taken with logging silenced.
     caplog.set_level(logging.INFO, logger="judge")
-    assert Judge().decide(_evidence(target=BadTarget("/t"))).decision == "ACCEPT"
+    logged = Judge().decide(_evidence(target=BadTarget(PROJECT_DIR)))
+    caplog.set_level(logging.CRITICAL, logger="judge")
+    quiet = Judge().decide(_evidence(target=BadTarget(PROJECT_DIR)))
+    assert logged.decision == quiet.decision and logged.decision in ("ACCEPT", "INSUFFICIENT")
+    assert logged.reasons == quiet.reasons
 
 
 @pytest.mark.parametrize("level", [logging.DEBUG, logging.CRITICAL])

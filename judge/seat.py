@@ -62,6 +62,8 @@ THE RULES, in order. The first group that fires decides.
     Ghost's baseline report is missing, so suppressed findings are unknown
     some tests did not run before, and code was changed
     the Warden reports a check that never ran (anything but 'judge')
+    edits were made but the project folder named in target is not on this machine,
+      so the symbolic-link check could not run (the owner's decision of 2026-11-26)
     a path that, with look-alike letters from another script swapped for Latin ones,
       reads as a test, Ghost, version-control or environment path: held for a named human
     a suite is marked text-only and also gives an exit code (it contradicts itself)
@@ -416,17 +418,21 @@ def _reaches_outside(norm: str) -> bool:
     return absolute or bool(set(_parts(norm)) & _OUTSIDE_DIRS)
 
 
-def _link_check_note(target: object, changed) -> str:
-    """Say so when the symbolic-link check could not run: edits were made but the project folder is not here."""
-    if not changed or not isinstance(target, str) or not target or "\0" in target:
+def _link_check_missing(target: object, changed) -> str:
+    """The reason to hold when the symbolic-link check could not run: edits were made but the project folder is not here.
+
+    Owner's decision (2026-11-26): a check that could not run is unknown, so the run is held, never ACCEPTed.
+    An empty target, or one that names a file rather than a folder, cannot be checked either.
+    """
+    if not changed:
         return ""
     try:
-        if Path(target).resolve().is_dir():
+        if isinstance(target, str) and target and "\0" not in target and Path(target).resolve().is_dir():
             return ""
     except (OSError, ValueError, RuntimeError):
         pass
     return ("the check for symbolic links did not run, because the project folder named in target was not found "
-            "on this machine; an edit that goes through a link was not looked at")
+            "on this machine, so an edit that goes through a link could not be looked at and nothing is approved")
 
 
 def _symlink_target(target: object, path: str):
@@ -672,7 +678,7 @@ def _decide(e: Evidence) -> Verdict:
         harm.append("code changed and no final suite result was given")
 
     text_note = _text_note(after)
-    link_note = _link_check_note(target, changed)
+    link_missing = _link_check_missing(target, changed)
     if harm:
         return Verdict("REJECT", tuple(harm) + ((text_note,) if text_note else ()), NAME)
 
@@ -694,6 +700,8 @@ def _decide(e: Evidence) -> Verdict:
     odd = [u for u in unmeasured if _norm_text(u) != "judge"]
     if odd:
         reasons.append(f"these checks never ran: {', '.join(odd)}")
+    if link_missing:
+        reasons.append(link_missing)
     if (before is not None and before.not_run > 0
             and any(p.strip().lower().endswith(".py") and k.strip().lower() in _EDIT_KINDS for p, k in changed)):
         reasons.append("some tests did not run, so a code change cannot be shown safe")
@@ -705,10 +713,9 @@ def _decide(e: Evidence) -> Verdict:
     if reasons:
         return Verdict("INSUFFICIENT", tuple(reasons) + ((text_note,) if text_note else ()), NAME)
 
-    # An ACCEPT that skipped the symbolic-link check says so, because that is the one verdict that rests on it.
     return Verdict("ACCEPT", (_accept_sentence(
         len(changed), before, after, ghost_start, ghost_end, held, total, low_only, caught, modes, floor),
-        *((text_note,) if text_note else ()), *((link_note,) if link_note else ())), NAME)
+        *((text_note,) if text_note else ())), NAME)
 
 
 def _norm_text(x: object) -> str:
