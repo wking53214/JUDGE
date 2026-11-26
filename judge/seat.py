@@ -20,16 +20,17 @@ THE RULES, in order. The first group that fires decides.
   REJECT        the evidence shows harm:
     the suite is red, or fewer tests pass than before
     more tests are skipped (or expected-to-fail) than before
-    an edit reached outside the project, or into git or environment folders
-      (.git, .venv, venv, env, .tox, .nox, .eggs, node_modules, site-packages)
+    an edit reached outside the project, or into version-control, environment or cache folders
+      (.git, .hg, .svn, .venv, venv, env, .tox, .nox, .eggs, node_modules, site-packages, __pycache__,
+      .mypy_cache, .pytest_cache)
     Ghost reports a finding at the end that it did not report at the start
       (counted one by one, so a repeated finding is new) whose severity, in
       Ghost's own word (Evidence.ghost_severity, finding id to word), is major
       or critical, or has no readable word: no mapping, an id missing from it,
       or a word that is not one of Ghost's four (Warden's high, medium and low
       included)
-    Ghost's baseline grew (more suppressed findings) or a baseline file or any
-      .ghost_* file was changed
+    Ghost's baseline grew (more suppressed findings) or a baseline file, any
+      .ghost_* file, or any file inside a .ghost_* folder was changed
     the final suite exited non-zero, or was marked forged
     SWIZZLE's proofs are exactly False
     SWIZZLE's attacks found an invariant violated (any severity except low;
@@ -61,6 +62,9 @@ THE RULES, in order. The first group that fires decides.
     Ghost's baseline report is missing, so suppressed findings are unknown
     some tests did not run before, and code was changed
     the Warden reports a check that never ran (anything but 'judge')
+    a path that, with look-alike letters from another script swapped for Latin ones,
+      reads as a test, Ghost, version-control or environment path: held for a named human
+    a suite is marked text-only and also gives an exit code (it contradicts itself)
     the evidence contradicts itself about what was applied (see
       _cycle_contradictions): a cycle outcome the Judge does not know, two
       cycles with one number, more applied cycles than listed edits, a listed
@@ -130,9 +134,10 @@ _JUDGING_PATTERNS = (
     re.compile(r".*\.lock$"), re.compile(r".*\.pth$"),
     re.compile(r"^\.ghost.*"),                              # .ghost_baseline.json and every other Ghost file
 )
-#: Version control and environment folders: nothing in them is the project's source, and a library edited there
-#: runs later with the user's rights.
-_OUTSIDE_DIRS = {"..", ".git", ".venv", "venv", "env", ".tox", ".nox", ".eggs", "node_modules", "site-packages"}
+#: Version control, environment and cache folders: nothing in them is the project's source, a library edited there
+#: runs later with the user's rights, and a cached .pyc runs in place of its source. Warden refuses edits in all of them.
+_OUTSIDE_DIRS = {"..", ".git", ".hg", ".svn", ".venv", "venv", "env", ".tox", ".nox", ".eggs", "node_modules", "site-packages",
+                 "__pycache__", ".mypy_cache", ".pytest_cache"}
 _BASELINE_NAMES = (".ghost_baseline.json",)
 #: SWIZZLE's attack scale: a violated attack at any of these severities is harm, and only "low" is tolerated.
 _HARM_SEVERITIES = {"high", "medium", "critical", "severe"}
@@ -277,6 +282,17 @@ def _cycle_contradictions(cycles: tuple[tuple[int, str], ...], listed: int, decl
 
 _SLASH = {ord("\\"): "/"}
 _EXIT_NAMES = ("exit_code", "returncode", "exitcode", "exit_status")
+_FORGED_NAMES = ("forged", "forged_output")
+_SUITE_COUNTS = ("passed", "failed", "errors", "skipped", "xfailed")
+#: Every attribute the Judge reads from the evidence or from a suite run, declared field or not. The CNS connector copies
+#: exactly these (with the declared fields) before it digests, and judges that copy, so the digest covers all the Judge saw.
+#: tests/test_round9_hardening.py fails if a getattr in this file reads a name that is not listed here.
+ROW_ATTRIBUTES = frozenset({
+    "target", "scope", "changed", "cycles", "declined", "judging_files_touched", "suite_before", "suite_after",
+    "ghost_before", "ghost_after", "ghost_severity", "unmeasured", "swizzle_proofs", "attacks", "assay", "finisher_ran",
+    "ghost_baseline_before", "ghost_baseline_after", "ghost_baseline",
+    "ran", "reason", "text_only", *_SUITE_COUNTS, *_EXIT_NAMES, *_FORGED_NAMES,
+})
 
 
 class _Suite:
@@ -285,7 +301,7 @@ class _Suite:
         if not isinstance(ran, bool):
             raise _Unreadable(f"{name}.ran is a {type(ran).__name__}")
         counts: dict[str, int] = {}
-        for f in ("passed", "failed", "errors", "skipped", "xfailed"):
+        for f in _SUITE_COUNTS:
             v: object = getattr(run, f, 0) if f == "xfailed" else getattr(run, f, None)
             if not _is_count(v):
                 raise _Unreadable(f"{name}.{f} is a {type(v).__name__}, not a count")
@@ -311,7 +327,7 @@ class _Suite:
             raise _Unreadable(f"{name} gives exit codes that disagree ({said})")
         self.exit_code: int | None = next(iter(codes.values()), None)
         # forged / text_only: anything but a plain False (or absent) counts as set.
-        self.forged = any(getattr(run, n, False) not in (False, None) for n in ("forged", "forged_output"))
+        self.forged = any(getattr(run, n, False) not in (False, None) for n in _FORGED_NAMES)
         self.text_only = getattr(run, "text_only", False) not in (False, None)
 
     @property
@@ -368,8 +384,31 @@ def _is_judging(norm: str, kind: str) -> bool:
 
 
 def _is_baseline(norm: str) -> bool:
+    """Ghost's own bookkeeping: a file whose name starts with .ghost, or anything inside a folder whose name does."""
     parts = _parts(norm)
-    return bool(parts) and (parts[-1] in _BASELINE_NAMES or parts[-1].startswith(".ghost"))
+    return bool(parts) and (parts[-1] in _BASELINE_NAMES or any(p.startswith(".ghost") for p in parts))
+
+
+#: Letters from other scripts that look like a Latin letter. Used only to tighten: a path that reads as a protected one
+#: once these are swapped for their Latin twins is held for a person. It is a short hand-made list, not Unicode's full
+#: confusables table, so a look-alike outside it is not caught.
+_LOOKALIKES = str.maketrans({
+    # Cyrillic
+    "\u0430": "a", "\u0432": "b", "\u0441": "c", "\u0501": "d", "\u0435": "e", "\u04bb": "h", "\u0456": "i",
+    "\u0458": "j", "\u043a": "k", "\u04cf": "l", "\u043c": "m", "\u043e": "o", "\u0440": "p", "\u051b": "q",
+    "\u0455": "s", "\u0442": "t", "\u0443": "y", "\u051d": "w", "\u0445": "x",
+    # Greek
+    "\u03b1": "a", "\u03b5": "e", "\u03b9": "i", "\u03ba": "k", "\u03bd": "v", "\u03bf": "o", "\u03c1": "p",
+    "\u03c4": "t", "\u03c5": "u", "\u03c7": "x",
+    # Latin letters that are not ASCII
+    "\u0131": "i", "\u0261": "g", "\u0251": "a",
+})
+
+
+def _lookalike(norm: str) -> str:
+    """The path with look-alike letters swapped for Latin ones, or "" when it has none."""
+    swapped = norm.translate(_LOOKALIKES)
+    return swapped if swapped != norm else ""
 
 
 def _reaches_outside(norm: str) -> bool:
@@ -469,6 +508,12 @@ def _decide(e: Evidence) -> Verdict:
             if before.passed == 0 and changed:
                 harm.append("changes were applied although the suite had no passing tests to protect them")
 
+    # a suite that says its counts come from printed text alone cannot also carry an exit code
+    for label, run in (("starting", before), ("final", after)):
+        if run is not None and run.text_only and run.exit_code is not None:
+            unknown.append(f"the {label} suite is marked text-only yet gives an exit code ({run.exit_code}); the evidence "
+                           "contradicts itself about where its counts came from")
+
     # the starting suite: the comparison is only worth anything if it started from a run that ran and was green
     if before is None:
         unknown.append("the starting suite run was not given, so nothing can be compared with the final one")
@@ -481,6 +526,7 @@ def _decide(e: Evidence) -> Verdict:
     outside: list[str] = []
     baseline_changed: list[str] = []
     resolved_code: list[str] = []
+    lookalike: list[str] = []
     for path, kind in changed:
         norm = _norm_path(path)
         kind_n = kind.strip().lower()
@@ -489,6 +535,9 @@ def _decide(e: Evidence) -> Verdict:
             outside.append(path)
             continue
         names = [norm] + ([_norm_path(real)] if real else [])
+        twin = _lookalike(norm)
+        if twin and (_reaches_outside(twin) or _is_baseline(twin) or _is_judging(twin, kind_n)) and path not in lookalike:
+            lookalike.append(path)
         if any(_is_baseline(n) for n in names) and path not in baseline_changed:
             baseline_changed.append(path)
         if any(_is_judging(n, kind_n) for n in names) and path not in judging:
@@ -506,6 +555,10 @@ def _decide(e: Evidence) -> Verdict:
                        "approve that; a named human keeps or drops the held result")
     if outside:
         harm.append(f"an edit reached outside the project or into git or environment folders ({', '.join(outside[:3])})")
+    if lookalike:
+        unknown.append(f"a path uses letters from another script that look like Latin ones and then reads as a test, "
+                       f"Ghost, version-control or environment path ({', '.join(lookalike[:3])}); the machine does not "
+                       "approve that, and a named human keeps or drops the held result")
 
     # Ghost, counted one finding at a time
     ghost_start = ghost_end = None

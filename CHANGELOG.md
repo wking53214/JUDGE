@@ -17,6 +17,31 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.7.0] - 2026-11-26
+
+### Fixed
+
+- A file inside a folder whose name starts with `.ghost` (`.ghost_cache/data.json`, at any depth, in any case) is Ghost's own
+  bookkeeping and is now harm (REJECT), like a `.ghost_*` file. It was ordinary code and ACCEPTed. Was KNOWN DEFECTS 3.
+- `.hg`, `.svn`, `__pycache__`, `.mypy_cache` and `.pytest_cache` join the folders an edit may not reach (REJECT), matching the
+  folders Warden refuses. They were ACCEPTed.
+- A path that reads as a test, Ghost, version-control or environment path once look-alike letters from another script are
+  swapped for Latin ones is held for a named human (INSUFFICIENT). A short hand-made list of Cyrillic, Greek and non-ASCII Latin
+  letters is used; it only tightens, and a path in another script that reads as nothing protected is judged as before.
+- A suite marked `text_only` that also gives an exit code is held (INSUFFICIENT) as a contradiction. It was ACCEPTed.
+- `judge.cns_connector.JudgeGate` reads the evidence once into a frozen copy, digests that copy, and has the Judge decide the
+  same copy. Before, the Judge read the original again, so a mapping whose `items` and `get` disagree could get `PASS` under
+  the digest of a record that is `TERMINAL_BREACH`, and an attribute on a suite's class was judged without being digested.
+  `judge.seat.ROW_ATTRIBUTES` names every attribute the Judge reads, and a test holds it to the code. Digests of ordinary
+  evidence are unchanged.
+- The CNS comment in `pyproject.toml` no longer names `v3.0.0` beside the `v4.1.0` pin.
+
+### Changed
+
+- KNOWN DEFECTS: items 3 and 4 are closed; a space-padded `unmeasured` entry is trimmed by the stated rule and is not a defect.
+  A new item 3 states that a run whose project folder is missing can still be ACCEPTed (unchanged, owner decision).
+- Tests: `tests/test_round9_hardening.py`. Version 0.7.0 (`pyproject.toml`, README).
+
 ## [0.6.0] - 2026-11-12
 
 ### Changed

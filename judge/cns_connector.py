@@ -45,6 +45,11 @@ suite flags ``forged`` and ``text_only``, Ghost's baseline). Evidence that
 cannot be described unambiguously (a wrong type, NaN, a cycle, a set) is a
 ``TERMINAL_BREACH``, never a pass.
 
+The evidence is read once into a frozen copy. The digest is computed from that
+copy and the Judge decides that same copy, so the evidence bound and the
+evidence judged cannot differ. A digest names the evidence that was judged; it
+does not show that the evidence is true or complete.
+
 Because the Judge has only the outcome end, ``cns_chain(...).complete()`` is
 ``False`` by design. A consumer that wants a complete chain supplies the
 ``alpha`` end from a repository that has one.
@@ -59,7 +64,7 @@ from typing import cast
 from cns.gate import GateChain, GateOutcome, GatePosition, GateResult, subject_digest
 from cns.seat import Evidence
 
-from .seat import Judge
+from .seat import ROW_ATTRIBUTES, Judge
 
 __all__ = [
     "JudgeGate",
@@ -73,27 +78,65 @@ DEFAULT_SUBJECT = "run-evidence"
 _MAX_DEPTH = 32
 
 
-def _plain(value: object, depth: int = 0) -> object:
-    """Evidence as plain content a digest can bind: scalars, mappings and lists.
+class _Row:
+    """A read-only copy of one evidence row: the attributes it had when it was copied, and nothing else."""
 
-    Rows are read through their dataclass fields and their instance attributes,
-    so an attribute set after construction is bound too.
+    __slots__ = ("_values",)
+
+    def __init__(self, values: dict) -> None:
+        object.__setattr__(self, "_values", values)
+
+    def __getattr__(self, name: str) -> object:
+        try:
+            return object.__getattribute__(self, "_values")[name]
+        except KeyError:
+            raise AttributeError(name) from None
+
+    def __setattr__(self, name: str, value: object) -> None:
+        raise AttributeError("a copied evidence row cannot be changed")
+
+
+def _snapshot(value: object, depth: int = 0) -> object:
+    """Read the evidence once into a frozen copy: scalars, dicts, tuples and read-only rows.
+
+    The digest is computed from this copy and the Judge decides this copy, so nothing can differ between the
+    evidence that was bound and the evidence that was judged: not a later change to the original, not a mapping
+    whose ``items`` and ``get`` disagree, not an attribute that answers differently each time it is read.
+    A row keeps its dataclass fields, its instance attributes and every attribute the Judge reads
+    (``judge.seat.ROW_ATTRIBUTES``), including one that lives on the class, so what the Judge reads is digested.
     """
     if depth > _MAX_DEPTH:
         raise TypeError("the evidence is nested too deeply to bind a verdict to")
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
     if isinstance(value, Mapping):
-        return {k: _plain(v, depth + 1) for k, v in value.items()}
+        return {k: _snapshot(v, depth + 1) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
-        return [_plain(v, depth + 1) for v in value]
+        return tuple(_snapshot(v, depth + 1) for v in value)
     names = set(getattr(value, "__dict__", ()))
     if dataclasses.is_dataclass(value) and not isinstance(value, type):
         names |= {f.name for f in dataclasses.fields(value)}
-    names = {n for n in names if not n.startswith("_")}
-    if not names:
+    values: dict = {}
+    for n in sorted((names | ROW_ATTRIBUTES) - {n for n in names if n.startswith("_")}):
+        try:
+            values[n] = getattr(value, n)
+        except AttributeError:
+            if n in names:
+                raise TypeError(f"{type(value).__name__}.{n} cannot be read") from None
+    if not values:
         raise TypeError(f"cannot bind a verdict to {type(value).__name__}")
-    return {n: _plain(getattr(value, n), depth + 1) for n in names}
+    return _Row({n: _snapshot(v, depth + 1) for n, v in values.items()})
+
+
+def _plain(value: object) -> object:
+    """A snapshot as plain content a digest can bind: scalars, mappings and lists."""
+    if isinstance(value, _Row):
+        return {n: _plain(v) for n, v in object.__getattribute__(value, "_values").items()}
+    if isinstance(value, dict):
+        return {k: _plain(v) for k, v in value.items()}
+    if isinstance(value, tuple):
+        return [_plain(v) for v in value]
+    return value
 
 
 class JudgeGate:
@@ -123,7 +166,8 @@ class JudgeGate:
 
     def check(self, candidate: object) -> GateResult:
         try:
-            content = _plain(candidate)
+            frozen = _snapshot(candidate)
+            content = _plain(frozen)
             if not isinstance(content, dict):
                 raise TypeError(f"{type(candidate).__name__} is not run evidence")
             digest = subject_digest(content)
@@ -132,9 +176,10 @@ class JudgeGate:
                 GateOutcome.TERMINAL_BREACH,
                 f"the evidence cannot be bound to a verdict, so nothing is approved ({exc})",
             )
-        # The gate contract hands over any object. The Judge reads its input defensively and answers
-        # INSUFFICIENT for anything that is not readable evidence, so the cast changes no behaviour.
-        verdict = self._judge.decide(cast(Evidence, candidate))
+        # The Judge decides the frozen copy the digest was computed from, never the original object, so the
+        # verdict is about exactly the bound evidence. The Judge reads its input defensively (by attribute, and
+        # answers INSUFFICIENT for anything it cannot read), so the cast changes no behaviour.
+        verdict = self._judge.decide(cast(Evidence, frozen))
         outcomes = {
             "ACCEPT": GateOutcome.PASS,
             "REJECT": GateOutcome.TERMINAL_BREACH,
