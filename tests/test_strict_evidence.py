@@ -232,7 +232,9 @@ def test_edits_outside_the_project_are_harm(path):
 
 
 def test_gitignore_is_not_the_git_folder():
-    assert _d(changed=((".gitignore", "write"),)).decision == "ACCEPT"
+    """Not harm like an edit into .git. Since 0.10.0 it is held for a named human: it decides what a diff can see."""
+    v = _d(changed=((".gitignore", "write"),))
+    assert v.decision == "INSUFFICIENT" and not any("outside the project" in r for r in v.reasons)
 
 
 # 5. skipped tests
