@@ -58,7 +58,7 @@ _READER_LEFT = "reader left"
 log = logging.getLogger(__name__)
 
 #: Attributes the Judge reads from a suite run that are not SuiteRun fields (a forged or text-only result, other exit-code names).
-_SUITE_EXTRAS = ("forged", "forged_output", "text_only", "returncode", "exitcode", "exit_status")
+_SUITE_EXTRAS = ("forged", "forged_output", "text_only", "returncode", "exitcode", "exit_status", "test_outcomes")
 _SUITE_FIELDS = {f.name for f in dataclasses.fields(SuiteRun)}
 _EVIDENCE_FIELDS = {f.name: f for f in dataclasses.fields(Evidence)}
 _SUITE_KEYS = ("suite_before", "suite_after")
@@ -87,7 +87,7 @@ def _suite(value: Any, name: str) -> Any:
         raise ValueError(f"{name} is not a suite run ({exc})") from None
     for key in _SUITE_EXTRAS:
         if key in value:
-            object.__setattr__(run, key, value[key])
+            object.__setattr__(run, key, _freeze(value[key]))
     return run
 
 
