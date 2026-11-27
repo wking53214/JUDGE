@@ -17,6 +17,18 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.12.0] - 2026-11-27
+
+### Changed
+
+- CNS pin `v4.1.0` -> `v4.2.0` (`670246fe5006ae15757f90e48350f57b53c56414`), which adds `Evidence.edit_sources`.
+- Warden pin `26d8128ecd75c841125128533812763385dc7497` -> `0875be47808b3b7e2f1f99f9666d8b1441a2410c`, the merge of Warden's CNS `v4.2.0` repin (Warden 1.0.0 at both), in `pyproject.toml` and the CI `warden` job.
+- `examples/accept.json` and `tests/fixtures/accept.json` carry `"edit_sources": [1]`; under CNS 4.2.0 an applied cycle with no labels is held.
+
+### Fixed
+
+- KNOWN DEFECTS 1 (a padded edit list without labels could be ACCEPTed) is closed: with the CNS pin at `v4.2.0` the field exists and the 0.9.0 hold applies. No rule changed.
+
 ## [0.11.0] - 2026-11-27
 
 ### Fixed

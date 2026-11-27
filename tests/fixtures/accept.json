@@ -3,6 +3,7 @@
   "scope": "documentation",
   "cycles": [[1, "APPLIED"]],
   "changed": [["README.md", "write"]],
+  "edit_sources": [1],
   "judging_files_touched": [],
   "suite_before": {"ran": true, "passed": 10, "exit_code": 0},
   "suite_after": {"ran": true, "passed": 10, "exit_code": 0},
