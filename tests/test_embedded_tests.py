@@ -29,6 +29,24 @@ WITH_TESTS = [
     ("Sources/Foo.swift", "import XCTest\n"),
     ("src/Foo.php", "<?php class Foo extends \\PHPUnit\\Framework\\TestCase {}\n"),
     ("lib/foo.rb", "require 'minitest/autorun'\nclass FooCheck < Minitest::Test; end\n"),
+    # 0.14.0
+    ("src/parser.cc", "#include <gtest/gtest.h>\nint f() { return 1; }\n"),
+    ("src/parser.cpp", "int f() { return 1; }\nTEST(Parser, Works) { EXPECT_EQ(f(), 1); }\n"),
+    ("src/parser.cpp", "#include \"doctest.h\"\nint f() { return 1; }\nTEST_CASE(\"f\") { CHECK(f() == 1); }\n"),
+    ("src/parser.c", "#include <cmocka.h>\n"),
+    ("include/parser.hpp", "#include <catch2/catch_test_macros.hpp>\n"),
+    ("Sources/Foo.m", "@import XCTest;\n"),
+    ("src/main.zig", "pub fn add(a: i32, b: i32) i32 { return a + b; }\ntest \"add\" {\n}\n"),
+    ("src/main.zig", "test {\n    _ = @import(\"x.zig\");\n}\n"),
+    ("source/app.d", "int add(int a, int b) { return a + b; }\nunittest { assert(add(1, 2) == 3); }\n"),
+    ("src/Lib.hs", "-- | Adds.\n--\n-- >>> add 1 2\n-- 3\nadd a b = a + b\n"),
+    ("src/Lib.hs", "import Test.Hspec\n"),
+    ("src/Model.jl", "using Test\n@testset \"m\" begin\n    @test 1 == 1\nend\n"),
+    ("R/model.R", "library(testthat)\ntest_that(\"m\", { expect_true(TRUE) })\n"),
+    ("src/util.lua", "local busted = require 'busted'\n"),
+    ("lib/app.dart", "import 'package:test/test.dart';\n"),
+    ("src/app.nim", "import std/unittest\n"),
+    ("src/app.nim", "proc add*(a, b: int): int =\n  runnableExamples:\n    assert add(1, 2) == 3\n  a + b\n"),
 ]
 
 #: (path, ordinary text with no test in it)
@@ -39,7 +57,16 @@ WITHOUT_TESTS = [
     ("lib/calc.ex", "defmodule Calc do\n  def add(a, b), do: a + b\nend\n"),
     ("src/main/java/Foo.java", "class Foo { int f() { return 1; } }\n"),
     ("src/Foo.cs", "public class Foo { public int F() => 1; }\n"),
-    ("cmd/main.go", "package main\nfunc TestLooksLikeATest() {}\n"),   # Go tests live only in _test.go files
+    ("cmd/main.go", "package main\nfunc TestLooksLikeATest() {}\n"),
+    ("src/parser.cpp", "int test_value = 1;\nint f() { return test_value; }\n"),
+    ("src/main.zig", "const testing = 1;\npub fn f() i32 { return testing; }\n"),
+    ("source/app.d", "int add(int a, int b) { return a + b; }\n"),
+    ("src/Lib.hs", "-- | Adds.\nadd a b = a + b\n"),
+    ("src/Model.jl", "f(x) = x + 1\n"),
+    ("R/model.R", "f <- function(x) x + 1\n"),
+    ("src/util.lua", "local M = {}\nreturn M\n"),
+    ("lib/app.dart", "int add(int a, int b) => a + b;\n"),
+    ("src/app.nim", "proc add*(a, b: int): int = a + b\n"),   # Go tests live only in _test.go files
     ("config/app.yaml", "def test_not_code: true\n"),                  # no marks for an extension with no tests
 ]
 

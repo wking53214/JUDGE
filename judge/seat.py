@@ -145,6 +145,10 @@ _JUDGING_NAMES = {
     "go.mod", "go.work", "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts",
     "gradle.properties", "gemfile", "rakefile", ".rspec", "tsconfig.json", "cmakelists.txt", "meson.build",
     "cloudbuild.yml", "codecov.yml", ".codecov.yml", "pdm.lock",
+    # more languages (0.14.0): Zig, D, Dart, Haskell, Julia, R, Lua and C/C++ package managers
+    "build.zig", "build.zig.zon", "dub.json", "dub.sdl", "pubspec.yaml", "cabal.project", "stack.yaml", "package.yaml",
+    "project.toml", "manifest.toml", "runtests.jl", "description", ".busted", "conanfile.txt", "conanfile.py",
+    "vcpkg.json", "cmakepresets.json",
     # what git ignores decides which files a diff, and so Ghost and the reviewer, can see
     ".gitignore",
 }
@@ -158,11 +162,16 @@ _JUDGING_PATTERNS = (
     re.compile(r"^\.ghost.*"),                              # .ghost_baseline.json and every other Ghost file
     # test files by the conventions of other languages (0.10.0); names are lower-cased before they are matched
     re.compile(r".*\.(test|spec)\.(js|jsx|ts|tsx|mjs|cjs|mts|cts)$"),   # Jest, Vitest, Mocha, Jasmine
-    re.compile(r".*_test\.(go|rs|rb|exs)$"),                # Go, Rust, Ruby minitest, Elixir
-    re.compile(r".*_spec\.rb$"),                            # RSpec
+    re.compile(r".*_test\.(go|rs|rb|exs|dart)$"),           # Go, Rust, Ruby minitest, Elixir, Dart
+    re.compile(r".*_spec\.(rb|lua)$"),                      # RSpec, Lua busted
     re.compile(r".*tests?\.(java|kt|kts|scala|groovy|cs|swift|php)$"),  # JUnit, NUnit, XCTest, PHPUnit
     re.compile(r"^(jest|vitest|karma|playwright|cypress|mocha|ava|babel|webpack|vite|rollup)\.(config|conf)\..*$"),
     re.compile(r"^\.mocharc.*"),
+    # more languages (0.14.0)
+    re.compile(r".*tests?\.(c|cc|cpp|cxx|m|mm)$"),          # C and C++ (GoogleTest, Catch2), Objective-C XCTest
+    re.compile(r".*spec\.hs$"),                             # Haskell hspec
+    re.compile(r"^test-.*\.r$"),                            # R testthat
+    re.compile(r".*\.(cabal|rockspec|nimble)$"),            # Haskell, Lua and Nim package files
 )
 #: Version control, environment and cache folders: nothing in them is the project's source, a library edited there
 #: runs later with the user's rights, and a cached .pyc runs in place of its source. Warden refuses edits in all of them.
@@ -181,7 +190,8 @@ _FORMAT_ONLY_KINDS: frozenset = frozenset()
 #: Tests that live inside an ordinary source file, by the file's extension (0.11.0, was KNOWN DEFECTS 2). A test file is
 #: caught by its name; these are caught by what the written file holds, so an edit next to them is held for a named
 #: human like an edit to a test file. The marks err towards holding: a mark in a comment or a string counts too. Go is
-#: absent because its tests can only live in `_test.go` files, which the names above already catch.
+#: absent because its tests can only live in `_test.go` files, which the names above already catch. Zig, D, C and
+#: C++ (0.14.0) are here because their tests often live in ordinary source files.
 _MARK = re.MULTILINE
 _EMBEDDED_TEST_MARKS: dict[str, tuple[re.Pattern[str], ...]] = {}
 for _exts, _marks in (
@@ -196,6 +206,20 @@ for _exts, _marks in (
     (("swift",), (r"\bXCTest\b", r"@Test\b", r"^\s*import\s+Testing\b")),
     (("php",), (r"\bPHPUnit\b", r"\bextends\s+\\?(?:\w+\\)*TestCase\b")),
     (("rb",), (r"\bMinitest\b", r"\bRSpec\b", r"\bTest::Unit\b")),
+    # more languages (0.14.0)
+    (("c", "h", "cc", "cpp", "cxx", "hpp", "hh", "hxx", "m", "mm"),
+     (r"^\s*(?:TEST|TEST_F|TEST_P|TYPED_TEST|TYPED_TEST_P|TEST_CASE|TEST_CASE_METHOD|SCENARIO|BOOST_AUTO_TEST_CASE|"
+      r"BOOST_AUTO_TEST_SUITE|BOOST_FIXTURE_TEST_CASE)\s*\(",
+      r"#\s*include\s*[<\"](?:gtest/|gmock/|catch2/|catch\.hpp|doctest|boost/test/|CUnit/|check\.h|unity\.h|cmocka\.h)",
+      r"\bXCTest\b")),
+    (("zig",), (r"^\s*test\s*(?:\"|\{|[A-Za-z_@])",)),
+    (("d",), (r"\bunittest\b",)),
+    (("hs", "lhs"), (r"^\s*--\s*>>>", r"\bTest\.(?:Hspec|Tasty|HUnit|DocTest)\b")),
+    (("jl",), (r"@test(?:set)?\b", r"\bjldoctest\b", r"\busing\s+Test\b")),
+    (("r",), (r"\btestthat\b", r"\btest_that\s*\(")),
+    (("lua",), (r"\bbusted\b", r"\b[Ll]ua[Uu]nit\b")),
+    (("dart",), (r"package:(?:test|flutter_test|integration_test)/",)),
+    (("nim",), (r"^\s*import\s+(?:std/)?unittest\b", r"\brunnableExamples\b")),
 ):
     for _ext in _exts:
         _EMBEDDED_TEST_MARKS[_ext] = tuple(re.compile(m, _MARK) for m in _marks)
