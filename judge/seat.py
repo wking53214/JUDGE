@@ -72,8 +72,10 @@ THE RULES, in order. The first group that fires decides.
     a written or replaced code file holds tests of its own (a Rust #[test] or
       #[cfg(test)], a Python doctest or test function, a Vitest in-source test, an
       Elixir doctest, a JUnit, xUnit, XCTest, PHPUnit or Minitest marker): held for a
-      named human like a test file; one that is there but cannot be read, or is listed
-      but not in the project folder (the owner's ruling of 2026-11-27), is held too
+      named human like a test file, except a Rust file whose test module and doc
+      comments are exactly as in the project's last commit (since 0.15.0); one that
+      is there but cannot be read, or is listed but not in the project folder (the
+      owner's ruling of 2026-11-27), is held too
     a deleted code file held such tests in the project's last commit (read from .git
       by judge.lastcommit, since Warden starts only on a folder with nothing
       uncommitted), or its committed copy could not be read: held the same way
@@ -666,8 +668,62 @@ def _embedded_tests(target: object, changed, skip, deleted: list[str], deleted_u
             unreadable.append(path)
             continue
         if any(m.search(text) for m in marks):
+            if name.endswith(".rs") and _rust_tests_untouched(root, path, text):
+                continue
             found.append(path)
     return found, unreadable
+
+
+#: Rust (0.15.0): where a file's own test module begins, an item-level test attribute, and forms the split below cannot
+#: place. Most Rust files keep a `#[cfg(test)] mod tests` at the end, so up to 0.14.0 nearly every Rust edit was held.
+#: An edit that leaves the tests exactly as they were in the last commit is no longer held.
+_RUST_TEST_START = re.compile(r"^\s*#\s*\[\s*cfg\s*\(\s*test\s*\)")
+#: An attribute or a macro call whose name holds "test" or "quickcheck" (`#[tokio::test]`, `#[rstest]`, `#[test_case]`,
+#: `proptest!`, `quickcheck!`) makes a test outside the module, so a file with one before the module is not split.
+_RUST_TEST_ATTR = re.compile(r"#\s*!?\s*\[[^\]]*(?:test|quickcheck)|\b\w*(?:test|quickcheck)\w*\s*!", re.IGNORECASE)
+_RUST_DOC = re.compile(r"^\s*//[/!]")
+_RUST_UNPLACEABLE = re.compile(r"/\*[*!]|#\s*!?\s*\[\s*doc\b|\binclude(?:_str|_bytes)?\s*!")
+_TEST_WORD = re.compile(r"test", re.IGNORECASE)
+
+
+def _rust_split(text: str):
+    """(code lines, doc-comment lines, test region) of a Rust file, or None when its tests cannot be placed.
+
+    The test region is everything from the first `#[cfg(test)]` line to the end. A test attribute before that line, a
+    block doc comment, a `#[doc]` attribute or an `include!` makes the split unsafe, so it is None.
+    """
+    lines = text.splitlines()
+    start = next((i for i, line in enumerate(lines) if _RUST_TEST_START.match(line)), len(lines))
+    code, docs = [], []
+    for line in lines[:start]:
+        if _RUST_UNPLACEABLE.search(line):
+            return None
+        if _RUST_DOC.match(line):
+            docs.append(line)
+        elif _RUST_TEST_ATTR.search(line):
+            return None
+        else:
+            code.append(line)
+    return code, docs, lines[start:]
+
+
+def _rust_tests_untouched(root: Path, path: str, text: str) -> bool:
+    """True only when a written or replaced Rust file's tests are exactly as they were in the project's last commit.
+
+    Compared: the test module from its `#[cfg(test)]` line to the end of the file, and every doc comment, in order
+    (doc tests live there). The code above the module may change, but no added or removed code line may contain the
+    letters "test" (an attribute such as `#![cfg_attr(test, ...)]`, a test-making macro, a `mod tests;` pointer).
+    Anything that cannot be read or placed (not a git folder, a new file, an unplaceable form) keeps the hold.
+    """
+    try:
+        old_text = lastcommit.committed_bytes(root, path.translate(_SLASH)).decode("utf-8", errors="replace")
+    except (lastcommit.Unreadable, OSError, ValueError, RuntimeError, MemoryError, RecursionError):
+        return False
+    old, new = _rust_split(old_text), _rust_split(text)
+    if old is None or new is None or old[1] != new[1] or old[2] != new[2]:
+        return False
+    changed = (Counter(old[0]) - Counter(new[0])) + (Counter(new[0]) - Counter(old[0]))
+    return not any(_TEST_WORD.search(line) for line in changed)
 
 
 # ---- the decision ----------------------------------------------------------------

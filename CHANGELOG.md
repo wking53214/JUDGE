@@ -17,6 +17,12 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.15.0] - 2026-11-27
+
+### Changed
+
+- KNOWN DEFECTS 2, Rust over-holding: a written or replaced Rust file with tests inside it is no longer held when, compared with the project's last commit, its `#[cfg(test)]` module (from that line to the end of the file) and its doc comments are unchanged and no added or removed code line contains `test`. A test attribute or test-making macro above the module, a block doc comment, a `#[doc]` attribute, an `include!`, a new file, a folder outside git or an unreadable committed copy keeps the hold. Other languages are unchanged. Held by `tests/test_rust_holds.py`.
+
 ## [0.14.1] - 2026-11-27
 
 ### Fixed
