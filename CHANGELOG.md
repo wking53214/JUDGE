@@ -17,6 +17,12 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.14.1] - 2026-11-27
+
+### Fixed
+
+- KNOWN DEFECTS 2, missing listed files: by the owner's ruling of 2026-11-27, a written or replaced code file that is listed but not in the project folder is held as a check that could not run (INSUFFICIENT); up to 0.14.0 it was skipped. Meant for 0.13.0, but the commit was not in the merged pull request #49. `tests/test_embedded_tests.py::test_a_listed_file_that_is_not_in_the_folder_is_not_looked_at` is replaced by `test_a_listed_code_file_that_is_not_in_the_folder_is_held`. `tests/conftest.py` gains `place_listed_files`, which puts an empty copy of each listed file in the shared test folder, as a real Warden run leaves them; no assertion was changed.
+
 ## [0.14.0] - 2026-11-27
 
 ### Added

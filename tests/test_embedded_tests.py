@@ -11,6 +11,7 @@ from test_strict_evidence import _d
 
 HOLDS_TESTS = "also holds tests"
 UNREAD = "could not be read to check it for tests inside it"
+MISSING_FILE = "is listed but is not in the project folder"
 
 #: (path, text holding a test of its own)
 WITH_TESTS = [
@@ -93,9 +94,19 @@ def test_a_code_file_with_no_tests_inside_is_still_accepted(tmp_path, path, text
     assert v.decision == "ACCEPT", v.reasons
 
 
-def test_a_listed_file_that_is_not_in_the_folder_is_not_looked_at(tmp_path):
-    """Warden writes the files it lists; hand-made evidence may name one that is not there."""
-    assert _d(target=str(tmp_path), changed=(("src/lib.rs", "write"),)).decision == "ACCEPT"
+@pytest.mark.parametrize("kind", ["write", "replace"])
+def test_a_listed_code_file_that_is_not_in_the_folder_is_held(tmp_path, kind):
+    """The owner's ruling of 2026-11-27 (0.13.0): it could not be checked for tests inside it, so it is unknown.
+    Up to 0.12.0 it was skipped. Real Warden writes the files it lists; hand-made evidence may name one that is not there."""
+    v = _d(target=str(tmp_path), changed=(("src/lib.rs", kind),))
+    assert v.decision == "INSUFFICIENT"
+    assert any(MISSING_FILE in r and "src/lib.rs" in r for r in v.reasons), v.reasons
+
+
+def test_a_listed_file_with_no_test_marks_for_its_kind_is_not_looked_for(tmp_path):
+    """Only files the test-mark check would read are held when missing; a missing prose file is not."""
+    v = _d(target=str(tmp_path), scope="all", changed=(("docs/guide.md", "write"),))
+    assert v.decision == "ACCEPT", v.reasons
 
 
 def test_a_listed_file_that_is_there_but_cannot_be_read_is_held(tmp_path):

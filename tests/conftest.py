@@ -11,6 +11,7 @@ import importlib.util
 import os
 import shutil
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -39,9 +40,33 @@ PROJECT_DIR = tempfile.mkdtemp(prefix="judge-project-")
 atexit.register(shutil.rmtree, PROJECT_DIR, ignore_errors=True)
 
 
+def place_listed_files(base: dict) -> dict:
+    """Put an empty file in the shared project folder for each written or replaced edit the evidence lists, as a real
+    Warden run leaves them. Since 0.13.0 a listed code file that is not in the folder is held (the owner's ruling of
+    2026-11-27), and these helpers build evidence that is meant to be judged on something else. Only evidence aimed at
+    PROJECT_DIR is touched, only plain relative paths inside it, and an existing file is left as it is. Returns `base`."""
+    if base.get("target") != PROJECT_DIR or not isinstance(base.get("changed"), (tuple, list)):
+        return base
+    root = Path(PROJECT_DIR).resolve()
+    for edit in base["changed"]:
+        if not (isinstance(edit, (tuple, list)) and len(edit) == 2 and all(isinstance(x, str) for x in edit)):
+            continue
+        path, kind = edit
+        if kind.strip().lower() not in {"write", "replace"} or not path or "\0" in path:
+            continue
+        f = root / path.replace("\\", "/")
+        try:
+            if f.resolve().is_relative_to(root) and f.resolve() != root and not f.exists() and not f.is_symlink():
+                f.parent.mkdir(parents=True, exist_ok=True)
+                f.write_bytes(b"")
+        except (OSError, ValueError):
+            pass
+    return base
+
+
 def with_project(data: dict) -> dict:
-    """A copy of decoded evidence whose `target` is the real project folder above."""
-    return {**data, "target": PROJECT_DIR}
+    """A copy of decoded evidence whose `target` is the real project folder above, holding the files it lists."""
+    return place_listed_files({**data, "target": PROJECT_DIR})
 
 
 def label_edits(base: dict) -> dict:
@@ -52,6 +77,7 @@ def label_edits(base: dict) -> dict:
     so the contradiction the test is about is the one the Judge sees."""
     from cns.seat import Evidence
 
+    place_listed_files(base)
     if "edit_sources" not in Evidence.__dataclass_fields__ or "edit_sources" in base:
         return base
     cycles, changed = base.get("cycles") or (), base.get("changed") or ()
