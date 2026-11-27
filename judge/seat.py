@@ -72,7 +72,8 @@ THE RULES, in order. The first group that fires decides.
     a written or replaced code file holds tests of its own (a Rust #[test] or
       #[cfg(test)], a Python doctest or test function, a Vitest in-source test, an
       Elixir doctest, a JUnit, xUnit, XCTest, PHPUnit or Minitest marker): held for a
-      named human like a test file; one that is there but cannot be read is held too
+      named human like a test file; one that is there but cannot be read, or is listed
+      but not in the project folder (the owner's ruling of 2026-11-27), is held too
     a deleted code file held such tests in the project's last commit (read from .git
       by judge.lastcommit, since Warden starts only on a folder with nothing
       uncommitted), or its committed copy could not be read: held the same way
@@ -603,8 +604,8 @@ def _symlink_target(target: object, path: str):
     return "OUTSIDE" if rel == ".." or rel.startswith("../") else rel
 
 
-def _embedded_tests(target: object, changed, skip, deleted: list[str], deleted_unread: list[tuple[str, str]]
-                    ) -> tuple[list[str], list[str]]:
+def _embedded_tests(target: object, changed, skip, deleted: list[str], deleted_unread: list[tuple[str, str]],
+                    missing: list[str]) -> tuple[list[str], list[str]]:
     """Written or replaced code files that hold tests of their own, and those that could not be read to look.
 
     Deleted code files go into `deleted` (their committed copy held tests) and `deleted_unread` (path, why not read).
@@ -613,9 +614,9 @@ def _embedded_tests(target: object, changed, skip, deleted: list[str], deleted_u
     looked at when its extension has marks in _EMBEDDED_TEST_MARKS, its edit kind is one the Judge knows (write,
     replace or delete) and it is not already judged as a test, a Ghost file or an edit outside the project. A deleted
     file is read as it was in the project's last commit (0.13.0, judge.lastcommit), since Warden starts only on a folder
-    with nothing uncommitted; one whose committed copy cannot be read is unknown. A written file that is not there is
-    not looked at (Warden
-    writes the files it lists, so real evidence names files that exist; hand-made evidence may not). A file that is there
+    with nothing uncommitted; one whose committed copy cannot be read is unknown. A written or replaced file that is
+    not there goes into `missing` and is unknown too (the owner's ruling of 2026-11-27; Warden writes the files it
+    lists, so only hand-made evidence names one that is not there; up to 0.12.0 it was skipped). A file that is there
     but is not a regular file, is too large or cannot be read is a check that could not run, so it is unknown (the
     owner's decision of 2026-11-26).
     """
@@ -651,7 +652,12 @@ def _embedded_tests(target: object, changed, skip, deleted: list[str], deleted_u
             continue
         try:
             real = (root / path.translate(_SLASH)).resolve()
-            if not real.is_relative_to(root) or not real.exists():
+            if not real.is_relative_to(root):
+                continue
+            if not real.exists() and not real.is_symlink():
+                # The owner's ruling of 2026-11-27: a listed file that is not in the folder is a check that could
+                # not run, so it is unknown (it was skipped up to 0.12.0).
+                missing.append(path)
                 continue
             if not real.is_file() or real.stat().st_size > _EMBEDDED_READ_LIMIT:
                 raise OSError("not a regular file, or too large")
@@ -775,8 +781,9 @@ def _decide(e: Evidence) -> Verdict:
                        "approve that, and a named human keeps or drops the held result")
     deleted: list[str] = []
     deleted_unread: list[tuple[str, str]] = []
+    missing_files: list[str] = []
     embedded, unread = _embedded_tests(target, changed, set(judging) | set(outside) | set(baseline_changed),
-                                       deleted, deleted_unread)
+                                       deleted, deleted_unread, missing_files)
     if embedded:
         # 0.11.0 (was KNOWN DEFECTS 2): a test inside an ordinary source file is held like a test file, since an edit
         # beside it cannot be told apart from an edit to it by its name.
@@ -785,6 +792,10 @@ def _decide(e: Evidence) -> Verdict:
     if unread:
         unknown.append(f"a changed code file could not be read to check it for tests inside it ({', '.join(unread[:3])}); "
                        "a check that could not run is unknown, so nothing is approved")
+    if missing_files:
+        unknown.append(f"a written or replaced code file is listed but is not in the project folder "
+                       f"({', '.join(missing_files[:3])}), so it could not be checked for tests inside it; a check that "
+                       "could not run is unknown, so nothing is approved")
     if deleted:
         # 0.13.0 (was KNOWN DEFECTS 2): deleting a code file that holds tests removes those tests, which is a change to
         # tests, so it is held like one. The copy read is the one in the project's last commit.
