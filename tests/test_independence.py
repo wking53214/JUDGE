@@ -27,6 +27,7 @@ ALLOWED: dict[str, frozenset[str]] = {
         "cns.seat", "cns.suite",
     }),
     "cns_connector": frozenset({"__future__", "dataclasses", "collections.abc", "typing", "cns.gate", "cns.seat"}),
+    "lastcommit": frozenset({"__future__", "hashlib", "zlib", "pathlib"}),
     "seat": frozenset({"__future__", "logging", "re", "unicodedata", "collections", "collections.abc", "pathlib", "typing", "cns.seat"}),
 }
 CNS_MODULES = {"cns.seat", "cns.suite", "cns.gate"}

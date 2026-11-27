@@ -17,6 +17,16 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.13.0] - 2026-11-27
+
+### Added
+
+- `judge.lastcommit`: reads one file as it was in the commit HEAD names, straight from `.git` with `zlib` and `hashlib` (no git program). Follows HEAD, branch files, `packed-refs`, a `.git` file (linked worktree, submodule) and `commondir`; reads loose objects and version-2 packs with offset and ref deltas; checks every object against its id. Refuses, as unreadable, SHA-256 repositories, missing objects, links and submodules, blobs over 4 MiB and packs over 256 MiB. Added to the import allowlist in `tests/test_independence.py`.
+
+### Fixed
+
+- KNOWN DEFECTS 2, deleted files: a deleted code file is now read from the project's last commit and the run is held for a named human when it held tests (INSUFFICIENT). A deleted code file whose committed copy cannot be read is held as a check that could not run. `tests/test_embedded_tests.py::test_a_deleted_file_is_not_read`, which recorded the old gap, is replaced by `tests/test_deleted_files.py`.
+
 ## [0.12.0] - 2026-11-27
 
 ### Changed
