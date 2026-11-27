@@ -17,6 +17,12 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.16.0] - 2026-11-27
+
+### Added
+
+- Tests compared by name (KNOWN DEFECTS 2): a suite run may carry `test_outcomes`, a list of (test id, outcome) pairs with outcomes `passed`, `failed`, `error`, `skipped`, `xfailed` or `xpassed`. When both suite runs carry it, a test that passed at the start and is gone or does not pass at the end is REJECT, even with every count equal. Names that disagree with the counts, or that are given at one end only, are INSUFFICIENT; a malformed list is unreadable. Read as an extra attribute (like `forged`), so `judge decide` accepts it in a suite object and the CNS connector digests it; no CNS change. Live once Warden fills it. `ROW_ATTRIBUTES` gains `test_outcomes` and `xpassed`. Held by `tests/test_outcomes_by_name.py`.
+
 ## [0.15.0] - 2026-11-27
 
 ### Changed

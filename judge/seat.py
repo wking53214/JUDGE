@@ -19,6 +19,8 @@ THE RULES, in order. The first group that fires decides.
                 approved, and the Judge never raises an error.
   REJECT        the evidence shows harm:
     the suite is red, or fewer tests pass than before
+    a test that passed at the start, named by id, is gone or no longer passes at the
+      end (only when both suite runs name their tests, 0.16.0)
     more tests are skipped (or expected-to-fail) than before
     an edit reached outside the project, or into version-control, environment or cache folders
       (.git, .hg, .svn, .venv, venv, env, .tox, .nox, .eggs, node_modules, site-packages, __pycache__,
@@ -442,8 +444,19 @@ ROW_ATTRIBUTES = frozenset({
     "target", "scope", "changed", "cycles", "declined", "judging_files_touched", "suite_before", "suite_after",
     "ghost_before", "ghost_after", "ghost_severity", "unmeasured", "swizzle_proofs", "attacks", "assay", "finisher_ran",
     "ghost_baseline_before", "ghost_baseline_after", "ghost_baseline", "edit_sources",
-    "ran", "reason", "text_only", *_SUITE_COUNTS, *_EXIT_NAMES, *_FORGED_NAMES,
+    "ran", "reason", "text_only", "xpassed", "test_outcomes", *_SUITE_COUNTS, *_EXIT_NAMES, *_FORGED_NAMES,
 })
+#: The words a suite may give for one test's outcome (0.16.0), and the count each one must agree with.
+_OUTCOME_COUNTS = {"passed": "passed", "failed": "failed", "error": "errors", "skipped": "skipped",
+                   "xfailed": "xfailed", "xpassed": "xpassed"}
+#: A reason names at most this many test ids, each cut to this length: an id is text from the target, not ours.
+_IDS_SHOWN, _ID_CHARS = 5, 120
+
+
+def _show_ids(ids) -> str:
+    shown = ["".join(ch if ch.isprintable() else " " for ch in i)[:_ID_CHARS] for i in list(ids)[:_IDS_SHOWN]]
+    more = len(ids) - len(shown)
+    return ", ".join(shown) + (f" and {more} more" if more > 0 else "")
 
 
 class _Suite:
@@ -480,6 +493,33 @@ class _Suite:
         # forged / text_only: anything but a plain False (or absent) counts as set.
         self.forged = any(getattr(run, n, False) not in (False, None) for n in _FORGED_NAMES)
         self.text_only = getattr(run, "text_only", False) not in (False, None)
+        # 0.16.0: each test by its id and outcome, when the runner gave them. None: not given (an older Warden, or a
+        # runner that cannot name its tests). A shape the Judge does not know is unreadable, never "not given".
+        self.outcomes: dict[str, str] | None = None
+        self.outcome_mismatch = ""
+        raw = getattr(run, "test_outcomes", None)
+        if raw is not None:
+            if not isinstance(raw, (tuple, list)):
+                raise _Unreadable(f"{name}.test_outcomes is a {type(raw).__name__}, not a list of (test id, outcome)")
+            outcomes: dict[str, str] = {}
+            for item in raw:
+                if (not isinstance(item, (tuple, list)) or len(item) != 2
+                        or not all(isinstance(x, str) for x in item)):
+                    raise _Unreadable(f"{name}.test_outcomes holds an entry that is not a (test id, outcome) pair")
+                tid, word = item
+                if word not in _OUTCOME_COUNTS:
+                    raise _Unreadable(f"{name}.test_outcomes gives an outcome the Judge does not know ({word[:40]!r})")
+                if tid in outcomes:
+                    raise _Unreadable(f"{name}.test_outcomes names one test twice ({_show_ids([tid])})")
+                outcomes[tid] = word
+            self.outcomes = outcomes
+            xpassed = getattr(run, "xpassed", 0)
+            if not _is_count(xpassed):
+                raise _Unreadable(f"{name}.xpassed is a {type(xpassed).__name__}, not a count")
+            totals = {**counts, "xpassed": xpassed}
+            told = Counter(outcomes.values())
+            off = [f"{told[w]} {w} by id but {totals[c]} by count" for w, c in _OUTCOME_COUNTS.items() if told[w] != totals[c]]
+            self.outcome_mismatch = "; ".join(off)
 
     @property
     def green(self) -> bool:
@@ -783,6 +823,29 @@ def _decide(e: Evidence) -> Verdict:
                 harm.append("the starting suite result was marked forged, so the comparison means nothing")
             if before.passed == 0 and changed:
                 harm.append("changes were applied although the suite had no passing tests to protect them")
+            # 0.16.0: by name, not only by count. A test that passed at the start must pass at the end; one removed and
+            # another added keeps the counts equal, so only the names show it.
+            if before.outcomes is not None and after.outcomes is not None:
+                lost = [t for t, w in before.outcomes.items() if w == "passed" and after.outcomes.get(t) != "passed"]
+                if lost:
+                    gone = [t for t in lost if t not in after.outcomes]
+                    changed_ = [t for t in lost if t in after.outcomes]
+                    parts = []
+                    if gone:
+                        parts.append(f"no longer there: {_show_ids(gone)}")
+                    if changed_:
+                        parts.append(f"no longer passing: {_show_ids(changed_)}")
+                    harm.append(f"a test that passed at the start did not pass at the end ({'; '.join(parts)})")
+
+    # 0.16.0: the names of the tests, when given, must agree with the counts and be given at both ends
+    for label, run in (("starting", before), ("final", after)):
+        if run is not None and run.outcome_mismatch:
+            unknown.append(f"the {label} suite's tests by name do not agree with its counts ({run.outcome_mismatch}); "
+                           "the evidence contradicts itself")
+    if before is not None and after is not None and (before.outcomes is None) != (after.outcomes is None):
+        which = "starting" if before.outcomes is None else "final"
+        unknown.append(f"the tests are named at one end of the run but not at the other (the {which} suite names none), "
+                       "so they cannot be compared by name")
 
     # a suite that says its counts come from printed text alone cannot also carry an exit code
     for label, run in (("starting", before), ("final", after)):
