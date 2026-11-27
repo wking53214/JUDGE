@@ -42,7 +42,7 @@ judge = "judge.cli:main"
 # To bump: see "Bumping the Warden pin" in README.md. CI checks out the same commit (.github/workflows/tests.yml);
 # tests/test_warden_pin.py fails if the two disagree.
 warden = [
-    "warden @ git+https://github.com/wking53214/Warden.git@a0a8e36d8d672fe3f7f5be12445a18dd343e0ac0",  # Warden 1.0.0
+    "warden @ git+https://github.com/wking53214/Warden.git@6feb031097c2d2ed0ad13844598c5ce5e4179e7b",  # Warden 1.0.0
 ]
 test = ["pytest>=8"]
 # Exact versions, so a new release of either cannot turn the lint job red (or hide a finding) on its own.
