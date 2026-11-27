@@ -73,6 +73,9 @@ THE RULES, in order. The first group that fires decides.
       #[cfg(test)], a Python doctest or test function, a Vitest in-source test, an
       Elixir doctest, a JUnit, xUnit, XCTest, PHPUnit or Minitest marker): held for a
       named human like a test file; one that is there but cannot be read is held too
+    a deleted code file held such tests in the project's last commit (read from .git
+      by judge.lastcommit, since Warden starts only on a folder with nothing
+      uncommitted), or its committed copy could not be read: held the same way
     a path that, with look-alike letters from another script swapped for Latin ones,
       reads as a test, Ghost, version-control or environment path: held for a named human
     a suite is marked text-only and also gives an exit code (it contradicts itself)
@@ -107,6 +110,7 @@ from typing import TypeGuard
 
 from cns.seat import Evidence, Verdict
 
+from . import lastcommit
 from ._version import __version__
 
 log = logging.getLogger(__name__)
@@ -575,13 +579,18 @@ def _symlink_target(target: object, path: str):
     return "OUTSIDE" if rel == ".." or rel.startswith("../") else rel
 
 
-def _embedded_tests(target: object, changed, skip) -> tuple[list[str], list[str]]:
+def _embedded_tests(target: object, changed, skip, deleted: list[str], deleted_unread: list[tuple[str, str]]
+                    ) -> tuple[list[str], list[str]]:
     """Written or replaced code files that hold tests of their own, and those that could not be read to look.
 
+    Deleted code files go into `deleted` (their committed copy held tests) and `deleted_unread` (path, why not read).
+
     Only when the project folder is here (when it is not, the run is already held by _link_check_missing). A file is
-    looked at when its extension has marks in _EMBEDDED_TEST_MARKS, its edit kind leaves a file behind (write or
-    replace) and it is not already judged as a test, a Ghost file or an edit outside the project. A deleted file cannot
-    be read; losing its tests shows in the before and after pass counts. A file that is not there is not looked at (Warden
+    looked at when its extension has marks in _EMBEDDED_TEST_MARKS, its edit kind is one the Judge knows (write,
+    replace or delete) and it is not already judged as a test, a Ghost file or an edit outside the project. A deleted
+    file is read as it was in the project's last commit (0.13.0, judge.lastcommit), since Warden starts only on a folder
+    with nothing uncommitted; one whose committed copy cannot be read is unknown. A written file that is not there is
+    not looked at (Warden
     writes the files it lists, so real evidence names files that exist; hand-made evidence may not). A file that is there
     but is not a regular file, is too large or cannot be read is a check that could not run, so it is unknown (the
     owner's decision of 2026-11-26).
@@ -597,11 +606,24 @@ def _embedded_tests(target: object, changed, skip) -> tuple[list[str], list[str]
     except (OSError, ValueError, RuntimeError):
         return found, unreadable
     for path, kind in changed:
-        if path in skip or kind.strip().lower() not in {"write", "replace"} or "\0" in path:
+        k = kind.strip().lower()
+        if path in skip or k not in {"write", "replace", "delete"} or "\0" in path:
             continue
         name = _norm_path(path).rsplit("/", 1)[-1]
         marks = _EMBEDDED_TEST_MARKS.get(name.rsplit(".", 1)[-1] if "." in name else "")
         if not marks:
+            continue
+        if k == "delete":
+            try:
+                text = lastcommit.committed_bytes(root, path.translate(_SLASH)).decode("utf-8", errors="replace")
+            except lastcommit.Unreadable as exc:
+                deleted_unread.append((path, str(exc)))
+                continue
+            except (OSError, ValueError, RuntimeError, MemoryError, RecursionError):
+                deleted_unread.append((path, "the repository could not be read"))
+                continue
+            if any(m.search(text) for m in marks):
+                deleted.append(path)
             continue
         try:
             real = (root / path.translate(_SLASH)).resolve()
@@ -727,7 +749,10 @@ def _decide(e: Evidence) -> Verdict:
         unknown.append(f"a path uses letters from another script that look like Latin ones and then reads as a test, "
                        f"Ghost, version-control or environment path ({', '.join(lookalike[:3])}); the machine does not "
                        "approve that, and a named human keeps or drops the held result")
-    embedded, unread = _embedded_tests(target, changed, set(judging) | set(outside) | set(baseline_changed))
+    deleted: list[str] = []
+    deleted_unread: list[tuple[str, str]] = []
+    embedded, unread = _embedded_tests(target, changed, set(judging) | set(outside) | set(baseline_changed),
+                                       deleted, deleted_unread)
     if embedded:
         # 0.11.0 (was KNOWN DEFECTS 2): a test inside an ordinary source file is held like a test file, since an edit
         # beside it cannot be told apart from an edit to it by its name.
@@ -736,6 +761,16 @@ def _decide(e: Evidence) -> Verdict:
     if unread:
         unknown.append(f"a changed code file could not be read to check it for tests inside it ({', '.join(unread[:3])}); "
                        "a check that could not run is unknown, so nothing is approved")
+    if deleted:
+        # 0.13.0 (was KNOWN DEFECTS 2): deleting a code file that holds tests removes those tests, which is a change to
+        # tests, so it is held like one. The copy read is the one in the project's last commit.
+        unknown.append(f"a deleted code file held tests of its own in the last commit ({', '.join(deleted[:3])}); deleting "
+                       "it removes those tests, so the machine does not approve that; a named human keeps or drops the "
+                       "held result")
+    if deleted_unread:
+        unknown.append("a deleted code file could not be read from the project's last commit to check it for tests "
+                       f"inside it ({'; '.join(f'{p}: {why}' for p, why in deleted_unread[:3])}); a check that could "
+                       "not run is unknown, so nothing is approved")
 
     # Ghost, counted one finding at a time
     ghost_start = ghost_end = None

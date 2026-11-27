@@ -66,11 +66,6 @@ def test_a_code_file_with_no_tests_inside_is_still_accepted(tmp_path, path, text
     assert v.decision == "ACCEPT", v.reasons
 
 
-def test_a_deleted_file_is_not_read(tmp_path):
-    """It is gone; losing its tests shows in the pass counts, which the Judge compares before and after."""
-    assert _d(target=str(tmp_path), changed=(("src/lib.rs", "delete"),)).decision == "ACCEPT"
-
-
 def test_a_listed_file_that_is_not_in_the_folder_is_not_looked_at(tmp_path):
     """Warden writes the files it lists; hand-made evidence may name one that is not there."""
     assert _d(target=str(tmp_path), changed=(("src/lib.rs", "write"),)).decision == "ACCEPT"
