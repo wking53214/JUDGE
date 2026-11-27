@@ -17,6 +17,28 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.10.0] - 2026-11-26
+
+### Changed
+
+- Test recognition covers other languages (was KNOWN DEFECTS 2). Held for a named human, like Python's: test files named
+  by the usual conventions of JavaScript and TypeScript (`*.test.js`, `*.spec.ts` and the jsx, tsx, mjs, cjs, mts, cts
+  forms), Go (`*_test.go`), Java, Kotlin, Scala, Groovy, C#, Swift and PHP (`*Test` or `*Tests`), Ruby (`*_spec.rb`,
+  `*_test.rb`), Rust (`*_test.rs`, `tests.rs`) and Elixir (`*_test.exs`); the folders `spec`, `specs`, `e2e`, `cypress`,
+  `.cargo` and `.azure-pipelines`; and the files that decide which tests exist and how they run (`Cargo.toml`, `build.rs`,
+  `rust-toolchain(.toml)`, `go.mod`, `go.work`, `pom.xml`, Gradle files, `Gemfile`, `Rakefile`, `.rspec`, `tsconfig.json`,
+  `CMakeLists.txt`, `meson.build`, `justfile`, test-runner configs such as `jest.config.*`), plus `.gitignore`. The Rust names
+  match what Warden protects.
+- The "some tests did not run" rule holds a change to any file that is not prose (it looked only at `.py` files).
+- Still not caught, and recorded as KNOWN DEFECTS 2: a test written inside an ordinary source file (Rust `#[cfg(test)]`,
+  a Python doctest), a test file named against its language's convention, and languages not listed. A name that only looks
+  like a test (`Latest.java`) is held: the patterns err towards holding.
+- Pre-existing tests changed to the new behaviour: `tests/test_readme_patterns.py` (the gap test became
+  `test_files_of_other_languages_are_held_as_the_readme_says` and
+  `test_a_test_inside_an_ordinary_source_file_is_not_recognised_as_the_readme_says`; the skipped-rule test now expects a
+  hold for every non-prose file) and `tests/test_strict_evidence.py::test_gitignore_is_not_the_git_folder` (held, still not
+  harm). New: `tests/test_languages.py`. Version 0.10.0.
+
 ## [0.9.0] - 2026-11-26
 
 ### Added

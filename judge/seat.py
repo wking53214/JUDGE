@@ -113,7 +113,7 @@ _PROSE = (".md", ".rst", ".txt")
 #: The grant scopes the Judge understands, and the edit kinds Warden writes. Any other word is unknown, never fine.
 _SCOPES = frozenset({"documentation", "code", "all"})
 _EDIT_KINDS = frozenset({"write", "replace", "delete"})
-_TEST_DIRS = {"tests", "test", "testing", "__tests__"}
+_TEST_DIRS = {"tests", "test", "testing", "__tests__", "spec", "specs", "e2e", "cypress"}
 #: Directories whose contents decide how a run is judged or built: tests, CI, hooks, dependency lists.
 #: Directories that hold what tests compare against: fixtures, specimens, golden files, snapshots, a corpus.
 #: A file there is an answer, not code under improvement; even a whitespace change breaks a recorded hash
@@ -121,7 +121,7 @@ _TEST_DIRS = {"tests", "test", "testing", "__tests__"}
 _FIXTURE_DIRS = {"fixtures", "fixture", "specimens", "specimen", "testdata", "test_data", "golden", "snapshots",
                  "__snapshots__", "corpus"}
 _JUDGING_DIRS = _TEST_DIRS | _FIXTURE_DIRS | {".github", ".circleci", ".gitlab", ".buildkite", ".husky", ".githooks",
-                               ".git-hooks", "githooks", "hooks", "requirements"}
+                               ".git-hooks", "githooks", "hooks", "requirements", ".azure-pipelines", ".cargo"}
 _JUDGING_NAMES = {
     "conftest.py", "pyproject.toml", "tox.ini", "setup.cfg", "setup.py", "noxfile.py", ".coveragerc",
     "makefile", "gnumakefile", "tests.py", "test.py", "sitecustomize.py", "usercustomize.py",
@@ -131,6 +131,14 @@ _JUDGING_NAMES = {
     "pipfile", "pipfile.lock", "poetry.lock", "uv.lock", "package.json", "package-lock.json",
     "yarn.lock", "pnpm-lock.yaml", "cargo.lock", "gemfile.lock", "go.sum",
     "docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", "dockerfile",
+    # other languages (0.10.0): manifests and build files decide which tests exist and how they run, and a build
+    # script runs code at build time; Warden protects the Rust ones too
+    "justfile", "cargo.toml", "build.rs", "rust-toolchain", "rust-toolchain.toml", "clippy.toml", "tests.rs",
+    "go.mod", "go.work", "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts",
+    "gradle.properties", "gemfile", "rakefile", ".rspec", "tsconfig.json", "cmakelists.txt", "meson.build",
+    "cloudbuild.yml", "codecov.yml", ".codecov.yml", "pdm.lock",
+    # what git ignores decides which files a diff, and so Ghost and the reviewer, can see
+    ".gitignore",
 }
 _JUDGING_PATTERNS = (
     re.compile(r"^\.?pytest.*\.(ini|toml|cfg)$"),          # pytest.ini, .pytest.ini, pytest.toml and variants
@@ -140,6 +148,13 @@ _JUDGING_PATTERNS = (
     re.compile(r"^docker-compose.*"), re.compile(r"^dockerfile.*"), re.compile(r".*\.dockerfile$"),
     re.compile(r".*\.lock$"), re.compile(r".*\.pth$"),
     re.compile(r"^\.ghost.*"),                              # .ghost_baseline.json and every other Ghost file
+    # test files by the conventions of other languages (0.10.0); names are lower-cased before they are matched
+    re.compile(r".*\.(test|spec)\.(js|jsx|ts|tsx|mjs|cjs|mts|cts)$"),   # Jest, Vitest, Mocha, Jasmine
+    re.compile(r".*_test\.(go|rs|rb|exs)$"),                # Go, Rust, Ruby minitest, Elixir
+    re.compile(r".*_spec\.rb$"),                            # RSpec
+    re.compile(r".*tests?\.(java|kt|kts|scala|groovy|cs|swift|php)$"),  # JUnit, NUnit, XCTest, PHPUnit
+    re.compile(r"^(jest|vitest|karma|playwright|cypress|mocha|ava|babel|webpack|vite|rollup)\.(config|conf)\..*$"),
+    re.compile(r"^\.mocharc.*"),
 )
 #: Version control, environment and cache folders: nothing in them is the project's source, a library edited there
 #: runs later with the user's rights, and a cached .pyc runs in place of its source. Warden refuses edits in all of them.
@@ -780,7 +795,7 @@ def _decide(e: Evidence) -> Verdict:
     if link_missing:
         reasons.append(link_missing)
     if (before is not None and before.not_run > 0
-            and any(p.strip().lower().endswith(".py") and k.strip().lower() in _EDIT_KINDS for p, k in changed)):
+            and any(not p.strip().lower().endswith(_PROSE) and k.strip().lower() in _EDIT_KINDS for p, k in changed)):
         reasons.append("some tests did not run, so a code change cannot be shown safe")
     # Counts that come from printed text alone can be faked by the code under test, so they never
     # support a plain ACCEPT. The run is held as unverified instead.

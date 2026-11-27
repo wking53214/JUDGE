@@ -59,12 +59,17 @@ def test_every_folder_the_readme_lists_is_rejected_when_edited(folder):
 
 @pytest.mark.parametrize("path", [
     "web/app.test.js", "web/app.spec.ts", "pkg/foo_test.go", "src/FooTest.java", "spec/foo_spec.rb",
-    "src/lib.rs", "Cargo.toml", ".gitignore",
+    "Cargo.toml", ".gitignore",
 ])
-def test_known_gap_files_of_other_languages_are_not_recognised(path):
-    """A KNOWN DEFECT in the README: these are ACCEPT with scope code, and with skips before and after. Update both when it changes."""
-    v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=((path, "write"),))
-    assert v.decision == "ACCEPT", path
+def test_files_of_other_languages_are_held_as_the_readme_says(path):
+    """Was a KNOWN DEFECT (0.9.0: ACCEPT). Since 0.10.0 these are held for a named human, with or without skips."""
+    v = _d(changed=((path, "write"),))
+    assert v.decision == "INSUFFICIENT", path
+
+
+def test_a_test_inside_an_ordinary_source_file_is_not_recognised_as_the_readme_says():
+    """KNOWN DEFECTS 2: src/lib.rs may hold a #[cfg(test)] module, and the Judge reads names, not code."""
+    assert _d(changed=(("src/lib.rs", "write"),)).decision == "ACCEPT"
 
 
 def test_setup_cfg_is_rejected_as_the_readme_says():
@@ -75,7 +80,10 @@ def test_a_java_test_in_a_test_folder_is_rejected_as_the_readme_says():
     assert _d(changed=(("src/test/java/FooTest.java", "write"),)).decision == "INSUFFICIENT"
 
 
-def test_the_skipped_tests_rule_looks_only_at_python_files_as_the_readme_says():
-    held = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("pkg/a.py", "write"),))
-    free = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("pkg/a.js", "write"),))
-    assert held.decision == "INSUFFICIENT" and free.decision == "ACCEPT"
+def test_the_skipped_tests_rule_holds_a_change_to_any_file_that_is_not_prose():
+    """0.9.0 looked only at .py files, so pkg/a.js went free."""
+    for path in ("pkg/a.py", "pkg/a.js", "src/lib.rs", "cmd/main.go", "config/app.yaml"):
+        v = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=((path, "write"),))
+        assert v.decision == "INSUFFICIENT", path
+    prose = _d(suite_before=_suite(skipped=1), suite_after=_suite(skipped=1), changed=(("docs/guide.md", "write"),))
+    assert prose.decision == "ACCEPT"
