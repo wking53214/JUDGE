@@ -67,9 +67,15 @@ def test_files_of_other_languages_are_held_as_the_readme_says(path):
     assert v.decision == "INSUFFICIENT", path
 
 
-def test_a_test_inside_an_ordinary_source_file_is_not_recognised_as_the_readme_says():
-    """KNOWN DEFECTS 2: src/lib.rs may hold a #[cfg(test)] module, and the Judge reads names, not code."""
-    assert _d(changed=(("src/lib.rs", "write"),)).decision == "ACCEPT"
+def test_a_test_inside_an_ordinary_source_file_is_held_as_the_readme_says(tmp_path):
+    """Was KNOWN DEFECTS 2 (0.10.0: ACCEPT). Since 0.11.0 the Judge reads the written file, so src/lib.rs with a
+    #[cfg(test)] module is held for a named human, and the same file without one is not."""
+    (tmp_path / "src").mkdir()
+    lib = tmp_path / "src" / "lib.rs"
+    lib.write_text("pub fn f() {}\n#[cfg(test)]\nmod tests {}\n", encoding="utf-8")
+    assert _d(target=str(tmp_path), changed=(("src/lib.rs", "write"),)).decision == "INSUFFICIENT"
+    lib.write_text("pub fn f() {}\n", encoding="utf-8")
+    assert _d(target=str(tmp_path), changed=(("src/lib.rs", "write"),)).decision == "ACCEPT"
 
 
 def test_setup_cfg_is_rejected_as_the_readme_says():

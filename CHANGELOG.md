@@ -17,6 +17,16 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.11.0] - 2026-11-27
+
+### Fixed
+
+- A test written inside an ordinary source file is held for a named human like a test file (was KNOWN DEFECTS 2). The Judge reads each written or replaced code file in the project folder and holds the run when the file carries a test mark of its language: Rust `#[cfg(test)]`, `#[test]` or a doc-comment code block; a Python doctest, `def test...`, `class Test...`, `doctest` or `unittest`; Vitest in-source tests and `Deno.test(`; Elixir doctests and `ExUnit`; JUnit, kotlin.test, xUnit, NUnit, MSTest, XCTest, Swift Testing, PHPUnit, Minitest, RSpec and Test::Unit. A file that is there but cannot be read (not a regular file, or over 4 MiB) is held as a check that could not run. A deleted file, and a listed file that is not in the folder, are not read. `tests/test_embedded_tests.py`.
+
+### Changed
+
+- `tests/test_readme_patterns.py::test_a_test_inside_an_ordinary_source_file_is_not_recognised_as_the_readme_says` asserted the old gap (ACCEPT); it is now `..._is_held_as_the_readme_says` and asserts the hold, with the file in a real folder.
+
 ## [0.10.0] - 2026-11-26
 
 ### Changed
