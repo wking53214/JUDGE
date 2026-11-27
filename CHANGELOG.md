@@ -17,6 +17,12 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.14.0] - 2026-11-27
+
+### Added
+
+- Test conventions of C, C++, Objective-C, Zig, D, Dart, Haskell, Julia, R, Lua and Nim (KNOWN DEFECTS 2, languages not listed): test file name patterns (`*_test.cc`, `FooTest.cpp`, `*_test.dart`, `FooSpec.hs`, `test-*.R`, `*_spec.lua`), package and build files (`build.zig`, `build.zig.zon`, `dub.json`, `dub.sdl`, `pubspec.yaml`, `*.cabal`, `cabal.project`, `stack.yaml`, `package.yaml`, `Project.toml`, `Manifest.toml`, `runtests.jl`, `DESCRIPTION`, `.busted`, `*.rockspec`, `*.nimble`, `conanfile.txt`, `conanfile.py`, `vcpkg.json`, `CMakePresets.json`), and in-source test marks for each (GoogleTest, Catch2, doctest and Boost.Test macros and includes, Zig `test` blocks, D `unittest` blocks, Haskell doctests and test imports, Julia `@test`, R `testthat`, Lua `busted`, Dart test packages, Nim `unittest` and `runnableExamples`). All are held for a named human. The README lists are regenerated from the code.
+
 ## [0.13.0] - 2026-11-27
 
 ### Added

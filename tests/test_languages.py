@@ -19,6 +19,10 @@ TEST_FILES = [
     "lib/foo_spec.rb", "lib/foo_test.rb",
     "src/parser_test.rs", "src/tests.rs",
     "lib/foo_test.exs",
+    # 0.14.0
+    "src/parser_test.cc", "src/parser_unittest.cpp", "src/FooTest.cpp", "src/foo_test.c", "Tests/FooTests.m",
+    "test/widget_test.dart", "test/FooSpec.hs", "src/FooSpec.hs", "tests/testthat/test-model.R", "R/test-model.R",
+    "src/foo_spec.lua",
 ]
 TEST_FOLDERS = ["spec/models/user.rb", "specs/a.js", "e2e/login.ts", "cypress/support/commands.js"]
 BUILD_FILES = [
@@ -26,9 +30,16 @@ BUILD_FILES = [
     "build.gradle", "build.gradle.kts", "settings.gradle.kts", "gradle.properties", "Gemfile", "Rakefile", ".rspec",
     "jest.config.js", "vitest.config.ts", "karma.conf.js", "playwright.config.ts", ".mocharc.json", "tsconfig.json",
     "CMakeLists.txt", "meson.build", "justfile", ".gitignore", ".azure-pipelines/ci.yml",
+    # 0.14.0
+    "build.zig", "build.zig.zon", "dub.json", "dub.sdl", "pubspec.yaml", "foo.cabal", "cabal.project", "stack.yaml",
+    "package.yaml", "Project.toml", "Manifest.toml", "DESCRIPTION", ".busted", "foo-1.0-1.rockspec", "foo.nimble",
+    "conanfile.txt", "conanfile.py", "vcpkg.json", "CMakePresets.json",
 ]
 ORDINARY = ["web/app.js", "web/App.tsx", "pkg/foo.go", "src/main/java/Foo.java", "lib/foo.rb", "src/parser.rs",
-            "lib/foo.ex", "src/Foo.cs", "web/testimony.js", "pkg/protest_utils.go"]
+            "lib/foo.ex", "src/Foo.cs", "web/testimony.js", "pkg/protest_utils.go",
+            # 0.14.0
+            "src/parser.c", "src/parser.cpp", "include/parser.h", "src/main.zig", "source/app.d", "lib/app.dart",
+            "src/Lib.hs", "src/Model.jl", "R/model.R", "src/util.lua", "src/app.nim"]
 
 
 @pytest.mark.parametrize("path", TEST_FILES + TEST_FOLDERS + BUILD_FILES)
