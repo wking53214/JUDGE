@@ -69,6 +69,10 @@ THE RULES, in order. The first group that fires decides.
       that declares the field, no labels at all while some cycle applied an edit
     edits were made but the project folder named in target is not on this machine,
       so the symbolic-link check could not run (the owner's decision of 2026-11-26)
+    a written or replaced code file holds tests of its own (a Rust #[test] or
+      #[cfg(test)], a Python doctest or test function, a Vitest in-source test, an
+      Elixir doctest, a JUnit, xUnit, XCTest, PHPUnit or Minitest marker): held for a
+      named human like a test file; one that is there but cannot be read is held too
     a path that, with look-alike letters from another script swapped for Latin ones,
       reads as a test, Ghost, version-control or environment path: held for a named human
     a suite is marked text-only and also gives an exit code (it contradicts itself)
@@ -170,6 +174,29 @@ _HARM_SEVERITIES = {"high", "medium", "critical", "severe"}
 _HELD_GHOST_SEVERITIES = frozenset({"minor", "informational"})
 #: Change kinds that only reformat. There are none today, so nothing is excused.
 _FORMAT_ONLY_KINDS: frozenset = frozenset()
+#: Tests that live inside an ordinary source file, by the file's extension (0.11.0, was KNOWN DEFECTS 2). A test file is
+#: caught by its name; these are caught by what the written file holds, so an edit next to them is held for a named
+#: human like an edit to a test file. The marks err towards holding: a mark in a comment or a string counts too. Go is
+#: absent because its tests can only live in `_test.go` files, which the names above already catch.
+_MARK = re.MULTILINE
+_EMBEDDED_TEST_MARKS: dict[str, tuple[re.Pattern[str], ...]] = {}
+for _exts, _marks in (
+    (("rs",), (r"#\s*\[\s*cfg\s*\(\s*test\s*\)", r"#\s*\[\s*(?:\w+::)*test\b", r"^\s*//[/!].*```")),
+    (("py", "pyi"), (r"^\s*>>>(?:\s|$)", r"^\s*(?:async\s+)?def\s+test", r"^\s*class\s+Test", r"\bdoctest\b",
+                     r"\bunittest\b")),
+    (("js", "jsx", "mjs", "cjs", "ts", "tsx", "mts", "cts"), (r"\bimport\.meta\.vitest\b", r"\bDeno\.test\s*\(")),
+    (("ex", "exs"), (r"^\s*iex(?:\(\d+\))?>", r"\bExUnit\b", r"\bdoctest\b")),
+    (("java", "kt", "kts", "scala", "groovy"), (r"@\s*(?:Test|ParameterizedTest|RepeatedTest|TestFactory)\b",
+                                                r"\borg\.junit\b", r"\bkotlin\.test\b")),
+    (("cs",), (r"\[\s*(?:Fact|Theory|Test|TestMethod|TestCase)\b", r"\b(?:Xunit|NUnit\.Framework|TestTools\.UnitTesting)\b")),
+    (("swift",), (r"\bXCTest\b", r"@Test\b", r"^\s*import\s+Testing\b")),
+    (("php",), (r"\bPHPUnit\b", r"\bextends\s+\\?(?:\w+\\)*TestCase\b")),
+    (("rb",), (r"\bMinitest\b", r"\bRSpec\b", r"\bTest::Unit\b")),
+):
+    for _ext in _exts:
+        _EMBEDDED_TEST_MARKS[_ext] = tuple(re.compile(m, _MARK) for m in _marks)
+#: A written file larger than this is not read; it is held as one that could not be looked at.
+_EMBEDDED_READ_LIMIT = 4 * 1024 * 1024
 
 
 class _Unreadable(Exception):
@@ -548,6 +575,49 @@ def _symlink_target(target: object, path: str):
     return "OUTSIDE" if rel == ".." or rel.startswith("../") else rel
 
 
+def _embedded_tests(target: object, changed, skip) -> tuple[list[str], list[str]]:
+    """Written or replaced code files that hold tests of their own, and those that could not be read to look.
+
+    Only when the project folder is here (when it is not, the run is already held by _link_check_missing). A file is
+    looked at when its extension has marks in _EMBEDDED_TEST_MARKS, its edit kind leaves a file behind (write or
+    replace) and it is not already judged as a test, a Ghost file or an edit outside the project. A deleted file cannot
+    be read; losing its tests shows in the before and after pass counts. A file that is not there is not looked at (Warden
+    writes the files it lists, so real evidence names files that exist; hand-made evidence may not). A file that is there
+    but is not a regular file, is too large or cannot be read is a check that could not run, so it is unknown (the
+    owner's decision of 2026-11-26).
+    """
+    found: list[str] = []
+    unreadable: list[str] = []
+    if not isinstance(target, str) or not target or "\0" in target:
+        return found, unreadable
+    try:
+        root = Path(target).resolve()
+        if not root.is_dir():
+            return found, unreadable
+    except (OSError, ValueError, RuntimeError):
+        return found, unreadable
+    for path, kind in changed:
+        if path in skip or kind.strip().lower() not in {"write", "replace"} or "\0" in path:
+            continue
+        name = _norm_path(path).rsplit("/", 1)[-1]
+        marks = _EMBEDDED_TEST_MARKS.get(name.rsplit(".", 1)[-1] if "." in name else "")
+        if not marks:
+            continue
+        try:
+            real = (root / path.translate(_SLASH)).resolve()
+            if not real.is_relative_to(root) or not real.exists():
+                continue
+            if not real.is_file() or real.stat().st_size > _EMBEDDED_READ_LIMIT:
+                raise OSError("not a regular file, or too large")
+            text = real.read_bytes().decode("utf-8", errors="replace")
+        except (OSError, ValueError, RuntimeError):
+            unreadable.append(path)
+            continue
+        if any(m.search(text) for m in marks):
+            found.append(path)
+    return found, unreadable
+
+
 # ---- the decision ----------------------------------------------------------------
 
 def _decide(e: Evidence) -> Verdict:
@@ -657,6 +727,15 @@ def _decide(e: Evidence) -> Verdict:
         unknown.append(f"a path uses letters from another script that look like Latin ones and then reads as a test, "
                        f"Ghost, version-control or environment path ({', '.join(lookalike[:3])}); the machine does not "
                        "approve that, and a named human keeps or drops the held result")
+    embedded, unread = _embedded_tests(target, changed, set(judging) | set(outside) | set(baseline_changed))
+    if embedded:
+        # 0.11.0 (was KNOWN DEFECTS 2): a test inside an ordinary source file is held like a test file, since an edit
+        # beside it cannot be told apart from an edit to it by its name.
+        unknown.append(f"a changed code file also holds tests ({', '.join(embedded[:3])}); an edit to it may change those "
+                       "tests, so the machine does not approve that; a named human keeps or drops the held result")
+    if unread:
+        unknown.append(f"a changed code file could not be read to check it for tests inside it ({', '.join(unread[:3])}); "
+                       "a check that could not run is unknown, so nothing is approved")
 
     # Ghost, counted one finding at a time
     ghost_start = ghost_end = None
