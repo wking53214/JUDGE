@@ -23,6 +23,12 @@ TEST_FILES = [
     "src/parser_test.cc", "src/parser_unittest.cpp", "src/FooTest.cpp", "src/foo_test.c", "Tests/FooTests.m",
     "test/widget_test.dart", "test/FooSpec.hs", "src/FooSpec.hs", "tests/testthat/test-model.R", "R/test-model.R",
     "src/foo_spec.lua",
+    # 0.17.0
+    "src/solver_test.f90", "src/solver_tests.F90", "src/solver.pf", "lib/parser_test.ml",
+    "lib/parser_tests.mli", "src/ParserTests.fs", "src/ParserTest.fsx", "src/app/core_test.clj",
+    "src/app/core_test.cljs", "src/app/core_test.cljc", "src/calc_tests.erl", "src/calc_test.erl", "src/calc_SUITE.erl",
+    "t/basic.t", "src/calc_spec.cr", "src/calc_test.v", "src/calc-test.adb", "src/calc_tests.ads", "src/calc.cut",
+    "scripts/install.bats", "src/Calc.Tests.ps1",
 ]
 TEST_FOLDERS = ["spec/models/user.rb", "specs/a.js", "e2e/login.ts", "cypress/support/commands.js"]
 BUILD_FILES = [
@@ -34,12 +40,21 @@ BUILD_FILES = [
     "build.zig", "build.zig.zon", "dub.json", "dub.sdl", "pubspec.yaml", "foo.cabal", "cabal.project", "stack.yaml",
     "package.yaml", "Project.toml", "Manifest.toml", "DESCRIPTION", ".busted", "foo-1.0-1.rockspec", "foo.nimble",
     "conanfile.txt", "conanfile.py", "vcpkg.json", "CMakePresets.json",
+    # 0.17.0
+    "fpm.toml", "dune", "src/dune", "dune-project", "foo.opam", "Directory.Build.props", "Directory.Build.targets",
+    "Directory.Packages.props", "global.json", "src/App/App.csproj", "src/App/App.fsproj", "src/App/App.vbproj",
+    "App.sln", "project.clj", "deps.edn", "shadow-cljs.edn", "bb.edn", "tests.edn", "rebar.config", "erlang.mk",
+    "mix.exs", "Makefile.PL", "Build.PL", "cpanfile", "dist.ini", "shard.yml", "v.mod", "alire.toml", "calc.gpr",
 ]
 ORDINARY = ["web/app.js", "web/App.tsx", "pkg/foo.go", "src/main/java/Foo.java", "lib/foo.rb", "src/parser.rs",
             "lib/foo.ex", "src/Foo.cs", "web/testimony.js", "pkg/protest_utils.go",
             # 0.14.0
             "src/parser.c", "src/parser.cpp", "include/parser.h", "src/main.zig", "source/app.d", "lib/app.dart",
-            "src/Lib.hs", "src/Model.jl", "R/model.R", "src/util.lua", "src/app.nim"]
+            "src/Lib.hs", "src/Model.jl", "R/model.R", "src/util.lua", "src/app.nim",
+            # 0.17.0
+            "src/solver.f90", "lib/parser.ml", "src/Parser.fs", "src/app/core.clj", "src/calc.erl", "lib/Calc.pm",
+            "bin/run.pl", "src/calc.cr", "src/calc.v", "src/calc.adb", "src/calc.cbl", "scripts/run.sh", "src/Calc.ps1",
+            "src/protest.erl"]
 
 
 @pytest.mark.parametrize("path", TEST_FILES + TEST_FOLDERS + BUILD_FILES)
