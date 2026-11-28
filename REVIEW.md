@@ -12,7 +12,7 @@ Read the rules, try to make the Judge approve something it should not (or turn a
 - a reason sentence that could mislead a person who is deciding whether to keep a held result;
 - a way to avoid the test detection (a test hidden from the lists of names and marks).
 
-**Who counts as outside.** The owner has not yet defined this. This guide assumes: someone who did not write, commit to or direct changes to this repository, and who is not the maintainer's own assistant. The outside check of 2026-11-28 (KNOWN DEFECTS 2) was made by the maintainer's assistant and is not a review. A reviewer who is unsure whether they qualify should say so in their report.
+**Who counts as outside.** The owner ruled on 2026-11-28: someone who did not write, commit to or direct changes to this repository, and who is not the maintainer's own assistant. A stranger who uses their own tools, AI included, still qualifies; a review by the maintainer's assistant does not. The outside check of 2026-11-28 (KNOWN DEFECTS 2) was made by the maintainer's assistant and is not a review. A reviewer who is unsure whether they qualify should say so in their report.
 
 **If the Judge has moved on.** This guide was written for Judge 0.20.0. If `judge --version` prints something newer, read `CHANGELOG.md` for the rules that changed since.
 
