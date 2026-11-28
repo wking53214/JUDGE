@@ -32,6 +32,10 @@ def test_the_readme_lists_the_folders_the_code_recognises():
     assert set(_items("Folders")) == set(seat._JUDGING_DIRS)
 
 
+def test_the_readme_lists_the_folder_name_patterns_the_code_recognises():
+    assert _items("Folder name patterns") == [p.pattern for p in seat._JUDGING_DIR_PATTERNS]
+
+
 def test_the_readme_lists_the_file_names_the_code_recognises():
     assert set(_items("File names")) == set(seat._JUDGING_NAMES)
 

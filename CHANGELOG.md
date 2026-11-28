@@ -22,6 +22,17 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.19.0] - 2026-11-28
+
+### Added
+
+- Found by an outside check that put every file of twelve public projects, none written by this project's author, to the Judge as a written edit (README KNOWN DEFECTS 2 lists them with their commits): folder name patterns, a new kind of rule tried against each folder in the path, for a project's test folder named after it (`HashLib.Tests`, `PrimeService.Tests`, `core-tests`; the .NET and Delphi convention, so it holds in every language) and a folder that starts with `test` and a separator (`test-assets`, `test_helpers`); tcllib's shared test files (`*.testsuite`, `*.testsupport`, `*.testscript`, `*.test.data`, `*.test.out`) and Tcl test drivers (`test.tcl`, `mail-test.tcl`); ECBLUnit marks in COBOL; a Scheme `define-library` named for `test`; and `elm-tooling.json`. Held for a named human.
+- Each new name, pattern and mark was weakened by hand (removed, one at a time) and a rule test failed every time.
+
+### Changed
+
+- README KNOWN DEFECTS 2 records the outside check, and one false hold it found: a Common Lisp line that starts with `(test ` is held even when `test` is only a local variable (cl-ppcre's `convert.lisp`). Left as it is, because the fix would loosen a rule.
+
 ## [0.18.0] - 2026-11-28
 
 ### Added

@@ -98,6 +98,8 @@ WITH_TESTS = [
     ("src/calc.cbl", "       COPY \"mfunit.cpy\".\n"),
     ("src/calc.cob", "       entry MFU-TC-PREFIX & \"Adds\".\n"),
     ("src/calc.cbl", "           CALL 'AZUTCINI' USING TC-NAME\n"),
+    ("src/calc.cbl", "           call \"ecblueq\" using a, b.\n"),               # ECBLUnit (0.19.0)
+    ("lib/chibi/check.sld", "(define-library (chibi test)\n  (export test))\n"),   # a Scheme test library (0.19.0)
 ]
 
 #: (path, ordinary text with no test in it)
