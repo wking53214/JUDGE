@@ -6,6 +6,10 @@ history.
 
 ## [Unreleased]
 
+### Added
+
+- README ROAD TO 1.0.0, by the owner's decision of 2026-11-28: the three must-haves before 1.0.0 is tagged (an outside review of the rules, signed evidence, a recorded whole-circuit run) and the known limits 1.0.0 accepts. Documentation only; no code, rule or test changed.
+
 ### Changed
 
 - The Warden pin moves from `a0a8e36d8d672fe3f7f5be12445a18dd343e0ac0` to `6feb031097c2d2ed0ad13844598c5ce5e4179e7b`, the head of Warden's `main`, which holds both Warden PR #83 (the pytest runner names every test in `test_outcomes`) and PR #84 (ghost_tools `491b870`); Warden 1.0.0 at both, CNS `v4.2.0` at both. In `pyproject.toml` and the CI `warden` job. Reason: `a0a8e36` was cut before #83 merged, so the Warden the Judge was tested with sent no test names and 0.16.0's comparison by name never ran against it. New `tests/test_names_from_real_warden.py` runs the pinned Warden's suite runner and checks that it names its tests, that a swapped test is REJECTed and that the same tests are ACCEPTed. No Judge code changed and no test was edited.

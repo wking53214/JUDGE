@@ -301,6 +301,24 @@ Each line names what shows it. "Hand-made evidence" means a test builds the inpu
 - **"No edit that Warden applied left the project" is a statement about Warden's edits.** The ACCEPT sentence measures the edit list in the evidence. What the target's own suite did (a write outside the project, a planted git hook) is not in the evidence and is not measured (`tests/test_harm_is_never_a_hold.py::test_the_accept_sentence_says_which_edits_it_measures`).
 - Python versions other than 3.11, 3.12 and 3.13 are untested.
 
+## ROAD TO 1.0.0
+
+Written 2026-11-28, at 0.19.0, by the owner's decision. 1.0.0 will promise that the verdict words, the evidence the Judge reads and the command line stay as they are until 2.0.0, and that a verdict can be relied on within the limits written below. The version moves to 1.0.0 only after each must-have is done and recorded here with its date and commit.
+
+Must-haves (none done yet):
+
+1. **An outside review of the rules.** Someone outside the project reads the rules in `judge/seat.py` and this README and reports what is wrong or missing. Each finding is answered here: fixed (with its test) or accepted as a limit. The outside check of 2026-11-28 (KNOWN DEFECTS 2) tested which files count as tests against real projects; it is not a review of the rules.
+2. **Signed evidence.** The Judge refuses evidence that is not signed, or that was changed after it was signed, by a key it trusts (for example from SIGNET, the circuit's separate signer). Today nothing signs the evidence, so anyone who can write the evidence file or the project folder can change the verdict (ROLE IN THE AUTHORITY MATRIX, "Two inputs that are not what they look like"). This needs work outside this repository (Warden, and perhaps CNS), which is asked of the owner before it starts.
+3. **A recorded whole-circuit run.** A real run of the circuit with the pins in `pyproject.toml`, in which the Judge gives ACCEPT, REJECT and INSUFFICIENT at least once each, recorded here as EXECUTED with its date and commits. None is recorded with the current pins (WHAT DOES NOT WORK / NOT PROVEN).
+
+Known limits that 1.0.0 accepts (each stays listed in KNOWN DEFECTS and is told to users, not hidden):
+
+- Over-holding outside Rust: an edit to a file that holds tests is held even when its tests are unchanged.
+- No comparison of tests by name for Rust, because Warden's cargo runner gives no test names.
+- Tests are found by names and marks, not by understanding code, so a framework or dialect the lists do not name is not caught, and Common Lisp's `(test ` mark can hold a file needlessly.
+- The zUnit and MFUnit marks rest on the vendors' documentation; no public project with such tests was found to check them against.
+- The Judge trusts Warden to have collected all the evidence and cannot tell if something was left out; signing (must-have 2) proves who wrote the evidence, not that it is complete.
+
 ## KNOWN DEFECTS
 
 Open, with no fix yet.
