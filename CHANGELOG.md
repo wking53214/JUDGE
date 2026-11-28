@@ -22,6 +22,18 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.17.0] - 2026-11-28
+
+### Added
+
+- Test conventions of Fortran, OCaml, F#, Clojure, Erlang, Perl, Crystal, V, Ada, COBOL's cobol-check, shell (bats, shunit2) and PowerShell (Pester) (KNOWN DEFECTS 2, languages not listed). Test file name patterns (`*_test.f90`, `*.pf`, `*_test.ml`, `FooTests.fs`, `*_test.clj`, `*_SUITE.erl`, `*.t`, `*_spec.cr`, `*_test.v`, `*-test.adb`, `*.cut`, `*.bats`, `*.Tests.ps1`), package and build files (`fpm.toml`, `dune`, `dune-project`, `*.opam`, `project.clj`, `deps.edn`, `shadow-cljs.edn`, `bb.edn`, `tests.edn`, `rebar.config`, `erlang.mk`, `Makefile.PL`, `Build.PL`, `cpanfile`, `dist.ini`, `shard.yml`, `v.mod`, `alire.toml`, `*.gpr`), and in-source test marks for Fortran, OCaml, F#, Clojure, Erlang, Perl, Crystal, Ada, shell and PowerShell. All are held for a named human. The README lists are regenerated from the code.
+- Build files of languages already listed that decide which tests run: .NET project files (`*.csproj`, `*.fsproj`, `*.vbproj`, `*.sln`, `Directory.Build.props`, `Directory.Build.targets`, `Directory.Packages.props`, `global.json`) and Elixir's `mix.exs`. Held for a named human.
+- Each new name, pattern and mark was weakened by hand (removed, one at a time) and a test failed every time.
+
+### Changed
+
+- README KNOWN DEFECTS 2 no longer says the pinned Warden sends no test names: since the repin to `6feb031` its pytest runner does, and only the cargo runner gives none.
+
 ## [0.16.0] - 2026-11-27
 
 ### Added

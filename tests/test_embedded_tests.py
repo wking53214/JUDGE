@@ -48,6 +48,32 @@ WITH_TESTS = [
     ("lib/app.dart", "import 'package:test/test.dart';\n"),
     ("src/app.nim", "import std/unittest\n"),
     ("src/app.nim", "proc add*(a, b: int): int =\n  runnableExamples:\n    assert add(1, 2) == 3\n  a + b\n"),
+    # 0.17.0: one entry for each new mark
+    ("src/solver.f90", "module solver_tests\n  @Test\n  subroutine test_add()\n  end subroutine\nend module\n"),
+    ("src/solver.F90", "program t\n  use PFUNIT\nend program\n"),
+    ("lib/parser.ml", "let add a b = a + b\nlet%test \"add\" = add 1 2 = 3\n"),
+    ("lib/parser.ml", "open Alcotest\n"),
+    ("lib/parser.ml", "(* preprocess (pps ppx_inline_test) *)\n"),
+    ("src/Parser.fs", "module Parser\n[<Fact>]\nlet ``adds`` () = ()\n"),
+    ("src/Parser.fs", "open Expecto\n"),
+    ("src/app/core.clj", "(ns app.core (:require [clojure.test :refer :all]))\n"),
+    ("src/app/core.cljs", "(ns app.core (:require [cljs.test :refer-macros [is]]))\n"),
+    ("src/app/core.cljc", "(deftest adds (is (= 3 (+ 1 2))))\n"),
+    ("src/app/core.clj", "(with-test (defn add [a b] (+ a b)) (is (= 3 (add 1 2))))\n"),
+    ("src/calc.erl", "-module(calc).\n-include_lib(\"eunit/include/eunit.hrl\").\n"),
+    ("src/calc.erl", "-module(calc).\n-include_lib(\"common_test/include/ct.hrl\").\n"),
+    ("src/calc.erl", "-module(calc).\n-include_lib(\"proper/include/proper.hrl\").\n"),
+    ("src/calc.erl", "-module(calc).\nadd_test() -> 3 = add(1, 2).\n"),
+    ("lib/Calc.pm", "package Calc;\nuse Test::More;\n"),
+    ("bin/run.pl", "use Test2::V0;\n"),
+    ("src/calc.cr", "require \"spec\"\n"),
+    ("src/calc.adb", "with AUnit.Assertions;\n"),
+    ("src/calc.ads", "with Ahven.Framework;\n"),
+    ("scripts/run.sh", "#!/bin/sh\n. shunit2\n"),
+    ("scripts/run.bash", "@test \"adds\" {\n  run add 1 2\n}\n"),
+    ("scripts/run.sh", "load 'test_helper/bats-assert/load'\n"),
+    ("src/Calc.ps1", "Import-Module Pester\n"),
+    ("src/Calc.psm1", "Describe 'Calc' {\n  It 'adds' { 3 | Should -Be 3 }\n}\n"),
 ]
 
 #: (path, ordinary text with no test in it)
@@ -68,6 +94,17 @@ WITHOUT_TESTS = [
     ("src/util.lua", "local M = {}\nreturn M\n"),
     ("lib/app.dart", "int add(int a, int b) => a + b;\n"),
     ("src/app.nim", "proc add*(a, b: int): int = a + b\n"),   # Go tests live only in _test.go files
+    # 0.17.0
+    ("src/solver.f90", "module solver\ncontains\n  subroutine add()\n  end subroutine\nend module\n"),
+    ("lib/parser.ml", "let add a b = a + b\n"),
+    ("src/Parser.fs", "module Parser\nlet add a b = a + b\n"),
+    ("src/app/core.clj", "(ns app.core)\n(defn add [a b] (+ a b))\n"),
+    ("src/calc.erl", "-module(calc).\nadd(A, B) -> A + B.\n"),
+    ("lib/Calc.pm", "package Calc;\nsub add { $_[0] + $_[1] }\n1;\n"),
+    ("src/calc.cr", "def add(a, b)\n  a + b\nend\n"),
+    ("src/calc.adb", "package body Calc is\nend Calc;\n"),
+    ("scripts/run.sh", "#!/bin/sh\necho testing\n"),
+    ("src/Calc.ps1", "function Add($a, $b) { $a + $b }\n"),
     ("config/app.yaml", "def test_not_code: true\n"),                  # no marks for an extension with no tests
 ]
 

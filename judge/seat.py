@@ -154,6 +154,10 @@ _JUDGING_NAMES = {
     "build.zig", "build.zig.zon", "dub.json", "dub.sdl", "pubspec.yaml", "cabal.project", "stack.yaml", "package.yaml",
     "project.toml", "manifest.toml", "runtests.jl", "description", ".busted", "conanfile.txt", "conanfile.py",
     "vcpkg.json", "cmakepresets.json",
+    # more languages (0.17.0): Fortran, OCaml, F# and .NET, Clojure, Erlang and Elixir, Perl, Crystal, V and Ada
+    "fpm.toml", "dune", "dune-project", "directory.build.props", "directory.build.targets", "directory.packages.props",
+    "global.json", "project.clj", "deps.edn", "shadow-cljs.edn", "bb.edn", "tests.edn", "rebar.config", "erlang.mk",
+    "mix.exs", "makefile.pl", "build.pl", "cpanfile", "dist.ini", "shard.yml", "v.mod", "alire.toml",
     # what git ignores decides which files a diff, and so Ghost and the reviewer, can see
     ".gitignore",
 }
@@ -177,6 +181,23 @@ _JUDGING_PATTERNS = (
     re.compile(r".*spec\.hs$"),                             # Haskell hspec
     re.compile(r"^test-.*\.r$"),                            # R testthat
     re.compile(r".*\.(cabal|rockspec|nimble)$"),            # Haskell, Lua and Nim package files
+    # more languages (0.17.0)
+    re.compile(r".*_tests?\.(f|for|f90|f95|f03|f08)$"),     # Fortran
+    re.compile(r".*\.pf$"),                                 # Fortran pFUnit test files
+    re.compile(r".*_tests?\.(ml|mli)$"),                    # OCaml
+    re.compile(r".*\.opam$"),                               # OCaml package files
+    re.compile(r".*tests?\.(fs|fsx)$"),                     # F# (xUnit, NUnit, Expecto)
+    re.compile(r".*\.(csproj|fsproj|vbproj|sln)$"),         # .NET project files decide which tests build and run
+    re.compile(r".*_test\.(clj|cljs|cljc)$"),               # Clojure clojure.test
+    re.compile(r".*_(tests?|suite)\.erl$"),                 # Erlang EUnit and Common Test suites
+    re.compile(r".*\.t$"),                                  # Perl (prove) and cram tests
+    re.compile(r".*_spec\.cr$"),                            # Crystal spec
+    re.compile(r".*_test\.v$"),                             # V (its tests live only in _test.v files)
+    re.compile(r".*[-_]tests?\.(adb|ads)$"),                # Ada AUnit
+    re.compile(r".*\.gpr$"),                                # Ada GNAT project files
+    re.compile(r".*\.cut$"),                                # COBOL cobol-check test files
+    re.compile(r".*\.bats$"),                               # shell, bats
+    re.compile(r".*\.tests\.ps1$"),                         # PowerShell Pester
 )
 #: Version control, environment and cache folders: nothing in them is the project's source, a library edited there
 #: runs later with the user's rights, and a cached .pyc runs in place of its source. Warden refuses edits in all of them.
@@ -196,7 +217,8 @@ _FORMAT_ONLY_KINDS: frozenset = frozenset()
 #: caught by its name; these are caught by what the written file holds, so an edit next to them is held for a named
 #: human like an edit to a test file. The marks err towards holding: a mark in a comment or a string counts too. Go is
 #: absent because its tests can only live in `_test.go` files, which the names above already catch. Zig, D, C and
-#: C++ (0.14.0) are here because their tests often live in ordinary source files.
+#: C++ (0.14.0) are here because their tests often live in ordinary source files. V (0.17.0) is absent for the same
+#: reason as Go: its tests can only live in `_test.v` files.
 _MARK = re.MULTILINE
 _EMBEDDED_TEST_MARKS: dict[str, tuple[re.Pattern[str], ...]] = {}
 for _exts, _marks in (
@@ -225,6 +247,20 @@ for _exts, _marks in (
     (("lua",), (r"\bbusted\b", r"\b[Ll]ua[Uu]nit\b")),
     (("dart",), (r"package:(?:test|flutter_test|integration_test)/",)),
     (("nim",), (r"^\s*import\s+(?:std/)?unittest\b", r"\brunnableExamples\b")),
+    # more languages (0.17.0); Fortran ignores case, so its marks do too
+    (("f", "for", "f90", "f95", "f03", "f08", "pf"),
+     (r"(?i)^\s*@test\b", r"(?i)\b(?:pfunit|funit|fruit|test_drive|testdrive|veggies)\b")),
+    (("ml", "mli"), (r"\blet%(?:test|expect_test|test_unit)\b", r"\b(?:OUnit2?|Alcotest|QCheck)\b",
+                     r"\bppx_(?:inline_test|expect)\b")),
+    (("fs", "fsx", "fsi"), (r"\[<\s*(?:Fact|Theory|Test|TestMethod|TestCase|Property|Tests)\b",
+                            r"\b(?:Expecto|Xunit|NUnit\.Framework|FsUnit|FsCheck)\b")),
+    (("clj", "cljs", "cljc", "bb"), (r"\bclojure\.test\b", r"\bcljs\.test\b", r"\(\s*deftest\b", r"\bwith-test\b")),
+    (("erl", "hrl"), (r"\beunit\b", r"\bcommon_test\b", r"\bproper/include\b", r"^[a-z]\w*_test_?\s*\(\s*\)\s*->")),
+    (("pl", "pm"), (r"\bTest2?::\w",)),
+    (("cr",), (r"^\s*require\s+\"spec\"",)),
+    (("adb", "ads"), (r"\bAUnit\b", r"\bAhven\b")),
+    (("sh", "bash", "zsh", "ksh"), (r"\bshunit2\b", r"^\s*@test\b", r"\bbats[-_]")),
+    (("ps1", "psm1"), (r"\bPester\b", r"^\s*Describe\s+[\'\"\w{-]")),
 ):
     for _ext in _exts:
         _EMBEDDED_TEST_MARKS[_ext] = tuple(re.compile(m, _MARK) for m in _marks)
