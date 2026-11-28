@@ -158,6 +158,8 @@ _JUDGING_NAMES = {
     "fpm.toml", "dune", "dune-project", "directory.build.props", "directory.build.targets", "directory.packages.props",
     "global.json", "project.clj", "deps.edn", "shadow-cljs.edn", "bb.edn", "tests.edn", "rebar.config", "erlang.mk",
     "mix.exs", "makefile.pl", "build.pl", "cpanfile", "dist.ini", "shard.yml", "v.mod", "alire.toml",
+    # the last languages (0.18.0): Elm, Gleam, Racket, Scheme, Prolog, Pascal and Tcl
+    "elm.json", "elm-verify-examples.json", "gleam.toml", "info.rkt", "akku.manifest", "pack.pl", "fpmake.pp", "all.tcl",
     # what git ignores decides which files a diff, and so Ghost and the reviewer, can see
     ".gitignore",
 }
@@ -198,6 +200,18 @@ _JUDGING_PATTERNS = (
     re.compile(r".*\.cut$"),                                # COBOL cobol-check test files
     re.compile(r".*\.bats$"),                               # shell, bats
     re.compile(r".*\.tests\.ps1$"),                         # PowerShell Pester
+    # the last languages (0.18.0)
+    re.compile(r".*tests?\.elm$"),                          # Elm elm-test
+    re.compile(r".*_test\.gleam$"),                         # Gleam gleeunit
+    re.compile(r".*[-_]tests?\.(rkt|scm|ss|sld|sls|lisp|lsp|cl)$"),   # Racket, Scheme, Common Lisp
+    re.compile(r"^tests?-.*\.(rkt|scm|ss|sld|sls|lisp|lsp|cl)$"),
+    re.compile(r".*\.(egg|asd)$"),                          # Chicken Scheme eggs, Common Lisp ASDF systems
+    re.compile(r".*\.plt$"),                                # Prolog plunit test files
+    re.compile(r".*tests?\.(pas|pp|dpr|lpr)$"),             # Pascal FPCUnit, DUnit, DUnitX
+    re.compile(r".*\.(lpi|lpk|dproj|dpk)$"),                # Lazarus and Delphi project files
+    re.compile(r".*\.test$"),                               # Tcl tcltest files
+    re.compile(r".*tests?\.vb$"),                           # Visual Basic .NET (MSTest, NUnit, xUnit)
+    re.compile(r".*\.(bzucfg|mfu)$"),                       # COBOL: IBM zUnit runner and Micro Focus MFUnit files
 )
 #: Version control, environment and cache folders: nothing in them is the project's source, a library edited there
 #: runs later with the user's rights, and a cached .pyc runs in place of its source. Warden refuses edits in all of them.
@@ -261,9 +275,26 @@ for _exts, _marks in (
     (("adb", "ads"), (r"\bAUnit\b", r"\bAhven\b")),
     (("sh", "bash", "zsh", "ksh"), (r"\bshunit2\b", r"^\s*@test\b", r"\bbats[-_]")),
     (("ps1", "psm1"), (r"\bPester\b", r"^\s*Describe\s+[\'\"\w{-]")),
+    # the last languages (0.18.0); Pascal, Visual Basic and COBOL ignore case, so their marks do too. Prolog shares
+    # `.pl` with Perl, so `.pl` carries the marks of both.
+    (("elm",), (r"^\s*import\s+(?:Test|Expect|Fuzz)\b", r"-->")),
+    (("gleam",), (r"\b(?:gleeunit|startest)\b",)),
+    (("rkt", "rktl"), (r"\(\s*module[+*]\s+test\b", r"\brackunit\b")),
+    (("scm", "ss", "sld", "sls"), (r"\bsrfi[- ]64\b", r"\(\s*test-(?:begin|assert|equal|eqv|eq|error|group)\b",
+                                  r"\(\s*(?:import|use)\b[^\n]*\btest\b")),
+    (("lisp", "lsp", "cl", "asd"), (r"(?i)\b(?:fiveam|5am|parachute|lisp-unit2?|fiasco|clunit2?)\b", r"(?i):(?:prove|rove)\b",
+                                    r"(?i)\(\s*(?:deftest|def-suite|def-test)\b", r"(?i)^\s*\(\s*(?:\w+:)?test\s")),
+    (("pl", "pro", "prolog", "plt"), (r"\bbegin_tests\s*\(", r"\bplunit\b")),
+    (("pas", "pp", "dpr", "lpr", "inc"), (r"(?i)\b(?:fpcunit|testregistry|TestFramework|DUnitX|punit)\b",
+                                          r"(?i)\bTTestCase\b")),
+    (("tcl", "tm"), (r"\btcltest\b",)),
+    (("vb",), (r"(?i)<\s*(?:Fact|Theory|Test|TestMethod|TestCase|TestClass|TestFixture)\b",
+               r"(?i)\b(?:Xunit|NUnit\.Framework|TestTools\.UnitTesting)\b")),
+    (("bas", "cls", "frm"), (r"(?i)'\s*@Test(?:Module|Method)\b",)),
+    (("cbl", "cob", "cpy", "ccp"), (r"(?i)\bmfunit", r"(?i)\bMFU-TC-", r"(?i)\bAZU(?:TCINI|TCADD|ASTFM|ASTFA)\b")),
 ):
     for _ext in _exts:
-        _EMBEDDED_TEST_MARKS[_ext] = tuple(re.compile(m, _MARK) for m in _marks)
+        _EMBEDDED_TEST_MARKS[_ext] = _EMBEDDED_TEST_MARKS.get(_ext, ()) + tuple(re.compile(m, _MARK) for m in _marks)
 #: A written file larger than this is not read; it is held as one that could not be looked at.
 _EMBEDDED_READ_LIMIT = 4 * 1024 * 1024
 

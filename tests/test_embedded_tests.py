@@ -74,6 +74,30 @@ WITH_TESTS = [
     ("scripts/run.sh", "load 'test_helper/bats-assert/load'\n"),
     ("src/Calc.ps1", "Import-Module Pester\n"),
     ("src/Calc.psm1", "Describe 'Calc' {\n  It 'adds' { 3 | Should -Be 3 }\n}\n"),
+    # 0.18.0: one entry for each new mark
+    ("src/Parser.elm", "module Parser exposing (add)\nimport Expect\n"),
+    ("src/Parser.elm", "{-| Adds.\n\n    add 1 2 --> 3\n\n-}\nadd a b = a + b\n"),
+    ("src/parser.gleam", "import gleeunit\n"),
+    ("src/parser.rkt", "#lang racket\n(define (add a b) (+ a b))\n(module+ test\n  (check-equal? (add 1 2) 3))\n"),
+    ("src/parser.rkt", "#lang racket\n(require rackunit)\n"),
+    ("src/parser.scm", "(import (srfi 64))\n"),
+    ("src/parser.scm", "(test-begin \"parser\")\n"),
+    ("src/parser.ss", "(import (chicken base) test)\n"),
+    ("src/parser.lisp", "(ql:quickload :fiveam)\n"),
+    ("src/parser.lisp", "(defpackage parser (:use :cl :rove))\n"),
+    ("src/parser.lisp", "(deftest adds (ok (= 3 (+ 1 2))))\n"),
+    ("src/parser.lisp", "(test adds (is (= 3 (+ 1 2))))\n"),
+    ("src/calc.pl", ":- begin_tests(calc).\n"),
+    ("src/calc.pro", ":- use_module(library(plunit)).\n"),
+    ("src/Calc.pas", "unit Calc;\nuses fpcunit, testregistry;\n"),
+    ("src/Calc.pas", "type TCalcCheck = class(TTestCase)\n"),
+    ("src/calc.tcl", "package require tcltest\n"),
+    ("src/Calc.vb", "<TestMethod()>\nPublic Sub Adds()\nEnd Sub\n"),
+    ("src/Calc.vb", "Imports NUnit.Framework\n"),
+    ("src/Module1.bas", "'@TestModule\nOption Explicit\n"),
+    ("src/calc.cbl", "       COPY \"mfunit.cpy\".\n"),
+    ("src/calc.cob", "       entry MFU-TC-PREFIX & \"Adds\".\n"),
+    ("src/calc.cbl", "           CALL 'AZUTCINI' USING TC-NAME\n"),
 ]
 
 #: (path, ordinary text with no test in it)
@@ -105,6 +129,18 @@ WITHOUT_TESTS = [
     ("src/calc.adb", "package body Calc is\nend Calc;\n"),
     ("scripts/run.sh", "#!/bin/sh\necho testing\n"),
     ("src/Calc.ps1", "function Add($a, $b) { $a + $b }\n"),
+    # 0.18.0
+    ("src/Parser.elm", "module Parser exposing (add)\nadd a b = a + b\n"),
+    ("src/parser.gleam", "pub fn add(a, b) { a + b }\n"),
+    ("src/parser.rkt", "#lang racket\n(define (add a b) (+ a b))\n"),
+    ("src/parser.scm", "(import (scheme base))\n(define (add a b) (+ a b))\n"),
+    ("src/parser.lisp", "(defun add (a b) (+ a b))\n"),
+    ("src/calc.pl", "add(A, B, C) :- C is A + B.\n"),
+    ("src/Calc.pas", "unit Calc;\ninterface\nfunction Add(a, b: Integer): Integer;\n"),
+    ("src/calc.tcl", "proc add {a b} { expr {$a + $b} }\n"),
+    ("src/Calc.vb", "Public Module Calc\nEnd Module\n"),
+    ("src/Module1.bas", "Public Function Add(a, b)\nEnd Function\n"),
+    ("src/calc.cbl", "       IDENTIFICATION DIVISION.\n       PROGRAM-ID. CALC.\n"),
     ("config/app.yaml", "def test_not_code: true\n"),                  # no marks for an extension with no tests
 ]
 
