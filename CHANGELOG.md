@@ -22,6 +22,18 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.18.0] - 2026-11-28
+
+### Added
+
+- Test conventions of the last languages KNOWN DEFECTS 2 named as missing: Elm, Gleam, Racket, Scheme, Common Lisp, Prolog, Pascal, Tcl and Visual Basic, and COBOL tests outside cobol-check (Micro Focus MFUnit, IBM zUnit). Test file name patterns (`FooTest.elm`, `*_test.gleam`, `*-test.rkt`, `test-*.scm`, `*-tests.lisp`, `*.plt`, `FooTests.pas`, `*.test` for tcltest, `FooTests.vb`), package and build files (`elm.json`, `elm-verify-examples.json`, `gleam.toml`, `info.rkt`, `Akku.manifest`, `*.egg`, `*.asd`, `pack.pl`, `fpmake.pp`, `*.lpi`, `*.lpk`, `*.dproj`, `*.dpk`, `all.tcl`, zUnit's `*.bzucfg`, MFUnit's `*.mfu`), and in-source test marks for each (elm-test imports and elm-verify-examples lines, gleeunit, Racket `module+ test` and rackunit, SRFI 64, FiveAM and its kin, plunit, FPCUnit, DUnit and DUnitX, tcltest, VB.NET test attributes, Rubberduck test modules, MFUnit entry points and zUnit calls). All are held for a named human. The README lists are regenerated from the code.
+- Each new name, pattern and mark was weakened by hand (removed, one at a time) and a test failed every time.
+
+### Changed
+
+- A file extension may now carry the marks of more than one language. `.pl` is Perl's and Prolog's, so a `.pl` file is checked for both; before, the last language listed for an extension would have replaced the first. No extension listed before 0.18.0 had two languages, so no earlier rule changed.
+- README KNOWN DEFECTS 2 no longer lists missing languages; what stays open is a test framework or dialect the marks do not name.
+
 ## [0.17.0] - 2026-11-28
 
 ### Added

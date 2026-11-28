@@ -29,6 +29,12 @@ TEST_FILES = [
     "src/app/core_test.cljs", "src/app/core_test.cljc", "src/calc_tests.erl", "src/calc_test.erl", "src/calc_SUITE.erl",
     "t/basic.t", "src/calc_spec.cr", "src/calc_test.v", "src/calc-test.adb", "src/calc_tests.ads", "src/calc.cut",
     "scripts/install.bats", "src/Calc.Tests.ps1",
+    # 0.18.0
+    "src/ParserTest.elm", "src/ParserTests.elm", "src/parser_test.gleam", "src/parser-test.rkt", "src/parser_tests.scm",
+    "src/parser-test.ss", "src/parser_test.sld", "src/parser-tests.sls", "src/parser-tests.lisp", "src/parser-test.lsp",
+    "src/parser_test.cl", "src/test-parser.rkt", "src/tests-parser.scm", "src/test-parser.lisp", "src/calc.plt",
+    "src/CalcTests.pas", "src/CalcTest.pp", "src/CalcTests.dpr", "src/CalcTests.lpr", "src/calc.test",
+    "src/CalcTests.vb",
 ]
 TEST_FOLDERS = ["spec/models/user.rb", "specs/a.js", "e2e/login.ts", "cypress/support/commands.js"]
 BUILD_FILES = [
@@ -45,6 +51,10 @@ BUILD_FILES = [
     "Directory.Packages.props", "global.json", "src/App/App.csproj", "src/App/App.fsproj", "src/App/App.vbproj",
     "App.sln", "project.clj", "deps.edn", "shadow-cljs.edn", "bb.edn", "tests.edn", "rebar.config", "erlang.mk",
     "mix.exs", "Makefile.PL", "Build.PL", "cpanfile", "dist.ini", "shard.yml", "v.mod", "alire.toml", "calc.gpr",
+    # 0.18.0
+    "elm.json", "elm-verify-examples.json", "gleam.toml", "info.rkt", "Akku.manifest", "pack.pl", "fpmake.pp",
+    "all.tcl", "calc.egg", "calc.asd", "Calc.lpi", "Calc.lpk", "Calc.dproj", "Calc.dpk", "AZUCF001.bzucfg",
+    "calc.mfu",
 ]
 ORDINARY = ["web/app.js", "web/App.tsx", "pkg/foo.go", "src/main/java/Foo.java", "lib/foo.rb", "src/parser.rs",
             "lib/foo.ex", "src/Foo.cs", "web/testimony.js", "pkg/protest_utils.go",
@@ -54,7 +64,10 @@ ORDINARY = ["web/app.js", "web/App.tsx", "pkg/foo.go", "src/main/java/Foo.java",
             # 0.17.0
             "src/solver.f90", "lib/parser.ml", "src/Parser.fs", "src/app/core.clj", "src/calc.erl", "lib/Calc.pm",
             "bin/run.pl", "src/calc.cr", "src/calc.v", "src/calc.adb", "src/calc.cbl", "scripts/run.sh", "src/Calc.ps1",
-            "src/protest.erl"]
+            "src/protest.erl",
+            # 0.18.0
+            "src/Parser.elm", "src/parser.gleam", "src/parser.rkt", "src/parser.scm", "src/parser.lisp", "src/calc.pl",
+            "src/Calc.pas", "src/calc.tcl", "src/Calc.vb", "src/Module1.bas", "src/calc.cob", "src/attest.rkt"]
 
 
 @pytest.mark.parametrize("path", TEST_FILES + TEST_FOLDERS + BUILD_FILES)
