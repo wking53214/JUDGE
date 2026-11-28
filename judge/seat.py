@@ -135,6 +135,13 @@ _FIXTURE_DIRS = {"fixtures", "fixture", "specimens", "specimen", "testdata", "te
                  "__snapshots__", "corpus"}
 _JUDGING_DIRS = _TEST_DIRS | _FIXTURE_DIRS | {".github", ".circleci", ".gitlab", ".buildkite", ".husky", ".githooks",
                                ".git-hooks", "githooks", "hooks", "requirements", ".azure-pipelines", ".cargo"}
+#: Folder names that are test or test-data folders by their shape (0.19.0, found by the outside check of 2026-11-28):
+#: a project's test folder named after it (`HashLib.Tests`, `PrimeService.Tests`, `core-tests`), the .NET and Delphi
+#: convention, and a folder that starts with `test` and a separator (`test-assets`, `test_helpers`), tcllib's.
+_JUDGING_DIR_PATTERNS = (
+    re.compile(r"^.+[._-]tests?$"),
+    re.compile(r"^tests?[-_.].+$"),
+)
 _JUDGING_NAMES = {
     "conftest.py", "pyproject.toml", "tox.ini", "setup.cfg", "setup.py", "noxfile.py", ".coveragerc",
     "makefile", "gnumakefile", "tests.py", "test.py", "sitecustomize.py", "usercustomize.py",
@@ -160,6 +167,7 @@ _JUDGING_NAMES = {
     "mix.exs", "makefile.pl", "build.pl", "cpanfile", "dist.ini", "shard.yml", "v.mod", "alire.toml",
     # the last languages (0.18.0): Elm, Gleam, Racket, Scheme, Prolog, Pascal and Tcl
     "elm.json", "elm-verify-examples.json", "gleam.toml", "info.rkt", "akku.manifest", "pack.pl", "fpmake.pp", "all.tcl",
+    "elm-tooling.json",                                 # found by the outside check (0.19.0)
     # what git ignores decides which files a diff, and so Ghost and the reviewer, can see
     ".gitignore",
 }
@@ -210,6 +218,10 @@ _JUDGING_PATTERNS = (
     re.compile(r".*tests?\.(pas|pp|dpr|lpr)$"),             # Pascal FPCUnit, DUnit, DUnitX
     re.compile(r".*\.(lpi|lpk|dproj|dpk)$"),                # Lazarus and Delphi project files
     re.compile(r".*\.test$"),                               # Tcl tcltest files
+    # found by the outside check (0.19.0)
+    re.compile(r".*[._]test(suite|support|script)$"),       # tcllib's shared test code, sourced by its .test files
+    re.compile(r".*\.test\.(data|out|in|expected)$"),        # tcllib's test inputs and expected outputs
+    re.compile(r"^(?:.*[-_])?tests?\.tcl$"),                # Tcl test drivers (`test.tcl`, `mail-test.tcl`)
     re.compile(r".*tests?\.vb$"),                           # Visual Basic .NET (MSTest, NUnit, xUnit)
     re.compile(r".*\.(bzucfg|mfu)$"),                       # COBOL: IBM zUnit runner and Micro Focus MFUnit files
 )
@@ -281,7 +293,7 @@ for _exts, _marks in (
     (("gleam",), (r"\b(?:gleeunit|startest)\b",)),
     (("rkt", "rktl"), (r"\(\s*module[+*]\s+test\b", r"\brackunit\b")),
     (("scm", "ss", "sld", "sls"), (r"\bsrfi[- ]64\b", r"\(\s*test-(?:begin|assert|equal|eqv|eq|error|group)\b",
-                                  r"\(\s*(?:import|use)\b[^\n]*\btest\b")),
+                                  r"\(\s*(?:import|use)\b[^\n]*\btest\b", r"\(\s*define-library\s+\([^)\n]*\btest\b")),
     (("lisp", "lsp", "cl", "asd"), (r"(?i)\b(?:fiveam|5am|parachute|lisp-unit2?|fiasco|clunit2?)\b", r"(?i):(?:prove|rove)\b",
                                     r"(?i)\(\s*(?:deftest|def-suite|def-test)\b", r"(?i)^\s*\(\s*(?:\w+:)?test\s")),
     (("pl", "pro", "prolog", "plt"), (r"\bbegin_tests\s*\(", r"\bplunit\b")),
@@ -291,7 +303,8 @@ for _exts, _marks in (
     (("vb",), (r"(?i)<\s*(?:Fact|Theory|Test|TestMethod|TestCase|TestClass|TestFixture)\b",
                r"(?i)\b(?:Xunit|NUnit\.Framework|TestTools\.UnitTesting)\b")),
     (("bas", "cls", "frm"), (r"(?i)'\s*@Test(?:Module|Method)\b",)),
-    (("cbl", "cob", "cpy", "ccp"), (r"(?i)\bmfunit", r"(?i)\bMFU-TC-", r"(?i)\bAZU(?:TCINI|TCADD|ASTFM|ASTFA)\b")),
+    (("cbl", "cob", "cpy", "ccp"), (r"(?i)\bmfunit", r"(?i)\bMFU-TC-", r"(?i)\bAZU(?:TCINI|TCADD|ASTFM|ASTFA)\b",
+                                    r"(?i)\becblu")),                    # ECBLUnit (0.19.0)
 ):
     for _ext in _exts:
         _EMBEDDED_TEST_MARKS[_ext] = _EMBEDDED_TEST_MARKS.get(_ext, ()) + tuple(re.compile(m, _MARK) for m in _marks)
@@ -638,6 +651,7 @@ def _is_judging(norm: str, kind: str) -> bool:
         return False
     name = parts[-1]
     return (bool(set(parts[:-1]) & _JUDGING_DIRS) or name in _JUDGING_DIRS or name in _JUDGING_NAMES
+            or any(p.match(d) for d in parts[:-1] for p in _JUDGING_DIR_PATTERNS)
             or any(p.match(name) for p in _JUDGING_PATTERNS))
 
 

@@ -35,8 +35,16 @@ TEST_FILES = [
     "src/parser_test.cl", "src/test-parser.rkt", "src/tests-parser.scm", "src/test-parser.lisp", "src/calc.plt",
     "src/CalcTests.pas", "src/CalcTest.pp", "src/CalcTests.dpr", "src/CalcTests.lpr", "src/calc.test",
     "src/CalcTests.vb",
+    # 0.19.0, found by the outside check
+    "modules/json/json.testsuite", "modules/struct/matrix.testsupport",
+    "modules/math/calculus.testscript", "modules/htmlparse/htmlparse.tree_testsuite", "modules/base64/yencode.test.data",
+    "modules/base64/yencode.test.out", "build/test.tcl", "clients/mail-test.tcl",
 ]
-TEST_FOLDERS = ["spec/models/user.rb", "specs/a.js", "e2e/login.ts", "cypress/support/commands.js"]
+TEST_FOLDERS = ["spec/models/user.rb", "specs/a.js", "e2e/login.ts", "cypress/support/commands.js",
+                # 0.19.0, folder shapes found by the outside check of 2026-11-28
+                "HashLib.Tests/src/Utils/Loader.pas", "HashLib.Tests/Data/Crypto/Vectors.csv",
+                "src/PrimeService.Tests/Helpers.vb", "core-tests/src/Main.java", "pkg/unit_test/a.go",
+                "modules/png/test-assets/basn0g01.png", "lib/test_helpers/util.rb", "tests.d/run.sh"]
 BUILD_FILES = [
     "Cargo.toml", "build.rs", "rust-toolchain.toml", ".cargo/config.toml", "go.mod", "go.work", "pom.xml",
     "build.gradle", "build.gradle.kts", "settings.gradle.kts", "gradle.properties", "Gemfile", "Rakefile", ".rspec",
@@ -54,7 +62,7 @@ BUILD_FILES = [
     # 0.18.0
     "elm.json", "elm-verify-examples.json", "gleam.toml", "info.rkt", "Akku.manifest", "pack.pl", "fpmake.pp",
     "all.tcl", "calc.egg", "calc.asd", "Calc.lpi", "Calc.lpk", "Calc.dproj", "Calc.dpk", "AZUCF001.bzucfg",
-    "calc.mfu",
+    "calc.mfu", "elm-tooling.json",  # elm-tooling.json: 0.19.0
 ]
 ORDINARY = ["web/app.js", "web/App.tsx", "pkg/foo.go", "src/main/java/Foo.java", "lib/foo.rb", "src/parser.rs",
             "lib/foo.ex", "src/Foo.cs", "web/testimony.js", "pkg/protest_utils.go",
@@ -67,7 +75,9 @@ ORDINARY = ["web/app.js", "web/App.tsx", "pkg/foo.go", "src/main/java/Foo.java",
             "src/protest.erl",
             # 0.18.0
             "src/Parser.elm", "src/parser.gleam", "src/parser.rkt", "src/parser.scm", "src/parser.lisp", "src/calc.pl",
-            "src/Calc.pas", "src/calc.tcl", "src/Calc.vb", "src/Module1.bas", "src/calc.cob", "src/attest.rkt"]
+            "src/Calc.pas", "src/calc.tcl", "src/Calc.vb", "src/Module1.bas", "src/calc.cob", "src/attest.rkt",
+            # 0.19.0
+            "lib/latest/a.c", "src/contest/a.c", "src/attestation/a.go", "src/testimony.tcl"]
 
 
 @pytest.mark.parametrize("path", TEST_FILES + TEST_FOLDERS + BUILD_FILES)
