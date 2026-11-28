@@ -29,6 +29,17 @@ def _attack(severity: str) -> object:
     return lambda e: e["attacks"].append({"scenario": "b", "severity": severity, "status": "violated"})
 
 
+def _code_edit(evidence: dict, path: str) -> None:
+    evidence.update(scope="code")
+    evidence["changed"].append([path, "write"])
+    evidence["edit_sources"].append(1)
+
+
+def _a_named_test_replaced(evidence: dict) -> None:
+    evidence["suite_before"].update(test_outcomes=[["t::a", "passed"], ["t::b", "passed"]], passed=2)
+    evidence["suite_after"].update(test_outcomes=[["t::a", "passed"], ["t::c", "passed"]], passed=2)
+
+
 PROBES = {
     "P1": lambda e: e.update(swizzle_proofs=False),
     "P2": lambda e: e["suite_after"].update(failed=1),
@@ -43,7 +54,16 @@ PROBES = {
     "P11": lambda e: e["suite_after"].update(passed=9),
     "P12": lambda e: e.update(target="/nonexistent-folder-for-the-probe"),
     "P13": lambda e: e["changed"].append(["tests/test_x.py", "write"]),
-    "P14": lambda e: (e.update(scope="code"), e["changed"].append(["tests/test_x.py", "write"]), e["edit_sources"].append(1)),
+    "P14": lambda e: _code_edit(e, "tests/test_x.py"),
+    "P15": _a_named_test_replaced,
+    "P16": lambda e: e["suite_after"].update(text_only=True),
+    "P17": lambda e: _code_edit(e, "t\u0435sts/x.py"),
+    "P18": lambda e: _code_edit(e, "TESTS/x.py"),
+    "P19": lambda e: e["ghost_baseline_after"].update(suppressed=1),
+    "P20": lambda e: e["changed"].append([".git/hooks/pre-commit", "write"]),
+    "P21": lambda e: e.update(unmeasured=["ghost"]),
+    "P22": lambda e: e.update(attacks=[]),
+    "P23": lambda e: e["suite_after"].update(forged=True),
 }
 ROWS = dict(re.findall(r"^\| (P\d+) \|[^|]*\| (ACCEPT|REJECT|INSUFFICIENT) \|", GUIDE, re.M))
 
@@ -104,3 +124,9 @@ def test_the_readme_points_at_the_guide_and_says_no_review_has_been_made():
     flat = " ".join(README.split()).lower()
     assert "no reviewer has been found" in flat and "no review has been made" in flat
     assert "Written 2026-11-28 for Judge" in GUIDE
+
+
+def test_every_section_the_guide_points_at_exists():
+    headings = set(re.findall(r"^## (\d+)\. ", GUIDE, re.M))
+    pointed = set(re.findall(r"\bsection (\d+)\b", GUIDE))
+    assert pointed and pointed <= headings, (pointed, headings)
