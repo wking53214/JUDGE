@@ -57,8 +57,10 @@ _READER_LEFT = "reader left"
 
 log = logging.getLogger(__name__)
 
-#: Attributes the Judge reads from a suite run that are not SuiteRun fields (a forged or text-only result, other exit-code names).
-_SUITE_EXTRAS = ("forged", "forged_output", "text_only", "returncode", "exitcode", "exit_status", "test_outcomes")
+#: Attributes the Judge reads from a suite run that are not SuiteRun fields (a forged or text-only result, other exit-code
+#: names, the tests by name, and the list of failing tests that Warden's pytest runner adds).
+_SUITE_EXTRAS = ("forged", "forged_output", "text_only", "returncode", "exitcode", "exit_status", "test_outcomes",
+                 "failed_ids")
 _SUITE_FIELDS = {f.name for f in dataclasses.fields(SuiteRun)}
 _EVIDENCE_FIELDS = {f.name: f for f in dataclasses.fields(Evidence)}
 _SUITE_KEYS = ("suite_before", "suite_after")

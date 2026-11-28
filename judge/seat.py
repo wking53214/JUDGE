@@ -524,7 +524,7 @@ ROW_ATTRIBUTES = frozenset({
     "target", "scope", "changed", "cycles", "declined", "judging_files_touched", "suite_before", "suite_after",
     "ghost_before", "ghost_after", "ghost_severity", "unmeasured", "swizzle_proofs", "attacks", "assay", "finisher_ran",
     "ghost_baseline_before", "ghost_baseline_after", "ghost_baseline", "edit_sources",
-    "ran", "reason", "text_only", "xpassed", "test_outcomes", *_SUITE_COUNTS, *_EXIT_NAMES, *_FORGED_NAMES,
+    "ran", "reason", "text_only", "xpassed", "test_outcomes", "failed_ids", *_SUITE_COUNTS, *_EXIT_NAMES, *_FORGED_NAMES,
 })
 #: The words a suite may give for one test's outcome (0.16.0), and the count each one must agree with.
 _OUTCOME_COUNTS = {"passed": "passed", "failed": "failed", "error": "errors", "skipped": "skipped",
@@ -600,6 +600,19 @@ class _Suite:
             told = Counter(outcomes.values())
             off = [f"{told[w]} {w} by id but {totals[c]} by count" for w, c in _OUTCOME_COUNTS.items() if told[w] != totals[c]]
             self.outcome_mismatch = "; ".join(off)
+        # 0.20.0: Warden's pytest runner lists the ids of the tests that failed or errored (the first ten). The list is
+        # not used to decide anything, but it must agree with the counts: a list that names a failure while the counts
+        # say none failed, or names more failures than the counts hold, contradicts itself. A shorter list is allowed,
+        # because Warden keeps only the first ten and keeps none when its plugin's file was garbled.
+        self.failed_ids_mismatch = ""
+        ids = getattr(run, "failed_ids", None)
+        if ids is not None:
+            if not isinstance(ids, (tuple, list)) or not all(isinstance(i, str) for i in ids):
+                raise _Unreadable(f"{name}.failed_ids is not a list of test ids")
+            bad = counts["failed"] + counts["errors"]
+            if len(ids) > bad:
+                self.failed_ids_mismatch = (f"it names {len(ids)} failing test(s) ({_show_ids(ids)}) but its counts "
+                                            f"hold {bad} failed or errored")
 
     @property
     def green(self) -> bool:
@@ -923,6 +936,10 @@ def _decide(e: Evidence) -> Verdict:
         if run is not None and run.outcome_mismatch:
             unknown.append(f"the {label} suite's tests by name do not agree with its counts ({run.outcome_mismatch}); "
                            "the evidence contradicts itself")
+    for label, run in (("starting", before), ("final", after)):
+        if run is not None and run.failed_ids_mismatch:
+            unknown.append(f"the {label} suite's list of failing tests does not agree with its counts "
+                           f"({run.failed_ids_mismatch}); the evidence contradicts itself")
     if before is not None and after is not None and (before.outcomes is None) != (after.outcomes is None):
         which = "starting" if before.outcomes is None else "final"
         unknown.append(f"the tests are named at one end of the run but not at the other (the {which} suite names none), "
