@@ -8,6 +8,7 @@ history.
 
 ### Added
 
+- `REVIEW.md`, a guide for an outside reviewer of the rules (must-have 1 of ROAD TO 1.0.0, prepared, not done: no review has been made), and `tests/test_review_package.py`, which runs the guide's fourteen probes against the Judge and keeps the guide's file names, README sections and wording honest. The README's ROAD TO 1.0.0 and WHAT DOES NOT WORK / NOT PROVEN point at it. Documentation and one test file only; no code and no rule changed.
 - README ROAD TO 1.0.0, by the owner's decision of 2026-11-28: the three must-haves before 1.0.0 is tagged (an outside review of the rules, signed evidence, a recorded whole-circuit run) and the known limits 1.0.0 accepts. Documentation only; no code, rule or test changed.
 
 ### Changed
