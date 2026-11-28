@@ -1,0 +1,844 @@
+{
+ "what": "One run of the whole circuit, recorded 2026-11-28 (README ROAD TO 1.0.0, must-have 3). 'record' is Warden's run record as printed, with this machine's folders replaced by '<run folder>'. 'claim' is the change Warden was given (--claim-commit). 'files' holds each listed edit as the claim wrote it, so the evidence can be judged again without the run folder.",
+ "case": "accept",
+ "claim": {
+  "commit": "3ad9033d1355fd48bd7acf8b5c1d92d58656c304",
+  "subject": "Clarify the sub docstring"
+ },
+ "files": {
+  "calc/__init__.py": "\"\"\"A tiny calculator used as a scratch target for a whole-circuit run.\"\"\"\n\n\ndef add(a: int, b: int) -> int:\n    \"\"\"Return the sum of a and b.\"\"\"\n    return a + b\n\n\ndef sub(a: int, b: int) -> int:\n    \"\"\"Return a minus b (the difference).\"\"\"\n    return a - b\n"
+ },
+ "record": {
+  "schema": "cns.run/1",
+  "decision": "ACCEPT",
+  "converged": true,
+  "cycles": [
+   {
+    "number": 1,
+    "outcome": "APPLIED",
+    "observed": 33
+   },
+   {
+    "number": 2,
+    "outcome": "NOTHING_TO_PROPOSE",
+    "observed": 33
+   }
+  ],
+  "finished": false,
+  "put_back": false,
+  "held_digest": null,
+  "reason": "Loop converged. No finisher configured. Judge: ACCEPT (checked and accepted: 1 change(s) applied; no tests or test settings were changed and no edit that Warden applied left the project (what the suite itself did is not measured); suite 3 passed, 0 skipped, 0 xfailed (before: 3 passed, 0 skipped, 0 xfailed); Ghost: 33 finding(s) at the start, 33 at the end, none new; SWIZZLE's own proofs held; 28 of 28 attacks on the governor held; ASSAY: Ghost caught 5 of 7 known failure modes, floor 3; Ghost's baseline suppressed nothing new). Measured: the suite 3 passed before and 3 passed after (3 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed); Ghost 33 finding(s) before and 33 after.",
+  "notes": [
+   "SWIZZLE proofs: 12 of 12 proofs hold.",
+   "ASSAY: Ghost caught 5 of 7 known failure modes (60/60 manifest claims hold)",
+   "Ghost Tools observed 33 finding(s).",
+   "Rule 7 suite cycle 1 before: 3 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+   "Cycle 1: transformation applied under granted authorization.",
+   "Rule 7 suite cycle 1 after: 3 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+   "Ghost re-inspected: 33 finding(s); closed=[] new=[]",
+   "Drafter is out of proposals but Ghost still reports 33 finding(s). Converged means no proposals left, not zero findings.",
+   "SWIZZLE proofs: 12 of 12 proofs hold.",
+   "SWIZZLE attacks on the governor: 0 of 28 violated",
+   "Rule 7 suite pass final state, for the Judge: reused the result of pass 2, tree digest 73ed6aa420beb7667d389eb5fb73df3271d761d0d8964584de1e4696bb28e39e identical.",
+   "Loop converged. No finisher configured. Judge: ACCEPT (checked and accepted: 1 change(s) applied; no tests or test settings were changed and no edit that Warden applied left the project (what the suite itself did is not measured); suite 3 passed, 0 skipped, 0 xfailed (before: 3 passed, 0 skipped, 0 xfailed); Ghost: 33 finding(s) at the start, 33 at the end, none new; SWIZZLE's own proofs held; 28 of 28 attacks on the governor held; ASSAY: Ghost caught 5 of 7 known failure modes, floor 3; Ghost's baseline suppressed nothing new).",
+   "--isolate-seats does not cover the claim seat: Warden builds it from the claimed change itself and it runs inside Warden.",
+   "released seats not seated: burnish, drafter (the Drafter role is filled by the claim seat; the run has no finisher)."
+  ],
+  "observed": [
+   "ghost-e537faa16d83",
+   "ghost-4d5a8e5b2f77",
+   "ghost-c85a03fd76fe-4dd849",
+   "ghost-c85a03fd76fe-81fb1e",
+   "ghost-c85a03fd76fe-81fb1e",
+   "ghost-19a2138045a1",
+   "ghost-e3802313cb4e-fcba84",
+   "ghost-961e4e252370",
+   "ghost-98e68274c878",
+   "ghost-3771d8bc752c",
+   "ghost-cab329e91da8",
+   "ghost-6bfc473b7758",
+   "ghost-4058937f9c95",
+   "ghost-e3802313cb4e-14c181",
+   "ghost-2ee85000ea00",
+   "ghost-9826c60efc6c",
+   "ghost-23969b89159e-5cac34",
+   "ghost-23969b89159e-f372d7",
+   "ghost-dcb5edc24da3",
+   "ghost-df5184fb6ac1",
+   "ghost-5b44b04f3e05",
+   "ghost-8164aa6f5a29",
+   "ghost-744aec32103f",
+   "ghost-73f17b0c0eac",
+   "ghost-01535fcf52d1",
+   "ghost-14315cb2df41",
+   "ghost-aac7e68a8097",
+   "ghost-9912cbe233cc",
+   "ghost-e1597ddffb8a",
+   "ghost-26b232ddc436",
+   "ghost-e00c187a88dc",
+   "ghost-317ca08b347f",
+   "ghost-d4e595e637f2"
+  ],
+  "reobserved": [
+   "ghost-e537faa16d83",
+   "ghost-4d5a8e5b2f77",
+   "ghost-c85a03fd76fe-4dd849",
+   "ghost-c85a03fd76fe-81fb1e",
+   "ghost-c85a03fd76fe-81fb1e",
+   "ghost-19a2138045a1",
+   "ghost-e3802313cb4e-fcba84",
+   "ghost-961e4e252370",
+   "ghost-98e68274c878",
+   "ghost-3771d8bc752c",
+   "ghost-cab329e91da8",
+   "ghost-6bfc473b7758",
+   "ghost-4058937f9c95",
+   "ghost-e3802313cb4e-14c181",
+   "ghost-2ee85000ea00",
+   "ghost-9826c60efc6c",
+   "ghost-23969b89159e-5cac34",
+   "ghost-23969b89159e-f372d7",
+   "ghost-dcb5edc24da3",
+   "ghost-df5184fb6ac1",
+   "ghost-5b44b04f3e05",
+   "ghost-8164aa6f5a29",
+   "ghost-744aec32103f",
+   "ghost-73f17b0c0eac",
+   "ghost-01535fcf52d1",
+   "ghost-14315cb2df41",
+   "ghost-aac7e68a8097",
+   "ghost-9912cbe233cc",
+   "ghost-e1597ddffb8a",
+   "ghost-26b232ddc436",
+   "ghost-e00c187a88dc",
+   "ghost-317ca08b347f",
+   "ghost-d4e595e637f2"
+  ],
+  "contract": "1",
+  "released_seats": [
+   "burnish",
+   "drafter"
+  ],
+  "versions": {
+   "warden": {
+    "version": "1.0.0",
+    "contract": "1",
+    "commit": "6feb031097c2d2ed0ad13844598c5ce5e4179e7b",
+    "dirty": false
+   },
+   "ghost_tools": {
+    "path": "<run folder>/ghost_tools",
+    "commit": "6979db8bb48f1003f178b017d1a218b7535f2cef",
+    "version": "1.10.14",
+    "dirty": false,
+    "module": "<run folder>/ghost_tools/ghost_buster/__init__.py",
+    "module_in_root": true
+   },
+   "swizzle": {
+    "path": "<run folder>/SWIZZLE",
+    "commit": "c97e8084727a29a5f65f9e7f8e270a43a56aad2b",
+    "version": "0.8.13",
+    "dirty": false,
+    "module": "<run folder>/SWIZZLE/swizzle/__init__.py",
+    "module_in_root": true
+   },
+   "assay": {
+    "path": "<run folder>/ASSAY",
+    "commit": "385de1e31b983ce510f4e0289239fd84809385e0",
+    "version": "0.11.10",
+    "dirty": false,
+    "module": "<run folder>/ASSAY/assay_production/__init__.py",
+    "module_in_root": true
+   },
+   "seats": {
+    "drafter": {
+     "spec": "warden.claim:ClaimDrafter",
+     "requires_contract": "1",
+     "version": "1.0.0",
+     "commit": "6feb031097c2d2ed0ad13844598c5ce5e4179e7b",
+     "dirty": false
+    },
+    "finisher": null,
+    "judge": {
+     "spec": "judge.seat:Judge",
+     "requires_contract": "1",
+     "version": "0.19.0",
+     "commit": "173019ad16d4d8cafd069351195a3a78b4430c25",
+     "dirty": false,
+     "isolated": true
+    }
+   },
+   "joins": [
+    {
+     "path": "<run folder>/ghost_tools",
+     "commit": "6979db8bb48f1003f178b017d1a218b7535f2cef",
+     "version": "1.10.14",
+     "dirty": false
+    },
+    {
+     "path": "<run folder>/SWIZZLE",
+     "commit": "c97e8084727a29a5f65f9e7f8e270a43a56aad2b",
+     "version": "0.8.13",
+     "dirty": false
+    },
+    {
+     "path": "<run folder>/ASSAY",
+     "commit": "385de1e31b983ce510f4e0289239fd84809385e0",
+     "version": "0.11.10",
+     "dirty": false
+    },
+    {
+     "path": "<run folder>/JUDGE",
+     "commit": "173019ad16d4d8cafd069351195a3a78b4430c25",
+     "version": "0.19.0",
+     "dirty": false
+    },
+    {
+     "path": "<run folder>/warden",
+     "commit": "6feb031097c2d2ed0ad13844598c5ce5e4179e7b",
+     "version": "1.0.0",
+     "dirty": false
+    }
+   ],
+   "target": {
+    "path": "<run folder>/run-accept"
+   }
+  },
+  "swizzle_sound": true,
+  "allow_uncommitted_instruments": false,
+  "unmeasured": [],
+  "ghost_scan": {
+   "status": "ok",
+   "files_scanned": 3,
+   "files_skipped": 0,
+   "files_unparsable": 0,
+   "gaps": [],
+   "gaps_not_shown": 0,
+   "declined": [
+    "mutate",
+    "kernel",
+    "structure",
+    "tests",
+    "project",
+    "correlate",
+    "ledger"
+   ],
+   "baseline": {
+    "path": null,
+    "suppressed": 0
+   }
+  },
+  "ghost_baseline": {
+   "before": {
+    "path": null,
+    "suppressed": 0
+   },
+   "after": {
+    "path": null,
+    "suppressed": 0
+   }
+  },
+  "drafter_skipped": [],
+  "informational": [],
+  "verdict": {
+   "decision": "ACCEPT",
+   "reasons": [
+    "checked and accepted: 1 change(s) applied; no tests or test settings were changed and no edit that Warden applied left the project (what the suite itself did is not measured); suite 3 passed, 0 skipped, 0 xfailed (before: 3 passed, 0 skipped, 0 xfailed); Ghost: 33 finding(s) at the start, 33 at the end, none new; SWIZZLE's own proofs held; 28 of 28 attacks on the governor held; ASSAY: Ghost caught 5 of 7 known failure modes, floor 3; Ghost's baseline suppressed nothing new"
+   ],
+   "judge": "judge 0.19.0"
+  },
+  "claim": {
+   "origin": "<run folder>/target",
+   "base_commit": "fd383b8575759d2b3f649394904c57779ceae0ef",
+   "base_tree_digest": "9029fbf4d73fcd3e7a66c4fecf437157458ca9700c071c876355e5c5a04b81eb",
+   "claimed_commit": "3ad9033d1355fd48bd7acf8b5c1d92d58656c304",
+   "claimed_tree_digest": "73ed6aa420beb7667d389eb5fb73df3271d761d0d8964584de1e4696bb28e39e",
+   "claimed_subject": "Clarify the sub docstring",
+   "claimed_author": "William N. King <wking53214@gmail.com>",
+   "claimed_date": "2026-11-28T13:57:47-05:00",
+   "diff_sha256": "e62e1f6ca6a39299586a2b9afc3b904d24e68cea6349dfd25a25f02358a2325f",
+   "diff_bytes": 303,
+   "files": [
+    {
+     "path": "calc/__init__.py",
+     "status": "M",
+     "before_sha256": "7a64f55cf69d707e7f04508c1cf1c802cbea861434293d408fe6aae86ea3d01c",
+     "after_sha256": "c2b59913167ef7c386d54e7d2a602f4f36ac514d9339d1184cfac434d28d0eea",
+     "protected": false
+    }
+   ],
+   "actor": "William N. King",
+   "authority": "unverified_claim",
+   "authorization_id": "auth_1a9778751bd3",
+   "scope": "code",
+   "transformation_id": "xform_9332acceeb4b",
+   "suite_before": {
+    "ran": true,
+    "passed": 3,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "reason": "",
+    "xfailed": 0,
+    "xpassed": 0,
+    "exit_code": 0,
+    "failed_ids": [],
+    "pass": 1,
+    "reused_from": null
+   },
+   "suite_after": {
+    "ran": true,
+    "passed": 3,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "reason": "",
+    "xfailed": 0,
+    "xpassed": 0,
+    "exit_code": 0,
+    "failed_ids": [],
+    "pass": 3,
+    "reused_from": 2
+   },
+   "ghost_before_count": 33,
+   "ghost_after_count": 33,
+   "new_findings": [],
+   "closed_findings": [],
+   "rules_fired": [
+    "checked and accepted: 1 change(s) applied; no tests or test settings were changed and no edit that Warden applied left the project (what the suite itself did is not measured); suite 3 passed, 0 skipped, 0 xfailed (before: 3 passed, 0 skipped, 0 xfailed); Ghost: 33 finding(s) at the start, 33 at the end, none new; SWIZZLE's own proofs held; 28 of 28 attacks on the governor held; ASSAY: Ghost caught 5 of 7 known failure modes, floor 3; Ghost's baseline suppressed nothing new"
+   ],
+   "judge": {
+    "seat": "judge.seat:Judge",
+    "version": "0.19.0",
+    "commit": "173019ad16d4d8cafd069351195a3a78b4430c25",
+    "verdict": "ACCEPT"
+   },
+   "decision": "ACCEPT",
+   "held_digest": null,
+   "held_tree_digest": "73ed6aa420beb7667d389eb5fb73df3271d761d0d8964584de1e4696bb28e39e",
+   "participants": [
+    {
+     "name": "warden",
+     "commit": "6feb031097c2d2ed0ad13844598c5ce5e4179e7b",
+     "version": "1.0.0",
+     "dirty": false
+    },
+    {
+     "name": "ghost_tools",
+     "commit": "6979db8bb48f1003f178b017d1a218b7535f2cef",
+     "version": "1.10.14",
+     "dirty": false
+    },
+    {
+     "name": "swizzle",
+     "commit": "c97e8084727a29a5f65f9e7f8e270a43a56aad2b",
+     "version": "0.8.13",
+     "dirty": false
+    },
+    {
+     "name": "assay",
+     "commit": "385de1e31b983ce510f4e0289239fd84809385e0",
+     "version": "0.11.10",
+     "dirty": false
+    },
+    {
+     "name": "drafter seat",
+     "commit": "6feb031097c2d2ed0ad13844598c5ce5e4179e7b",
+     "version": "1.0.0",
+     "dirty": false
+    },
+    {
+     "name": "judge seat",
+     "commit": "173019ad16d4d8cafd069351195a3a78b4430c25",
+     "version": "0.19.0",
+     "dirty": false
+    },
+    {
+     "name": "join <run folder>/ghost_tools",
+     "commit": "6979db8bb48f1003f178b017d1a218b7535f2cef",
+     "version": "1.10.14",
+     "dirty": false
+    },
+    {
+     "name": "join <run folder>/SWIZZLE",
+     "commit": "c97e8084727a29a5f65f9e7f8e270a43a56aad2b",
+     "version": "0.8.13",
+     "dirty": false
+    },
+    {
+     "name": "join <run folder>/ASSAY",
+     "commit": "385de1e31b983ce510f4e0289239fd84809385e0",
+     "version": "0.11.10",
+     "dirty": false
+    },
+    {
+     "name": "join <run folder>/JUDGE",
+     "commit": "173019ad16d4d8cafd069351195a3a78b4430c25",
+     "version": "0.19.0",
+     "dirty": false
+    },
+    {
+     "name": "join <run folder>/warden",
+     "commit": "6feb031097c2d2ed0ad13844598c5ce5e4179e7b",
+     "version": "1.0.0",
+     "dirty": false
+    }
+   ],
+   "finisher_edits": [],
+   "removals": [],
+   "target_tree_digest": "9029fbf4d73fcd3e7a66c4fecf437157458ca9700c071c876355e5c5a04b81eb",
+   "base_matches_parent": true
+  },
+  "evidence": {
+   "target": "<run folder>/run-accept",
+   "scope": "code",
+   "cycles": [
+    [
+     1,
+     "APPLIED"
+    ],
+    [
+     2,
+     "NOTHING_TO_PROPOSE"
+    ]
+   ],
+   "changed": [
+    [
+     "calc/__init__.py",
+     "write"
+    ]
+   ],
+   "judging_files_touched": [],
+   "suite_before": {
+    "ran": true,
+    "passed": 3,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "reason": "",
+    "xfailed": 0,
+    "xpassed": 0,
+    "exit_code": 0,
+    "failed_ids": [],
+    "test_outcomes": [
+     [
+      "tests/test_calc.py::test_add",
+      "passed"
+     ],
+     [
+      "tests/test_calc.py::test_add_negative",
+      "passed"
+     ],
+     [
+      "tests/test_calc.py::test_sub",
+      "passed"
+     ]
+    ]
+   },
+   "suite_after": {
+    "ran": true,
+    "passed": 3,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "reason": "",
+    "xfailed": 0,
+    "xpassed": 0,
+    "exit_code": 0,
+    "failed_ids": [],
+    "test_outcomes": [
+     [
+      "tests/test_calc.py::test_add",
+      "passed"
+     ],
+     [
+      "tests/test_calc.py::test_add_negative",
+      "passed"
+     ],
+     [
+      "tests/test_calc.py::test_sub",
+      "passed"
+     ]
+    ]
+   },
+   "ghost_before": [
+    "ghost-01535fcf52d1",
+    "ghost-14315cb2df41",
+    "ghost-19a2138045a1",
+    "ghost-23969b89159e-5cac34",
+    "ghost-23969b89159e-f372d7",
+    "ghost-26b232ddc436",
+    "ghost-2ee85000ea00",
+    "ghost-317ca08b347f",
+    "ghost-3771d8bc752c",
+    "ghost-4058937f9c95",
+    "ghost-4d5a8e5b2f77",
+    "ghost-5b44b04f3e05",
+    "ghost-6bfc473b7758",
+    "ghost-73f17b0c0eac",
+    "ghost-744aec32103f",
+    "ghost-8164aa6f5a29",
+    "ghost-961e4e252370",
+    "ghost-9826c60efc6c",
+    "ghost-98e68274c878",
+    "ghost-9912cbe233cc",
+    "ghost-aac7e68a8097",
+    "ghost-c85a03fd76fe-4dd849",
+    "ghost-c85a03fd76fe-81fb1e",
+    "ghost-c85a03fd76fe-81fb1e",
+    "ghost-cab329e91da8",
+    "ghost-d4e595e637f2",
+    "ghost-dcb5edc24da3",
+    "ghost-df5184fb6ac1",
+    "ghost-e00c187a88dc",
+    "ghost-e1597ddffb8a",
+    "ghost-e3802313cb4e-14c181",
+    "ghost-e3802313cb4e-fcba84",
+    "ghost-e537faa16d83"
+   ],
+   "ghost_after": [
+    "ghost-01535fcf52d1",
+    "ghost-14315cb2df41",
+    "ghost-19a2138045a1",
+    "ghost-23969b89159e-5cac34",
+    "ghost-23969b89159e-f372d7",
+    "ghost-26b232ddc436",
+    "ghost-2ee85000ea00",
+    "ghost-317ca08b347f",
+    "ghost-3771d8bc752c",
+    "ghost-4058937f9c95",
+    "ghost-4d5a8e5b2f77",
+    "ghost-5b44b04f3e05",
+    "ghost-6bfc473b7758",
+    "ghost-73f17b0c0eac",
+    "ghost-744aec32103f",
+    "ghost-8164aa6f5a29",
+    "ghost-961e4e252370",
+    "ghost-9826c60efc6c",
+    "ghost-98e68274c878",
+    "ghost-9912cbe233cc",
+    "ghost-aac7e68a8097",
+    "ghost-c85a03fd76fe-4dd849",
+    "ghost-c85a03fd76fe-81fb1e",
+    "ghost-c85a03fd76fe-81fb1e",
+    "ghost-cab329e91da8",
+    "ghost-d4e595e637f2",
+    "ghost-dcb5edc24da3",
+    "ghost-df5184fb6ac1",
+    "ghost-e00c187a88dc",
+    "ghost-e1597ddffb8a",
+    "ghost-e3802313cb4e-14c181",
+    "ghost-e3802313cb4e-fcba84",
+    "ghost-e537faa16d83"
+   ],
+   "ghost_severity": {
+    "ghost-01535fcf52d1": "informational",
+    "ghost-14315cb2df41": "informational",
+    "ghost-19a2138045a1": "minor",
+    "ghost-23969b89159e-5cac34": "informational",
+    "ghost-23969b89159e-f372d7": "informational",
+    "ghost-26b232ddc436": "major",
+    "ghost-2ee85000ea00": "informational",
+    "ghost-317ca08b347f": "major",
+    "ghost-3771d8bc752c": "informational",
+    "ghost-4058937f9c95": "informational",
+    "ghost-4d5a8e5b2f77": "minor",
+    "ghost-5b44b04f3e05": "informational",
+    "ghost-6bfc473b7758": "informational",
+    "ghost-73f17b0c0eac": "informational",
+    "ghost-744aec32103f": "informational",
+    "ghost-8164aa6f5a29": "informational",
+    "ghost-961e4e252370": "informational",
+    "ghost-9826c60efc6c": "informational",
+    "ghost-98e68274c878": "informational",
+    "ghost-9912cbe233cc": "informational",
+    "ghost-aac7e68a8097": "informational",
+    "ghost-c85a03fd76fe-4dd849": "minor",
+    "ghost-c85a03fd76fe-81fb1e": "minor",
+    "ghost-cab329e91da8": "informational",
+    "ghost-d4e595e637f2": "major",
+    "ghost-dcb5edc24da3": "informational",
+    "ghost-df5184fb6ac1": "informational",
+    "ghost-e00c187a88dc": "major",
+    "ghost-e1597ddffb8a": "informational",
+    "ghost-e3802313cb4e-14c181": "informational",
+    "ghost-e3802313cb4e-fcba84": "informational",
+    "ghost-e537faa16d83": "critical"
+   },
+   "declined": [],
+   "swizzle_proofs": true,
+   "attacks": [
+    {
+     "scenario": "seat_writes_the_tree",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "finisher_writes_the_tree",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "seat_writes_with_time_put_back",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "seat_writes_environment_folder",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "grant_scope_ignored",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "edit_escapes_target",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "tests_weakened",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "config_weakened",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "finisher_plants_conftest",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "removal_reached_by_name",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "forged_self_authorization",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "accept_without_measuring",
+     "severity": "medium",
+     "status": "held"
+    },
+    {
+     "scenario": "ghost_unreachable",
+     "severity": "medium",
+     "status": "held"
+    },
+    {
+     "scenario": "ordinary_docs_fix",
+     "severity": "low",
+     "status": "held"
+    },
+    {
+     "scenario": "formatting_only_tidy",
+     "severity": "low",
+     "status": "held"
+    },
+    {
+     "scenario": "config_change_keeps_pass_count",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "removal_invisible_to_suite_after",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "baseline_file_edited",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "pytest_dotini_edited",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "gitlab_ci_edited",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "circleci_config_edited",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "hidden_prose_file_edit_allowed",
+     "severity": "low",
+     "status": "held"
+    },
+    {
+     "scenario": "symlink_into_protected_file",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "dirty_folder_start",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "clean_git_folder_start_allowed",
+     "severity": "low",
+     "status": "held"
+    },
+    {
+     "scenario": "sigterm_mid_apply",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "judge_raises",
+     "severity": "high",
+     "status": "held"
+    },
+    {
+     "scenario": "judge_accepts_change_applies",
+     "severity": "low",
+     "status": "held"
+    }
+   ],
+   "unmeasured": [],
+   "notes": [
+    "SWIZZLE proofs: 12 of 12 proofs hold.",
+    "ASSAY: Ghost caught 5 of 7 known failure modes (60/60 manifest claims hold)",
+    "Ghost Tools observed 33 finding(s).",
+    "Rule 7 suite cycle 1 before: 3 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+    "Cycle 1: transformation applied under granted authorization.",
+    "Rule 7 suite cycle 1 after: 3 passed, 0 failed, 0 errors, 0 skipped, 0 xfailed, 0 xpassed.",
+    "Ghost re-inspected: 33 finding(s); closed=[] new=[]",
+    "Drafter is out of proposals but Ghost still reports 33 finding(s). Converged means no proposals left, not zero findings.",
+    "SWIZZLE proofs: 12 of 12 proofs hold.",
+    "SWIZZLE attacks on the governor: 0 of 28 violated",
+    "Rule 7 suite pass final state, for the Judge: reused the result of pass 2, tree digest 73ed6aa420beb7667d389eb5fb73df3271d761d0d8964584de1e4696bb28e39e identical."
+   ],
+   "assay": {
+    "key_proven": true,
+    "failure_modes": 7,
+    "caught": 5,
+    "escaped": 0,
+    "misnamed": 2,
+    "proof": "60/60 manifest claims hold",
+    "floor": 3
+   },
+   "ghost_baseline_before": {
+    "path": null,
+    "suppressed": 0
+   },
+   "ghost_baseline_after": {
+    "path": null,
+    "suppressed": 0
+   },
+   "finisher_ran": false,
+   "edit_sources": [
+    1
+   ]
+  },
+  "suite_passes": [
+   {
+    "pass": 1,
+    "when": "cycle 1 before",
+    "tree_digest": "9029fbf4d73fcd3e7a66c4fecf437157458ca9700c071c876355e5c5a04b81eb",
+    "reused_from": null,
+    "environment": null,
+    "ran": true,
+    "passed": 3,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "reason": "",
+    "xfailed": 0,
+    "xpassed": 0,
+    "exit_code": 0,
+    "failed_ids": [],
+    "test_outcomes": [
+     [
+      "tests/test_calc.py::test_add",
+      "passed"
+     ],
+     [
+      "tests/test_calc.py::test_add_negative",
+      "passed"
+     ],
+     [
+      "tests/test_calc.py::test_sub",
+      "passed"
+     ]
+    ]
+   },
+   {
+    "pass": 2,
+    "when": "cycle 1 after",
+    "tree_digest": "73ed6aa420beb7667d389eb5fb73df3271d761d0d8964584de1e4696bb28e39e",
+    "reused_from": null,
+    "environment": null,
+    "ran": true,
+    "passed": 3,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "reason": "",
+    "xfailed": 0,
+    "xpassed": 0,
+    "exit_code": 0,
+    "failed_ids": [],
+    "test_outcomes": [
+     [
+      "tests/test_calc.py::test_add",
+      "passed"
+     ],
+     [
+      "tests/test_calc.py::test_add_negative",
+      "passed"
+     ],
+     [
+      "tests/test_calc.py::test_sub",
+      "passed"
+     ]
+    ]
+   },
+   {
+    "pass": 3,
+    "when": "final state, for the Judge",
+    "tree_digest": "73ed6aa420beb7667d389eb5fb73df3271d761d0d8964584de1e4696bb28e39e",
+    "reused_from": 2,
+    "ran": true,
+    "passed": 3,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "reason": "",
+    "xfailed": 0,
+    "xpassed": 0,
+    "exit_code": 0,
+    "failed_ids": [],
+    "test_outcomes": [
+     [
+      "tests/test_calc.py::test_add",
+      "passed"
+     ],
+     [
+      "tests/test_calc.py::test_add_negative",
+      "passed"
+     ],
+     [
+      "tests/test_calc.py::test_sub",
+      "passed"
+     ]
+    ]
+   }
+  ],
+  "chronicle": null
+ }
+}

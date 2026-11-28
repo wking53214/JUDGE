@@ -26,6 +26,16 @@ history.
 - The Warden pin moves from `84cb89bbab94f09b32cb27ffd2c2ca21308d6cb4` to `8704ee7c89e1536c6946132e4544c371cc82a4a2`, the head of Warden's `main` on 2026-11-11 (Warden 0.16.5 at both; in `warden/` only docstrings and help text differ between them, and beside that Warden's own ghost_tools pin, its documents, its tests and its CI file). Reason: the `stack` job in CNS installs the circuit at each repository's head, and pip cannot install two commits of warden together; this repository named the older one. The CI `warden` job checks out the same commit. No version change here, and no test was edited.
 
 
+## [0.20.0] - 2026-11-28
+
+### Added
+
+- ROAD TO 1.0.0 must-have 3, a recorded whole-circuit run, is done: EXECUTED 2026-11-28 with Warden `6feb031`, ghost_tools `6979db8`, SWIZZLE `c97e808`, ASSAY `385de1e` and Judge `173019a` (0.19.0) on CNS `v4.2.0`, three runs on a scratch project, ACCEPT, REJECT and INSUFFICIENT once each (README ROAD TO 1.0.0). The three Warden run records are kept in `tests/fixtures/circuit_run/` with this machine's folders replaced, and `tests/test_circuit_run.py` checks them against the pins and judges each one's evidence again.
+
+### Changed
+
+- The Judge reads `failed_ids`, the list of failing test ids Warden 1.0.0's pytest runner adds to each suite run, and holds a run (INSUFFICIENT) whose list names more failing tests than its counts hold, which includes naming a failure in a suite whose counts say none failed; a list that is not text is unreadable. `judge decide` accepts the field, so a record Warden printed can be judged again as it is; up to 0.19.0 it refused every such record as an unknown field. The field is in `ROW_ATTRIBUTES`, so the CNS connector's digest covers it. The owner approved reading the field on 2026-11-28 after a red-team of the two options; the cross-check is a new hold. Each part was weakened by hand and a test failed each time. `tests/test_failed_ids.py`.
+
 ## [0.19.0] - 2026-11-28
 
 ### Added
